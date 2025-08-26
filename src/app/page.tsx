@@ -1,103 +1,112 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [isLoaded, setIsLoaded] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+
+  const features = [
+    {
+      icon: "👤",
+      title: "Profile Management",
+      description: "Manage your personal and professional information",
+      color: "from-blue-500 to-purple-600",
+      delay: "delay-100",
+    },
+    {
+      icon: "📄",
+      title: "Document Center",
+      description: "Upload, organize and access your documents securely",
+      color: "from-green-500 to-blue-500",
+      delay: "delay-200",
+    },
+    {
+      icon: "🔐",
+      title: "Secure Access",
+      description: "Enterprise-grade security for your data protection",
+      color: "from-purple-500 to-pink-500",
+      delay: "delay-300",
+    },
+    {
+      icon: "📊",
+      title: "Analytics Dashboard",
+      description: "Track your performance and productivity metrics",
+      color: "from-orange-500 to-red-500",
+      delay: "delay-500",
+    },
+    {
+      icon: "🔔",
+      title: "Smart Notifications",
+      description: "Stay updated with real-time alerts and reminders",
+      color: "from-teal-500 to-green-500",
+      delay: "delay-700",
+    },
+    {
+      icon: "⚡",
+      title: "Quick Actions",
+      description: "Streamlined workflows for maximum efficiency",
+      color: "from-yellow-500 to-orange-500",
+      delay: "delay-1000",
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="max-w-md sm:max-w-lg lg:max-w-4xl mx-auto">
+          <div
+            className={`text-center mb-12 transform transition-all duration-1000 ${
+              isLoaded
+                ? "translate-y-0 opacity-100"
+                : "translate-y-10 opacity-0"
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6">
+              Welcome to NYK-FIL APPLICATION
+            </h1>
+
+            <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 mb-2 sm:mb-4">
+              Your Digital Workplace
+            </p>
+
+            <p className="text-gray-500 text-sm sm:text-base lg:text-lg leading-relaxed max-w-2xl mx-auto">
+              Streamline your work experience with our comprehensive employee
+              management platform
+            </p>
+          </div>
+
+          <div
+            className={`mb-8 sm:mb-12 lg:mb-16 transform transition-all duration-1000 delay-300 ${
+              isLoaded
+                ? "translate-y-0 opacity-100"
+                : "translate-y-10 opacity-0"
+            }`}
           >
-            Read our docs
-          </a>
+            <Link
+              href="/login"
+              className="w-full sm:max-w-sm lg:max-w-md mx-auto block bg-gray-900 text-white py-4 sm:py-5 lg:py-6 rounded-xl font-semibold text-center shadow-lg hover:bg-gray-800 transform hover:scale-105 transition-all duration-300"
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <span className="text-base sm:text-lg">Get Started</span>
+                <span className="text-sm sm:text-base">→</span>
+              </div>
+            </Link>
+          </div>
+
+          <div
+            className={`text-center transform transition-all duration-1000 delay-1000 ${
+              isLoaded
+                ? "translate-y-0 opacity-100"
+                : "translate-y-10 opacity-0"
+            }`}
+          ></div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
