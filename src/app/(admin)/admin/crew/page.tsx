@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Navigation from "@/components/Navigation";
 import CrewTable from "@/components/CrewTable";
 import CrewForm from "@/components/CrewForm";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";

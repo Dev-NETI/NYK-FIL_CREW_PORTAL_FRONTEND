@@ -34,6 +34,12 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
       activeIcon: "file-earmark-fill",
     },
     {
+      href: "/job-description",
+      label: "Job Description",
+      icon: "file-earmark-text",
+      activeIcon: "file-earmark-text-fill",
+    },
+    {
       href: "/settings",
       label: "Settings",
       icon: "gear",
