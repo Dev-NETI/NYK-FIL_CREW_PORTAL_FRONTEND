@@ -28,10 +28,22 @@ export default function ProfilePage() {
   });
 
   const [recentActivity] = useState([
-    { action: "Completed medical examination", time: "2 hours ago", icon: "medical-bag" },
-    { action: "Updated emergency contact info", time: "1 day ago", icon: "person-badge" },
+    {
+      action: "Completed medical examination",
+      time: "2 hours ago",
+      icon: "medical-bag",
+    },
+    {
+      action: "Updated emergency contact info",
+      time: "1 day ago",
+      icon: "person-badge",
+    },
     { action: "Renewed STCW certificate", time: "3 days ago", icon: "award" },
-    { action: "Completed safety drill training", time: "1 week ago", icon: "shield-check" },
+    {
+      action: "Completed safety drill training",
+      time: "1 week ago",
+      icon: "shield-check",
+    },
   ]);
 
   useEffect(() => {
@@ -47,7 +59,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50">
+    <div className="min-h-screen ">
       <Navigation currentPath="/profile" />
 
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
@@ -179,9 +191,13 @@ export default function ProfilePage() {
                     }`}
                   >
                     {isEditing ? (
-                      <><i className="bi bi-x-lg mr-2"></i>Cancel</>
+                      <>
+                        <i className="bi bi-x-lg mr-2"></i>Cancel
+                      </>
                     ) : (
-                      <><i className="bi bi-pencil mr-2"></i>Edit Profile</>
+                      <>
+                        <i className="bi bi-pencil mr-2"></i>Edit Profile
+                      </>
                     )}
                   </button>
                 </div>
@@ -409,7 +425,9 @@ export default function ProfilePage() {
                       key={index}
                       className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-xl transition-all duration-300"
                     >
-                      <i className={`bi bi-${activity.icon} text-lg flex-shrink-0 text-blue-600`}></i>
+                      <i
+                        className={`bi bi-${activity.icon} text-lg flex-shrink-0 text-blue-600`}
+                      ></i>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-900">
                           {activity.action}

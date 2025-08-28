@@ -32,7 +32,7 @@ export default function Dashboard() {
       icon: "calendar-check",
       title: "Appointment Schedule",
       description: "View upcoming medical exams and appointments",
-      href: "/settings",
+      href: "/appointment-schedule",
       color: "from-purple-500 to-pink-500",
       delay: "delay-300",
     },
@@ -48,7 +48,7 @@ export default function Dashboard() {
       icon: "currency-dollar",
       title: "Finance",
       description: "View payroll, allotments, and financial statements",
-      href: "/messages",
+      href: "/finance",
       color: "from-teal-500 to-green-500",
       delay: "delay-500",
     },
@@ -86,7 +86,7 @@ export default function Dashboard() {
   return (
     <>
       <Navigation currentPath="/home" />
-      <div className="min-h-screen bg-gray-50 pt-16 pb-20 md:pb-8">
+      <div className="min-h-screen bg-gray-50 pt-16 pb-20 md:pb-8 ">
         <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
@@ -103,7 +103,8 @@ export default function Dashboard() {
                     Crew Dashboard
                   </h1>
                   <p className="text-gray-600 text-sm sm:text-base">
-                    Welcome aboard! Manage your maritime career and documentation.
+                    Welcome aboard! Manage your maritime career and
+                    documentation.
                   </p>
                 </div>
               </div>
@@ -135,7 +136,9 @@ export default function Dashboard() {
                   >
                     <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border border-gray-100 group">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-3 sm:mb-4 transform group-hover:rotate-12 transition-transform duration-300">
-                        <i className={`bi bi-${link.icon} text-xl sm:text-2xl text-gray-700`}></i>
+                        <i
+                          className={`bi bi-${link.icon} text-xl sm:text-2xl text-gray-700`}
+                        ></i>
                       </div>
                       <h3 className="text-gray-900 font-semibold text-base sm:text-lg mb-2">
                         {link.title}
@@ -168,7 +171,9 @@ export default function Dashboard() {
                       className="flex items-center space-x-4 p-3 hover:bg-gray-50 rounded-xl transition-all duration-300"
                     >
                       <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                        <i className={`bi bi-${activity.icon} text-lg text-gray-700`}></i>
+                        <i
+                          className={`bi bi-${activity.icon} text-lg text-gray-700`}
+                        ></i>
                       </div>
                       <div className="flex-1">
                         <h4 className="text-gray-900 font-medium text-sm">
@@ -228,9 +233,7 @@ export default function Dashboard() {
                 <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
                   847
                 </div>
-                <p className="text-gray-600 text-xs sm:text-sm">
-                  Days served
-                </p>
+                <p className="text-gray-600 text-xs sm:text-sm">Days served</p>
               </div>
             </div>
 
@@ -249,7 +252,8 @@ export default function Dashboard() {
                       Need assistance with crew management?
                     </h3>
                     <p className="text-gray-600 text-sm">
-                      Get help with certificates, documentation, or crew support services
+                      Get help with certificates, documentation, or crew support
+                      services
                     </p>
                   </div>
                   <div className="flex space-x-3">
