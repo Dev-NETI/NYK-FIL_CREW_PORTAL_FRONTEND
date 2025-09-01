@@ -10,6 +10,7 @@ export default function Home() {
     setIsLoaded(true);
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const features = [
     {
       icon: "👤",
