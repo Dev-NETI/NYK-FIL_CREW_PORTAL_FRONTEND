@@ -22,12 +22,14 @@ interface JobDescriptionRequest {
 interface JobDescriptionStatusProps {
   crewId?: string;
   className?: string;
+  requests?: JobDescriptionRequest[];
 }
 
 export default function JobDescriptionStatus({
   className = "",
+  requests: propRequests,
 }: JobDescriptionStatusProps) {
-  const [requests] = useState<JobDescriptionRequest[]>([
+  const [fallbackRequests] = useState<JobDescriptionRequest[]>([
     {
       id: "JD-001",
       purpose: "SSS",
@@ -52,6 +54,8 @@ export default function JobDescriptionStatus({
       disapprovalReason: "Incomplete contract information provided",
     },
   ]);
+
+  const requests = propRequests || fallbackRequests;
 
   const [selectedRequest, setSelectedRequest] =
     useState<JobDescriptionRequest | null>(null);

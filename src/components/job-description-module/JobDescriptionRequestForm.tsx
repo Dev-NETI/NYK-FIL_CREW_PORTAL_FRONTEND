@@ -70,12 +70,12 @@ export default function JobDescriptionRequestForm({
     formData.purpose && (formData.purpose !== "VISA" || formData.visaType);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-3 sm:p-4 md:p-6 lg:p-8">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:space-y-6">
         <div>
           <label
             htmlFor="purpose"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
           >
             Purpose of Request <span className="text-red-500">*</span>
           </label>
@@ -86,7 +86,7 @@ export default function JobDescriptionRequestForm({
             onChange={handleInputChange}
             required
             disabled={isSubmitting}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             <option value="">Select purpose of request</option>
             {purposeOptions.map((option) => (
@@ -101,7 +101,7 @@ export default function JobDescriptionRequestForm({
           <div className="animate-in slide-in-from-top-2 duration-300">
             <label
               htmlFor="visaType"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
             >
               VISA Type <span className="text-red-500">*</span>
             </label>
@@ -112,7 +112,7 @@ export default function JobDescriptionRequestForm({
               onChange={handleInputChange}
               required
               disabled={isSubmitting}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               <option value="">Select VISA type</option>
               {visaTypes.map((visa) => (
@@ -127,7 +127,7 @@ export default function JobDescriptionRequestForm({
         <div>
           <label
             htmlFor="notes"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
           >
             Additional Notes (Optional)
           </label>
@@ -136,19 +136,19 @@ export default function JobDescriptionRequestForm({
             name="notes"
             value={formData.notes}
             onChange={handleInputChange}
-            rows={4}
+            rows={3}
             disabled={isSubmitting}
             placeholder="Add any additional information or special requirements..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none disabled:bg-gray-100 disabled:cursor-not-allowed text-sm sm:text-base"
           />
         </div>
 
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
           <div className="flex items-start">
-            <i className="bi bi-exclamation-triangle text-yellow-600 text-lg mt-0.5 mr-3"></i>
-            <div className="text-sm text-yellow-800">
+            <i className="bi bi-exclamation-triangle text-yellow-600 text-sm sm:text-base md:text-lg mt-0.5 mr-2 flex-shrink-0"></i>
+            <div className="text-xs sm:text-sm text-yellow-800">
               <p className="font-medium mb-1">Important Information:</p>
-              <ul className="list-disc list-inside space-y-1 text-xs">
+              <ul className="list-disc list-inside space-y-0.5 sm:space-y-1 text-xs sm:text-sm">
                 <li>
                   Your request will be reviewed by the Executive Assistant and
                   Vice President
@@ -163,30 +163,33 @@ export default function JobDescriptionRequestForm({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2">
           <button
             type="button"
             onClick={handleReset}
             disabled={isSubmitting}
-            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="flex-1 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:bg-gray-100 disabled:cursor-not-allowed text-sm sm:text-base flex items-center justify-center"
           >
-            <i className="bi bi-arrow-clockwise mr-2"></i>
-            Reset Form
+            <i className="bi bi-arrow-clockwise mr-1.5 sm:mr-2"></i>
+            <span className="hidden sm:inline">Reset Form</span>
+            <span className="sm:hidden">Reset</span>
           </button>
           <button
             type="submit"
             disabled={!isFormValid || isSubmitting}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all font-medium flex items-center justify-center"
+            className="flex-1 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all font-medium flex items-center justify-center text-sm sm:text-base min-h-[44px]"
           >
             {isSubmitting ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
-                Submitting...
+                <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 border-2 border-white border-t-transparent mr-1.5 sm:mr-2"></div>
+                <span className="hidden sm:inline">Submitting...</span>
+                <span className="sm:hidden">Submit...</span>
               </>
             ) : (
               <>
-                <i className="bi bi-send mr-2"></i>
-                Submit Request
+                <i className="bi bi-send mr-1.5 sm:mr-2"></i>
+                <span className="hidden sm:inline">Submit Request</span>
+                <span className="sm:hidden">Submit</span>
               </>
             )}
           </button>
