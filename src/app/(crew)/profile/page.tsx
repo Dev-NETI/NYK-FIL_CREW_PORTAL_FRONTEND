@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
+import { ArrowRightFromLine } from 'lucide-react';
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -404,6 +405,10 @@ export default function ProfilePage() {
                   <button className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group">
                     <i className="bi bi-headset mr-3 text-xl group-hover:scale-110 transition-transform duration-300 text-orange-600"></i>
                     <span className="font-medium">Crew Support</span>
+                  </button>
+                  <button className="md:hidden w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group gap-3">
+                   <ArrowRightFromLine className="text-red-600 group-hover:scale-110 transition-transform duration-300"/>
+                    <span className="font-medium">Sign Out</span>
                   </button>
                 </div>
               </div>
