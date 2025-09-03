@@ -5,10 +5,16 @@ import Link from "next/link";
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     setIsLoaded(true);
   }, []);
+
+  if (!isMounted) {
+    return null;
+  }
 
   const features = [
     {

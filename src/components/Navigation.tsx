@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { AuthService } from "@/services/auth";
 
 interface NavigationProps {
   currentPath?: string;
@@ -49,6 +50,10 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
     }
     setClickedItem(href);
     setTimeout(() => setClickedItem(null), 200);
+  };
+
+  const handleLogout = async () => {
+    await AuthService.handleLogout();
   };
 
   return (
@@ -127,36 +132,25 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-2 lg:space-x-3">
-              {/* Notifications */}
-              <button className="relative p-2 lg:p-3 rounded-xl hover:bg-gray-100 transition-all duration-300 group">
-                <span className="text-lg lg:text-xl">
-                  <i className="bi bi-bell"></i>
-                </span>
-                <div className="absolute -top-1 -right-1 w-3 h-3 lg:w-4 lg:h-4 bg-red-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">3</span>
-                </div>
-              </button>
-
               {/* User Menu */}
               <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
                 <Link
                   href="/profile"
                   className="flex items-center space-x-2 p-2 lg:p-3 rounded-xl hover:bg-gray-100 transition-all duration-300"
                 >
-                  <div className="w-7 h-7 lg:w-8 lg:h-8 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-sm lg:text-base">👤</span>
-                  </div>
+                  <i className="bi bi-person-circle lg"></i>
                 </Link>
               </div>
 
-              <Link
-                href="/login"
+              {/* Logout */}
+              <button
+                onClick={handleLogout}
                 className="text-sm lg:text-base font-medium text-gray-600 hover:text-gray-900 px-2 lg:px-3 py-2 lg:py-3 rounded-lg hover:bg-gray-100 transition-all duration-300"
               >
                 <span className=" lg:inline">
                   <i className="bi bi-box-arrow-right"></i>
                 </span>
-              </Link>
+              </button>
             </div>
           </div>
         </div>

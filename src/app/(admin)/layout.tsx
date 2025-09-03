@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { AuthService } from "@/services/auth";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -19,6 +20,21 @@ export default function AdminLayout({
 }>) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    
+    setIsLoggingOut(true);
+    try {
+      await AuthService.handleLogout();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if API fails
+      AuthService.clearAuthData();
+      window.location.href = '/login';
+    }
+  };
   return (
     <div
       className={`${poppins.variable} antialiased bg-gray-50 min-h-screen lg:flex`}
@@ -145,13 +161,14 @@ export default function AdminLayout({
               </Link>
             </li>
             <li>
-              <a
-                href="/logout"
-                className="flex items-center px-6 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors"
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex items-center w-full px-6 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <i className="bi bi-box-arrow-right mr-3"></i>
-                Logout
-              </a>
+                <i className={`bi ${isLoggingOut ? 'bi-arrow-clockwise animate-spin' : 'bi-box-arrow-right'} mr-3`}></i>
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
+              </button>
             </li>
           </ul>
         </nav>
