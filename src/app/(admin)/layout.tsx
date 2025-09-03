@@ -1,5 +1,4 @@
 "use client";
-import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -114,6 +113,19 @@ export default function AdminLayout({
             </li>
             <li>
               <Link
+                href="/admin/job-descriptions"
+                className={`flex items-center px-6 py-3 transition-colors ${
+                  pathname.startsWith("/admin/job-descriptions")
+                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
+                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                }`}
+              >
+                <i className="bi bi-file-earmark-check mr-3"></i>
+                Job Descriptions
+              </Link>
+            </li>
+            <li>
+              <Link
                 href="/admin/documents"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/documents")
@@ -195,7 +207,7 @@ export default function AdminLayout({
                 </h2>
                 <p className="text-xs lg:text-sm text-gray-600 hidden sm:block">
                   <i>
-                    Welcome back, Angelo Peria! Here's what's happening today.
+                    Welcome back, Angelo Peria! Here&apos;s what&apos;s happening today.
                   </i>
                 </p>
               </div>
