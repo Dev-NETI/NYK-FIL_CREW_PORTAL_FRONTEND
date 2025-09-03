@@ -23,15 +23,15 @@ export default function AdminLayout({
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
-    
+
     setIsLoggingOut(true);
     try {
       await AuthService.handleLogout();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
       // Force logout even if API fails
       AuthService.clearAuthData();
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
   };
   return (
@@ -178,8 +178,14 @@ export default function AdminLayout({
                 disabled={isLoggingOut}
                 className="flex items-center w-full px-6 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <i className={`bi ${isLoggingOut ? 'bi-arrow-clockwise animate-spin' : 'bi-box-arrow-right'} mr-3`}></i>
-                {isLoggingOut ? 'Logging out...' : 'Logout'}
+                <i
+                  className={`bi ${
+                    isLoggingOut
+                      ? "bi-arrow-clockwise animate-spin"
+                      : "bi-box-arrow-right"
+                  } mr-3`}
+                ></i>
+                {isLoggingOut ? "Logging out..." : "Logout"}
               </button>
             </li>
           </ul>
@@ -207,7 +213,8 @@ export default function AdminLayout({
                 </h2>
                 <p className="text-xs lg:text-sm text-gray-600 hidden sm:block">
                   <i>
-                    Welcome back, Angelo Peria! Here&apos;s what&apos;s happening today.
+                    Welcome back, Angelo Peria! Here&apos;s what&apos;s
+                    happening today.
                   </i>
                 </p>
               </div>
