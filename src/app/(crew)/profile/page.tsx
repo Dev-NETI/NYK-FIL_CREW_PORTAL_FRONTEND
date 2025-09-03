@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
-import { ArrowRightFromLine } from 'lucide-react';
-
+import { ArrowRightFromLine, HelpCircle, KeyRound, MailIcon } from 'lucide-react';
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -391,10 +391,6 @@ export default function ProfilePage() {
                 </h3>
                 <div className="space-y-3">
                   <button className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group">
-                    <i className="bi bi-key mr-3 text-xl group-hover:scale-110 transition-transform duration-300 text-blue-600"></i>
-                    <span className="font-medium">Change Password</span>
-                  </button>
-                  <button className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group">
                     <i className="bi bi-file-earmark-medical mr-3 text-xl group-hover:scale-110 transition-transform duration-300 text-green-600"></i>
                     <span className="font-medium">Medical Records</span>
                   </button>
@@ -413,6 +409,50 @@ export default function ProfilePage() {
                 </div>
               </div>
 
+              <div
+                className={`bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-1000 delay-400 ${
+                  isLoaded
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-10 opacity-0"
+                }`}
+              >
+                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  Support
+                </h3>
+                <div className="space-y-3">
+                  <button className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group gap-3">
+                   <HelpCircle className="text-blue-600 group-hover:scale-110 transition-transform duration-300"/>
+                    <span className="font-medium">Inquiry</span>
+                  </button>
+                </div>
+                <div className="space-y-3">
+                   <FeedbackDialog/>
+                </div>
+              </div>
+
+              <div
+                className={`bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-1000 delay-400 ${
+                  isLoaded
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-10 opacity-0"
+                }`}
+              >
+                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  Settings
+                </h3>
+                <div className="space-y-3">
+                  <button className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group gap-3">
+                   <KeyRound className="text-blue-600 group-hover:scale-110 transition-transform duration-300"/>
+                    <span className="font-medium">Change Password</span>
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <button className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group gap-3">
+                   <MailIcon className="text-blue-600 group-hover:scale-110 transition-transform duration-300"/>
+                    <span className="font-medium">Change Email</span>
+                  </button>
+                </div>
+              </div>
               {/* Recent Activity */}
               <div
                 className={`bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-1000 delay-500 ${
