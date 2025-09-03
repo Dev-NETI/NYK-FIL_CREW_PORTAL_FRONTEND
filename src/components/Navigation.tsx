@@ -3,6 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NavigationProps {
   currentPath?: string;
@@ -21,12 +29,12 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
       icon: "grid-3x3-gap-fill",
       activeIcon: "grid-3x3-gap-fill",
     },
-    {
-      href: "/profile",
-      label: "Profile",
-      icon: "person",
-      activeIcon: "person-fill",
-    },
+    // {
+    //   href: "/profile",
+    //   label: "Profile",
+    //   icon: "person",
+    //   activeIcon: "person-fill",
+    // },
     {
       href: "/documents",
       label: "Documents",
@@ -39,12 +47,12 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
       icon: "file-earmark-text",
       activeIcon: "file-earmark-text-fill",
     },
-    {
-      href: "/settings",
-      label: "Settings",
-      icon: "gear",
-      activeIcon: "gear-fill",
-    },
+    // {
+    //   href: "/settings",
+    //   label: "Settings",
+    //   icon: "gear",
+    //   activeIcon: "gear-fill",
+    // },
   ];
 
   const isActive = (path: string) => currentPath === path;
@@ -144,25 +152,54 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
               </button>
 
               {/* User Menu */}
-              <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
+              <div className="flex items-center space-x-2 lg:space-x-3">
+                {/* Mobile: direct link */}
                 <Link
                   href="/profile"
-                  className="flex items-center space-x-2 p-2 lg:p-3 rounded-xl hover:bg-gray-100 transition-all duration-300"
+                  className="flex md:hidden items-center space-x-2 p-2 lg:p-3 rounded-xl hover:bg-gray-100 transition-all duration-300"
                 >
-                  <div className="w-7 h-7 lg:w-8 lg:h-8 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-sm lg:text-base">👤</span>
-                  </div>
+                  <Avatar className="w-9 h-9 lg:w-10 lg:h-10">
+                    <AvatarImage src="/default-avatar.png" alt="User Avatar" />
+                    <AvatarFallback className="text-sm lg:text-base font-medium">
+                      P
+                    </AvatarFallback>
+                  </Avatar>
                 </Link>
+
+                {/* Desktop/Tablet: dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="hidden md:flex items-center space-x-2 p-2 lg:p-3 rounded-xl hover:bg-gray-100 transition-all duration-300">
+                      <Avatar className="w-9 h-9 lg:w-10 lg:h-10">
+                        <AvatarImage
+                          src="/default-avatar.png"
+                          alt="User Avatar"
+                        />
+                        <AvatarFallback className="text-sm lg:text-base font-medium">
+                          P
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-40 mt-2">
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile">Profile</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                    <Link href="/signout">Sign Out</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
-              <Link
+              {/* <Link
                 href="/login"
                 className="text-sm lg:text-base font-medium text-gray-600 hover:text-gray-900 px-2 lg:px-3 py-2 lg:py-3 rounded-lg hover:bg-gray-100 transition-all duration-300"
               >
                 <span className=" lg:inline">
                   <i className="bi bi-box-arrow-right"></i>
                 </span>
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
@@ -170,7 +207,7 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 z-40 md:hidden">
-        <div className="grid grid-cols-4 py-2 sm:py-3">
+        <div className="grid grid-cols-3 py-2 sm:py-3">
           {navItems.map((item) => (
             <Link
               key={item.href}
