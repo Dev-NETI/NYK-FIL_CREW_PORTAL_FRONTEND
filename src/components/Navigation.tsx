@@ -25,35 +25,23 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
 
   const navItems = [
     {
-      href: "/home",
+      href: "/crew/home",
       label: "Home",
       icon: "grid-3x3-gap-fill",
       activeIcon: "grid-3x3-gap-fill",
     },
-    // {
-    //   href: "/profile",
-    //   label: "Profile",
-    //   icon: "person",
-    //   activeIcon: "person-fill",
-    // },
     {
-      href: "/documents",
+      href: "/crew/documents",
       label: "Documents",
       icon: "file-earmark",
       activeIcon: "file-earmark-fill",
     },
     {
-      href: "/job-description",
+      href: "/crew/job-description",
       label: "Job Description",
       icon: "file-earmark-text",
       activeIcon: "file-earmark-text-fill",
     },
-    // {
-    //   href: "/settings",
-    //   label: "Settings",
-    //   icon: "gear",
-    //   activeIcon: "gear-fill",
-    // },
   ];
 
   const isActive = (path: string) => currentPath === path;
@@ -182,24 +170,13 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
                       <Link href="/profile">Profile</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/signout">Sign Out</Link>
+                      <button onClick={handleLogout} className="w-38">
+                        <Link href="/login">Sign Out</Link>
+                      </button>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-
-              {/* Logout */}
-              {/* <button
-                onClick={handleLogout} */}
-              {/* <Link
-                href="/login"
-                className="text-sm lg:text-base font-medium text-gray-600 hover:text-gray-900 px-2 lg:px-3 py-2 lg:py-3 rounded-lg hover:bg-gray-100 transition-all duration-300"
-              >
-                <span className=" lg:inline">
-                  <i className="bi bi-box-arrow-right"></i>
-                </span>
-              </button>
-              </Link> */}
             </div>
           </div>
         </div>

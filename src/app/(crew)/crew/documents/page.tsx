@@ -118,7 +118,7 @@ export default function DocumentsPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation currentPath="/documents" />
+      <Navigation currentPath="/crew/documents" />
 
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         <div className="max-w-md sm:max-w-lg lg:max-w-6xl mx-auto">
