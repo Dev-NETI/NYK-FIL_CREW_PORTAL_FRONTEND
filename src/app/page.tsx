@@ -5,12 +5,17 @@ import Link from "next/link";
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     setIsLoaded(true);
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  if (!isMounted) {
+    return null;
+  }
+
   const features = [
     {
       icon: "👤",

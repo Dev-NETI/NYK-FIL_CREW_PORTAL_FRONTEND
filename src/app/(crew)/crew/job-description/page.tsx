@@ -53,7 +53,7 @@ export default function JobDescriptionPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
-      <Navigation currentPath="/job-description" />
+      <Navigation currentPath="/crew/job-description" />
 
       <main className="pt-16 sm:pt-20 pb-24 sm:pb-32 md:pb-8 px-3 sm:px-4 md:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
@@ -116,7 +116,8 @@ export default function JobDescriptionPage() {
                   Check Your Job Description Request Status
                 </h3>
                 <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-2 sm:px-0">
-                  Track the progress of your submitted job description requests and download approved documents
+                  Track the progress of your submitted job description requests
+                  and download approved documents
                 </p>
                 <Link
                   href="/job-description/status"

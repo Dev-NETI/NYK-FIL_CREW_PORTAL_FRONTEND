@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { AuthService } from "@/services/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,35 +25,23 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
 
   const navItems = [
     {
-      href: "/home",
+      href: "/crew/home",
       label: "Home",
       icon: "grid-3x3-gap-fill",
       activeIcon: "grid-3x3-gap-fill",
     },
-    // {
-    //   href: "/profile",
-    //   label: "Profile",
-    //   icon: "person",
-    //   activeIcon: "person-fill",
-    // },
     {
-      href: "/documents",
+      href: "/crew/documents",
       label: "Documents",
       icon: "file-earmark",
       activeIcon: "file-earmark-fill",
     },
     {
-      href: "/job-description",
+      href: "/crew/job-description",
       label: "Job Description",
       icon: "file-earmark-text",
       activeIcon: "file-earmark-text-fill",
     },
-    // {
-    //   href: "/settings",
-    //   label: "Settings",
-    //   icon: "gear",
-    //   activeIcon: "gear-fill",
-    // },
   ];
 
   const isActive = (path: string) => currentPath === path;
@@ -63,6 +52,10 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
     }
     setClickedItem(href);
     setTimeout(() => setClickedItem(null), 200);
+  };
+
+  const handleLogout = async () => {
+    await AuthService.handleLogout();
   };
 
   return (
@@ -141,16 +134,6 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-2 lg:space-x-3">
-              {/* Notifications */}
-              <button className="relative p-2 lg:p-3 rounded-xl hover:bg-gray-100 transition-all duration-300 group">
-                <span className="text-lg lg:text-xl">
-                  <i className="bi bi-bell"></i>
-                </span>
-                <div className="absolute -top-1 -right-1 w-3 h-3 lg:w-4 lg:h-4 bg-red-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">3</span>
-                </div>
-              </button>
-
               {/* User Menu */}
               <div className="flex items-center space-x-2 lg:space-x-3">
                 {/* Mobile: direct link */}
@@ -158,6 +141,7 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
                   href="/profile"
                   className="flex md:hidden items-center space-x-2 p-2 lg:p-3 rounded-xl hover:bg-gray-100 transition-all duration-300"
                 >
+                  <i className="bi bi-person-circle lg"></i>
                   <Avatar className="w-9 h-9 lg:w-10 lg:h-10">
                     <AvatarImage src="/default-avatar.png" alt="User Avatar" />
                     <AvatarFallback className="text-sm lg:text-base font-medium">
@@ -186,20 +170,13 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
                       <Link href="/profile">Profile</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                    <Link href="/signout">Sign Out</Link>
+                      <button onClick={handleLogout} className="w-38">
+                        <Link href="/login">Sign Out</Link>
+                      </button>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-
-              {/* <Link
-                href="/login"
-                className="text-sm lg:text-base font-medium text-gray-600 hover:text-gray-900 px-2 lg:px-3 py-2 lg:py-3 rounded-lg hover:bg-gray-100 transition-all duration-300"
-              >
-                <span className=" lg:inline">
-                  <i className="bi bi-box-arrow-right"></i>
-                </span>
-              </Link> */}
             </div>
           </div>
         </div>
