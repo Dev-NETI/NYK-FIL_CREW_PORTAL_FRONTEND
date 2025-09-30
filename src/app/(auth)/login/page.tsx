@@ -146,7 +146,16 @@ export default function LoginPage() {
 
       if (err instanceof AxiosError) {
         const errorData = err.response?.data as ApiErrorResponse;
-        if (errorData) {
+        const statusCode = err.response?.status;
+        
+        if (statusCode === 401) {
+          // Handle 401 Unauthorized - Invalid OTP
+          const errorMessage = errorData?.message || "Invalid OTP. Please try again.";
+          toast.error(errorMessage, {
+            icon: "🔢",
+            duration: 5000,
+          });
+        } else if (errorData) {
           let errorMessage = errorData.message || "Invalid OTP";
           if (errorData.retry_after) {
             errorMessage = `${errorData.message} Please wait ${errorData.retry_after} seconds.`;
@@ -254,15 +263,22 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600 rounded-full opacity-20 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-700 rounded-full opacity-20 animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500 rounded-full opacity-10 animate-ping delay-2000"></div>
+      </div>
+
+      <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
         <div
           className={`text-center transform transition-all duration-1000 ${
             isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
           }`}
         >
           <div className="mx-auto flex items-center justify-center mb-6 sm:mb-8">
-            <div className="text-center">
+            <div className="text-center  rounded-2xl p-4 ">
               <Image
                 src="/nykfil.png"
                 alt="Logo"
@@ -272,25 +288,25 @@ export default function LoginPage() {
               />
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
-            {showOtpInput ? "Verify Your Identity" : "NYK-FIL CREW PORTAL"}
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-3xl font-bold text-white mb-3 sm:mb-4 drop-shadow-lg">
+            {showOtpInput ? "🔐 Verify Your Identity" : "NYK-FIL CREW PORTAL"}
           </h1>
-          <p className="text-gray-600 text-base sm:text-lg md:text-xl lg:text-lg mb-2 sm:mb-4">
+          <p className="text-blue-100 text-base sm:text-lg md:text-xl lg:text-lg mb-2 sm:mb-4 drop-shadow">
             {showOtpInput
               ? "Enter the OTP sent to your email"
-              : "Sign in to your account"}
+              : "Welcome aboard! Sign in to your account"}
           </p>
-          <p className="text-gray-500 text-sm sm:text-base md:text-lg lg:text-base">
+          <p className="text-blue-200 text-sm sm:text-base md:text-lg lg:text-base drop-shadow">
             {showOtpInput
               ? "Check your email for a 6-digit verification code"
-              : "Enter your email address to receive an OTP"}
+              : "Enter your email address to receive a secure OTP"}
           </p>
         </div>
       </div>
 
-      <div className="mt-8 sm:mt-12 lg:mt-8 sm:mx-auto sm:w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
+      <div className="relative z-10 mt-8 sm:mt-12 lg:mt-8 sm:mx-auto sm:w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
         <div
-          className={`bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 lg:p-8 border border-gray-100 shadow-lg transform transition-all duration-1000 delay-300 ${
+          className={`bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 lg:p-8 border border-white/20 shadow-2xl transform transition-all duration-1000 delay-300 ${
             isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
           }`}
         >
@@ -303,9 +319,9 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm sm:text-base lg:text-base font-medium text-gray-700 mb-2 sm:mb-3"
+                  className="block text-sm sm:text-base lg:text-base font-medium text-black mb-2 sm:mb-3"
                 >
-                  Email address
+                  Email Address
                 </label>
                 <input
                   id="email"
@@ -315,7 +331,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 sm:px-4 md:px-5 lg:px-4 py-3 sm:py-4 md:py-5 lg:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder-gray-500 hover:border-gray-300 text-sm sm:text-base md:text-lg lg:text-base"
+                  className="w-full px-3 sm:px-4 md:px-5 lg:px-4 py-3 sm:py-4 md:py-5 lg:py-3 border-2 border-blue-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-gray-900 placeholder-gray-400 hover:border-blue-300 text-sm sm:text-base md:text-lg lg:text-base bg-white shadow-sm"
                   placeholder="Enter your email address"
                 />
               </div>
@@ -323,12 +339,12 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-3 sm:py-4 md:py-5 lg:py-3 px-4 sm:px-6 md:px-8 lg:px-4 border border-transparent rounded-lg sm:rounded-xl shadow-lg text-base sm:text-lg md:text-xl lg:text-base font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+                className="w-full flex justify-center py-3 sm:py-4 md:py-5 lg:py-3 px-4 sm:px-6 md:px-8 lg:px-4 border border-transparent rounded-lg sm:rounded-xl shadow-lg text-base sm:text-lg md:text-xl lg:text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
               >
                 {isLoading ? (
                   <div className="flex items-center">
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
-                    Sending OTP...
+                    🚀 Sending OTP...
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2">
@@ -343,17 +359,17 @@ export default function LoginPage() {
             <div className="space-y-6 sm:space-y-8">
               {/* OTP Header Section */}
               <div className="text-center space-y-2">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full mb-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full mb-4 animate-pulse">
                   <span className="text-2xl">🔐</span>
                 </div>
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                <h3 className="text-lg sm:text-xl font-semibold text-blue-900">
                   Verification Code
                 </h3>
-                <p className="text-sm text-gray-600">
-                  We've sent a 6-digit code to your email
+                <p className="text-sm text-black">
+                  We&apos;ve sent a 6-digit code to your email
                 </p>
-                <p className="text-xs text-gray-500">
-                  <span className="font-medium text-gray-700">{email}</span>
+                <p className="text-xs text-blue-600">
+                  <span className="font-medium text-blue-800">📩 {email}</span>
                 </p>
               </div>
 
@@ -375,7 +391,7 @@ export default function LoginPage() {
                         <div
                           key={index}
                           className={`w-2 h-1 rounded-full transition-all duration-300 ${
-                            index < otp.length ? "bg-gray-900" : "bg-gray-200"
+                            index < otp.length ? "bg-blue-600" : "bg-blue-200"
                           }`}
                         />
                       ))}
@@ -429,38 +445,6 @@ export default function LoginPage() {
               </form>
             </div>
           )}
-        </div>
-
-        <div
-          className={`mt-6 transform transition-all duration-1000 delay-500 ${
-            isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
-          }`}
-        >
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6 sm:mt-8 lg:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <button className="w-full inline-flex justify-center py-2 sm:py-3 md:py-4 lg:py-3 px-3 sm:px-4 md:px-6 lg:px-4 border border-gray-200 rounded-lg sm:rounded-xl shadow-sm bg-white text-xs sm:text-sm md:text-base lg:text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all duration-300 transform hover:scale-105">
-              <span className="mr-1 sm:mr-2 text-base sm:text-lg md:text-xl lg:text-base">
-                📱
-              </span>
-              Phone
-            </button>
-            <button className="w-full inline-flex justify-center py-2 sm:py-3 md:py-4 lg:py-3 px-3 sm:px-4 md:px-6 lg:px-4 border border-gray-200 rounded-lg sm:rounded-xl shadow-sm bg-white text-xs sm:text-sm md:text-base lg:text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all duration-300 transform hover:scale-105">
-              <span className="mr-1 sm:mr-2 text-base sm:text-lg md:text-xl lg:text-base">
-                🔐
-              </span>
-              Biometric
-            </button>
-          </div>
         </div>
       </div>
     </div>

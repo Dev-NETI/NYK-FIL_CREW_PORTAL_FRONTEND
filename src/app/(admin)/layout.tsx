@@ -48,7 +48,7 @@ export default function AdminLayout({
 
       {/* Sidebar */}
       <aside
-        className={`w-64 bg-white shadow-lg h-screen overflow-y-auto z-50 transform transition-transform duration-300 ease-in-out fixed inset-y-0 left-0 lg:relative lg:sticky lg:top-0 ${
+        className={`w-64 bg-blue-900 shadow-2xl h-screen overflow-y-auto z-50 transform transition-transform duration-300 ease-in-out fixed inset-y-0 left-0 lg:relative lg:sticky lg:top-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -66,7 +66,7 @@ export default function AdminLayout({
 
         <nav className="mt-8">
           <div className="px-6 py-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">
               Dashboard
             </p>
           </div>
@@ -77,8 +77,8 @@ export default function AdminLayout({
                 href="/admin"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname === "/admin"
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-house-door mr-3"></i>
@@ -90,8 +90,8 @@ export default function AdminLayout({
                 href="/admin/crew"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/crew")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-people mr-3"></i>
@@ -103,8 +103,8 @@ export default function AdminLayout({
                 href="/admin/applications"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/applications")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-file-earmark-text mr-3"></i>
@@ -116,8 +116,8 @@ export default function AdminLayout({
                 href="/admin/job-descriptions"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/job-descriptions")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-file-earmark-check mr-3"></i>
@@ -129,8 +129,8 @@ export default function AdminLayout({
                 href="/admin/documents"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/documents")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-folder mr-3"></i>
@@ -142,8 +142,8 @@ export default function AdminLayout({
                 href="/admin/reports"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/reports")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-graph-up mr-3"></i>
@@ -153,7 +153,7 @@ export default function AdminLayout({
           </ul>
 
           <div className="px-6 py-3 mt-8">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">
               Settings
             </p>
           </div>
@@ -164,8 +164,8 @@ export default function AdminLayout({
                 href="/admin/settings"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/settings")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-gear mr-3"></i>
@@ -176,7 +176,7 @@ export default function AdminLayout({
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="flex items-center w-full px-6 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center w-full px-6 py-3 text-white hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <i
                   className={`bi ${

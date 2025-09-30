@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import CrewTable from "@/components/CrewTable";
 import CrewForm from "@/components/CrewForm";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import { UserService } from "@/services";
+import { User } from "@/types/api";
+import toast from "react-hot-toast";
 
 interface Crew {
   id: string;
@@ -23,64 +26,43 @@ export default function CrewManagement() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingCrewId, setDeletingCrewId] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - In a real app, this would come from an API
+  // Convert User data to Crew format for compatibility with existing components
+  const convertUserToCrew = (user: User): Crew => ({
+    id: user.id.toString(),
+    name: user.name || `${user.first_name || ''} ${user.middle_name || ''} ${user.last_name || ''}`.trim() || user.email,
+    position: user.rank_name || 'Not assigned',
+    department: user.fleet_name || 'Not assigned',
+    status: user.crew_status || 'active',
+    joinDate: user.hire_date || 'Unknown',
+    email: user.email,
+    phone: user.mobile_number || 'Not provided',
+  });
+
+  // Load crew data from API
   useEffect(() => {
-    const mockCrews: Crew[] = [
-      {
-        id: "1",
-        name: "John Smith",
-        position: "Ship Captain",
-        department: "Operations",
-        status: "active",
-        joinDate: "2022-01-15",
-        email: "john.smith@nykfil.com",
-        phone: "+63-912-345-6789",
-      },
-      {
-        id: "2",
-        name: "Maria Garcia",
-        position: "Chief Engineer",
-        department: "Engineering",
-        status: "active",
-        joinDate: "2021-08-20",
-        email: "maria.garcia@nykfil.com",
-        phone: "+63-917-234-5678",
-      },
-      {
-        id: "3",
-        name: "David Johnson",
-        position: "Safety Officer",
-        department: "Safety",
-        status: "on_leave",
-        joinDate: "2020-05-10",
-        email: "david.johnson@nykfil.com",
-        phone: "+63-920-123-4567",
-      },
-      {
-        id: "4",
-        name: "Sarah Lee",
-        position: "Navigator",
-        department: "Operations",
-        status: "active",
-        joinDate: "2023-02-28",
-        email: "sarah.lee@nykfil.com",
-        phone: "+63-918-345-6789",
-      },
-      {
-        id: "5",
-        name: "Robert Chen",
-        position: "HR Manager",
-        department: "Human Resources",
-        status: "inactive",
-        joinDate: "2019-11-05",
-        email: "robert.chen@nykfil.com",
-        phone: "+63-915-678-9012",
-      },
-    ];
+    const loadCrewData = async () => {
+      try {
+        setLoading(true);
+        const response = await UserService.getAllCrew();
+        
+        if (response.success && response.crew) {
+          const convertedCrew = response.crew.map(convertUserToCrew);
+          setCrews(convertedCrew);
+        } else {
+          toast.error(response.message || 'Failed to load crew data');
+        }
+      } catch (error) {
+        console.error('Error loading crew data:', error);
+        toast.error('Failed to load crew data');
+      } finally {
+        setLoading(false);
+        setIsLoaded(true);
+      }
+    };
 
-    setCrews(mockCrews);
-    setIsLoaded(true);
+    loadCrewData();
   }, []);
 
   const handleAddCrew = () => {
@@ -131,6 +113,17 @@ export default function CrewManagement() {
   };
 
   const deletingCrew = crews.find((crew) => crew.id === deletingCrewId);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading crew data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

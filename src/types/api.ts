@@ -26,10 +26,15 @@ export interface ResendOtpResponse extends BaseApiResponse {
   retry_after?: number;
 }
 
-export interface LogoutResponse extends BaseApiResponse {}
+export type LogoutResponse = BaseApiResponse;
 
 export interface UserResponse extends BaseApiResponse {
   user?: User;
+}
+
+export interface CrewListResponse extends BaseApiResponse {
+  crew?: User[];
+  total?: number;
 }
 
 // User interface
@@ -39,13 +44,31 @@ export interface User {
   email: string;
   email_verified_at: string | null;
   last_login_at?: string | null;
-  first_name?: string;
-  last_name?: string;
   is_crew: number; // 1 = crew, 0 = admin
   role?: string; // 'crew' or 'admin'
   crew_id?: string;
-  fleet_id?: number;
-  rank_id?: number;
+  fleet_name?: string;
+  rank_name?: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  suffix?: string;
+  date_of_birth?: string;
+  age?: number;
+  gender?: string;
+  mobile_number?: string;
+  permanent_address_id?: number;
+  graduated_school_id?: number;
+  date_graduated?: string;
+  crew_status?: string;
+  hire_status?: string;
+  hire_date?: string;
+  passport_number?: string;
+  passport_expiry?: string;
+  seaman_book_number?: string;
+  seaman_book_expiry?: string;
+  primary_allotee_id?: number;
+  last_login_ip?: string;
 }
 
 // Request interfaces

@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
   }
 
   // If user is not logged in and tries to access protected routes
-  if (!token && (pathname.startsWith('/crew/home') || pathname.startsWith('/admin'))) {
+  if (!token && (pathname.startsWith('/crew/home') || pathname.startsWith('/admin') || pathname.startsWith('/crew/profile'))) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
@@ -43,6 +43,22 @@ export function middleware(request: NextRequest) {
     // Block admin users from accessing crew routes
     if (!isCrew && pathname.match(/^\/(crew|home)/)) {
       return NextResponse.redirect(new URL('/admin', request.url))
+    }
+    
+    // Check crew profile access - crew members can only access their own profile
+    const profileMatch = pathname.match(/^\/crew\/profile\/(.+)$/)
+    if (profileMatch && userCookie) {
+      try {
+        const user = JSON.parse(userCookie)
+        const requestedCrewId = profileMatch[1]
+        // Allow access if user is admin or accessing their own profile
+        if (user.is_crew === 1 && user.crew_id !== requestedCrewId) {
+          return NextResponse.redirect(new URL('/crew/home', request.url))
+        }
+      } catch (e) {
+        console.error('Error checking profile access:', e)
+        return NextResponse.redirect(new URL('/login', request.url))
+      }
     }
   }
 

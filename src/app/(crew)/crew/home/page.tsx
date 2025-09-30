@@ -1,66 +1,78 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Navigation from "@/components/Navigation";
+import { AuthService } from "@/services";
+import { User } from "@/types/api";
 
 export default function Dashboard() {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // console.log(currentUser);
 
   useEffect(() => {
+    const user = AuthService.getStoredUser();
+    setCurrentUser(user);
     setIsLoaded(true);
   }, []);
 
-  const quickLinks = [
-    {
-      icon: "person-badge",
-      title: "My Profile",
-      description: "View and update your crew information and certifications",
-      href: "/profile",
-      color: "from-blue-500 to-purple-600",
-      delay: "delay-100",
-    },
-    {
-      icon: "file-earmark-text",
-      title: "Documents",
-      description: "Access certificates, contracts, and maritime documents",
-      href: "/documents",
-      color: "from-green-500 to-blue-500",
-      delay: "delay-200",
-    },
-    {
-      icon: "calendar-check",
-      title: "Appointment Schedule",
-      description: "View upcoming medical exams and appointments",
-      href: "/appointment-schedule",
-      color: "from-purple-500 to-pink-500",
-      delay: "delay-300",
-    },
-    {
-      icon: "megaphone",
-      title: "Debriefing / Briefing",
-      description: "Access safety briefings and voyage reports",
-      href: "/reports",
-      color: "from-orange-500 to-red-500",
-      delay: "delay-400",
-    },
-    {
-      icon: "currency-dollar",
-      title: "Finance",
-      description: "View payroll, allotments, and financial statements",
-      href: "/finance",
-      color: "from-teal-500 to-green-500",
-      delay: "delay-500",
-    },
-    {
-      icon: "bell",
-      title: "Notifications",
-      description: "Important vessel updates, alerts, and announcements",
-      href: "/notifications",
-      color: "from-yellow-500 to-orange-500",
-      delay: "delay-600",
-    },
-  ];
+  const quickLinks = useMemo(
+    () => [
+      {
+        icon: "person-badge",
+        title: "My Profile",
+        description: "View and update your crew information and certifications",
+        href: currentUser?.crew_id
+          ? `/crew/profile/${currentUser.crew_id}`
+          : "/crew/profile",
+        color: "from-blue-500 to-purple-600",
+        delay: "delay-100",
+      },
+      {
+        icon: "file-earmark-text",
+        title: "Documents",
+        description: "Access certificates, contracts, and maritime documents",
+        href: "/crew/documents",
+        color: "from-green-500 to-blue-500",
+        delay: "delay-200",
+      },
+      {
+        icon: "calendar-check",
+        title: "Appointment Schedule",
+        description: "View upcoming medical exams and appointments",
+        href: "/appointment-schedule",
+        color: "from-purple-500 to-pink-500",
+        delay: "delay-300",
+      },
+      {
+        icon: "megaphone",
+        title: "Debriefing / Briefing",
+        description: "Access safety briefings and voyage reports",
+        href: "/crew/reports",
+        color: "from-orange-500 to-red-500",
+        delay: "delay-400",
+      },
+      {
+        icon: "currency-dollar",
+        title: "Finance",
+        description: "View payroll, allotments, and financial statements",
+        href: "/crew/finance",
+        color: "from-teal-500 to-green-500",
+        delay: "delay-500",
+      },
+      {
+        icon: "bell",
+        title: "Notifications",
+        description: "Important vessel updates, alerts, and announcements",
+        href: "/crew/notifications",
+        color: "from-yellow-500 to-orange-500",
+        delay: "delay-600",
+      },
+    ],
+    [currentUser]
+  );
 
   const recentActivities = [
     {
