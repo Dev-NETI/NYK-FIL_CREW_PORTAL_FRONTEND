@@ -26,9 +26,30 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<User | null>(null);
   const [, setCurrentUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState("basic");
   const router = useRouter();
   const resolvedParams = use(params);
   const crewId = resolvedParams.id;
+
+  // Sample employment data
+  const sampleEmploymentData = [
+    {
+      id: 1,
+      program: "NTMA_CADETSHIP",
+      programDisplay: "NTMA CADETSHIP",
+      batch: "BATCH 2025",
+      dateJoined: "2024-01-15",
+      status: "Active",
+    },
+    {
+      id: 2,
+      program: "OJT_PROGRAM",
+      programDisplay: "OJT Program",
+      batch: "BATCH 2024",
+      dateJoined: "2023-06-10",
+      status: "Completed",
+    },
+  ];
 
   const [recentActivity] = useState([
     {
@@ -119,6 +140,12 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                 ? "translate-y-0 opacity-100"
                 : "translate-y-10 opacity-0"
             }`}
+            style={{
+              backgroundImage: 'url("/anchor.jpg")',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundBlendMode: 'overlay'
+            }}
           >
             <div className="relative px-6 sm:px-8 lg:px-12 py-10 sm:py-12 lg:py-16">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-700/90 to-cyan-800/90"></div>
@@ -175,118 +202,704 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
           {/* Main Content Grid */}
           <div className="lg:grid lg:grid-cols-3 lg:gap-8 space-y-8 lg:space-y-0">
-            {/* Profile Information */}
+            {/* Profile Information with Tabs */}
             <div className="lg:col-span-2">
               <div
-                className={`bg-white rounded-2xl shadow-lg p-6 sm:p-8 transform transition-all duration-1000 delay-300 ${
+                className={`bg-white rounded-2xl shadow-lg overflow-hidden transform transition-all duration-1000 delay-300 ${
                   isLoaded
                     ? "translate-y-0 opacity-100"
                     : "translate-y-10 opacity-0"
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Seafarer Profile
-                  </h2>
+                {/* Tab Navigation */}
+                <div className="border-b border-gray-200">
+                  <nav
+                    className="flex space-x-8 px-6 sm:px-8"
+                    aria-label="Tabs"
+                  >
+                    <button
+                      onClick={() => setActiveTab("basic")}
+                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
+                        activeTab === "basic"
+                          ? "border-blue-500 text-blue-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      Basic Information
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("physical")}
+                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
+                        activeTab === "physical"
+                          ? "border-blue-500 text-blue-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      Physical Traits
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("contact")}
+                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
+                        activeTab === "contact"
+                          ? "border-blue-500 text-blue-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      Contact
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("employment")}
+                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
+                        activeTab === "employment"
+                          ? "border-blue-500 text-blue-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      Employment Info
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("education")}
+                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
+                        activeTab === "education"
+                          ? "border-blue-500 text-blue-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      Educational Background
+                    </button>
+                  </nav>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      First Name
-                    </label>
-                    <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                      {profile.first_name || "Not provided"}
-                    </p>
-                  </div>
+                {/* Tab Content */}
+                <div className="p-6 sm:p-8">
+                  {/* Basic Information Tab */}
+                  {activeTab === "basic" && (
+                    <div className="space-y-6">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                        Basic Information
+                      </h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Last Name
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.last_name || "Not provided"}
+                          </p>
+                        </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Middle Name
-                    </label>
-                    <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                      {profile.middle_name || "Not provided"}
-                    </p>
-                  </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            First Name
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.first_name || "Not provided"}
+                          </p>
+                        </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Last Name
-                    </label>
-                    <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                      {profile.last_name || "Not provided"}
-                    </p>
-                  </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Middle Name
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.middle_name || "Not provided"}
+                          </p>
+                        </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Crew ID
-                    </label>
-                    <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                      {profile.crew_id || "Not assigned"}
-                    </p>
-                  </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Suffix
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.suffix || "Not provided"}
+                          </p>
+                        </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Email Address
-                    </label>
-                    <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                      {profile.email}
-                      {profile.email_verified_at && (
-                        <span className="ml-2 text-green-600 text-sm">
-                          ✓ Verified
-                        </span>
-                      )}
-                    </p>
-                  </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Nationality
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.nationality || "Not provided"}
+                          </p>
+                        </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      User Role
-                    </label>
-                    <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                      {profile.is_crew === 1 ? "Crew Member" : "Administrator"}
-                    </p>
-                  </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Gender
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.gender || "Not provided"}
+                          </p>
+                        </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Fleet ID
-                    </label>
-                    <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                      {profile.fleet_name || "Not assigned"}
-                    </p>
-                  </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Civil Status
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.civil_status || "Not provided"}
+                          </p>
+                        </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Rank
-                    </label>
-                    <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                      {profile.rank_name || "Not assigned"}
-                    </p>
-                  </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Birth Date
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.birth_date
+                              ? new Date(profile.birth_date).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  }
+                                )
+                              : "Not provided"}
+                          </p>
+                        </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Last Login
-                    </label>
-                    <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                      {profile.last_login_at
-                        ? new Date(profile.last_login_at).toLocaleDateString(
-                            "en-US",
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )
-                        : "Never"}
-                    </p>
-                  </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Birth Place
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.birth_place || "Not provided"}
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Blood Type
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.blood_type || "Not provided"}
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Religion
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.religion || "Not provided"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Physical Traits Tab */}
+                  {activeTab === "physical" && (
+                    <div className="space-y-6">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                        Physical Traits
+                      </h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Height (cm)
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.height
+                              ? `${profile.height} cm`
+                              : "Not provided"}
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Weight (kg)
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.weight
+                              ? `${profile.weight} kg`
+                              : "Not provided"}
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Eyes (Color)
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.eye_color || "Not provided"}
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Hair (Color)
+                          </label>
+                          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {profile.hair_color || "Not provided"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Contact Tab */}
+                  {activeTab === "contact" && (
+                    <div className="space-y-6">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                        Contact Information
+                      </h2>
+
+                      {/* Mailing/Permanent Address Section */}
+                      <div className="bg-blue-50 rounded-xl p-6 mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          Mailing Address / Permanent Address
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Region
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.permanent_region || "Not provided"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Province
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.permanent_province || "Not provided"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              City/Municipality
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.permanent_city || "Not provided"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Subdivision/Barangay
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.permanent_barangay || "Not provided"}
+                            </p>
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Building Name, Floor, Unit Number, Street Name
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.permanent_street || "Not provided"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Postal Code
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.permanent_postal_code || "Not provided"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contact Address Section */}
+                      <div className="bg-green-50 rounded-xl p-6 mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          Contact Address
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Region
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.contact_region || "Not provided"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Province
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.contact_province || "Not provided"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              City/Municipality
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.contact_city || "Not provided"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Subdivision/Barangay
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.contact_barangay || "Not provided"}
+                            </p>
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Building Name, Floor, Unit Number, Street Name
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.contact_street || "Not provided"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Postal Code
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.contact_postal_code || "Not provided"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contact Information Section */}
+                      <div className="bg-orange-50 rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          Contact Information
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Email Address
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.email}
+                              {profile.email_verified_at && (
+                                <span className="ml-2 text-green-600 text-sm">
+                                  ✓ Verified
+                                </span>
+                              )}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Mobile No.
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.mobile_number || "Not provided"}
+                            </p>
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Emergency Contact (Mobile No., Relation to
+                              Seafarer)
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.emergency_contact_number &&
+                              profile.emergency_contact_relation
+                                ? `${profile.emergency_contact_number} (${profile.emergency_contact_relation})`
+                                : "Not provided"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Employment Information Tab */}
+                  {activeTab === "employment" && (
+                    <div className="space-y-6">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                        Employment Information
+                      </h2>
+
+                      <div className="bg-purple-50 rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          Employment History
+                        </h3>
+
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-sm">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Program
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Batch
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Date Joined
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Status
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                              {sampleEmploymentData.map((employment, index) => (
+                                <tr
+                                  key={employment.id}
+                                  className="hover:bg-gray-50 transition-colors duration-200"
+                                >
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center">
+                                      <div className="flex-shrink-0 h-3 w-3 bg-blue-600 rounded-full mr-3"></div>
+                                      <div className="text-sm font-medium text-gray-900">
+                                        {employment.programDisplay}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                      {employment.batch}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {new Date(
+                                      employment.dateJoined
+                                    ).toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    })}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                        employment.status === "Active"
+                                          ? "bg-green-100 text-green-800"
+                                          : "bg-gray-100 text-gray-800"
+                                      }`}
+                                    >
+                                      {employment.status}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div className="mt-6 bg-white rounded-lg p-4 border border-gray-200">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                            Available Programs
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div className="flex items-center text-sm text-gray-600">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                              NTMA CADETSHIP
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                              NYK-PMMA Cadetship
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                              OJT Program
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                              Maritime Ratings Program (MRP)
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                              ETO Development Program (EDP)
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                              Deck Cadet Program
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                              Engine Cadet Program
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                              Galley Rating Program
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                              Able Seaman Program
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 text-xs text-gray-500">
+                          <p>
+                            💡 <strong>Note:</strong> This shows sample
+                            employment data. In a real application, this would
+                            be fetched from the database.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Educational Background Tab */}
+                  {activeTab === "education" && (
+                    <div className="space-y-6">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                        Educational Background
+                      </h2>
+
+                      {/* High School Section */}
+                      <div className="bg-green-50 rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                          <div className="w-3 h-3 bg-green-600 rounded-full mr-3"></div>
+                          High School
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              School Name
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.highschool_name || "Not provided"}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Date Graduated
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.highschool_graduation_date
+                                ? new Date(
+                                    profile.highschool_graduation_date
+                                  ).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                  })
+                                : "Not provided"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* College Section */}
+                      <div className="bg-blue-50 rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                          <div className="w-3 h-3 bg-blue-600 rounded-full mr-3"></div>
+                          College
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              School Name
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.college_name || "Not provided"}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Degree Earned
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.college_degree || "Not provided"}
+                            </p>
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Date Graduated
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.college_graduation_date
+                                ? new Date(
+                                    profile.college_graduation_date
+                                  ).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                  })
+                                : "Not provided"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Higher Attainment Section */}
+                      <div className="bg-purple-50 rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                          <div className="w-3 h-3 bg-purple-600 rounded-full mr-3"></div>
+                          Higher Attainment
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              School Name
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.higher_education_name || "Not provided"}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Degree Earned
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.higher_education_degree ||
+                                "Not provided"}
+                            </p>
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Date Graduated
+                            </label>
+                            <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
+                              {profile.higher_education_graduation_date
+                                ? new Date(
+                                    profile.higher_education_graduation_date
+                                  ).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                  })
+                                : "Not provided"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0">
+                            <svg
+                              className="w-5 h-5 text-blue-600 mt-0.5"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900">
+                              Educational Timeline
+                            </h4>
+                            <p className="text-sm text-gray-600 mt-1">
+                              This section shows the educational progression
+                              from high school through higher education. Each
+                              level builds upon the previous one to create a
+                              comprehensive academic profile.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

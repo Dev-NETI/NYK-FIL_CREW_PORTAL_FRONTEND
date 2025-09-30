@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import Navigation from "@/components/Navigation";
 import { AuthService } from "@/services";
 import { User } from "@/types/api";
+import QRCode from "qrcode";
 
 export default function Dashboard() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
 
   // console.log(currentUser);
 
@@ -16,6 +19,40 @@ export default function Dashboard() {
     const user = AuthService.getStoredUser();
     setCurrentUser(user);
     setIsLoaded(true);
+
+    // Generate QR code when user data is available
+    if (user?.crew_id) {
+      QRCode.toDataURL(user.crew_id, {
+        width: 128,
+        margin: 1,
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+      })
+        .then((url) => {
+          setQrCodeDataUrl(url);
+        })
+        .catch((err) => {
+          console.error("QR Code generation failed:", err);
+        });
+    } else {
+      // Generate default QR code
+      QRCode.toDataURL("NYK-FIL-CREW", {
+        width: 128,
+        margin: 1,
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+      })
+        .then((url) => {
+          setQrCodeDataUrl(url);
+        })
+        .catch((err) => {
+          console.error("QR Code generation failed:", err);
+        });
+    }
   }, []);
 
   const quickLinks = useMemo(
@@ -97,6 +134,20 @@ export default function Dashboard() {
 
   return (
     <>
+      <style jsx>{`
+        .perspective-1000 {
+          perspective: 1000px;
+        }
+        .transform-style-preserve-3d {
+          transform-style: preserve-3d;
+        }
+        .backface-hidden {
+          backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+          transform: rotateY(180deg);
+        }
+      `}</style>
       <Navigation currentPath="/crew/home" />
       <div className="min-h-screen bg-gray-50 pt-16 pb-20 md:pb-8 ">
         <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -118,6 +169,288 @@ export default function Dashboard() {
                     Welcome aboard! Manage your maritime career and
                     documentation.
                   </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Maritime ID Card - Flippable */}
+            <div
+              className={`mb-8 flex justify-center transform transition-all duration-1000 delay-300 ${
+                isLoaded
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-10 opacity-0"
+              }`}
+            >
+              <div className="w-full max-w-md perspective-1000">
+                <div
+                  className={`relative w-full transform-style-preserve-3d transition-transform duration-700 cursor-pointer ${
+                    isCardFlipped ? "rotate-y-180" : ""
+                  }`}
+                  style={{ aspectRatio: "1.586/1" }}
+                  onClick={() => setIsCardFlipped(!isCardFlipped)}
+                >
+                  {/* Front Side */}
+                  <div
+                    className={`absolute inset-0 w-full h-full backface-hidden rounded-xl shadow-2xl overflow-hidden border border-gray-200 ${
+                      isCardFlipped ? "rotate-y-180" : ""
+                    }`}
+                    style={{
+                      background: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)), url("/anchor.jpg")`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      backgroundRepeat: "no-repeat",
+                    }}
+                  >
+                    {/* Card Header */}
+                    <div className="bg-gradient-to-r from-blue-800 to-blue-600 px-4 py-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-white text-xs font-bold">
+                            NYK-FIL CREW PORTAL
+                          </div>
+                          <div className="text-blue-100 text-xs">
+                            SEAFARER IDENTIFICATION
+                          </div>
+                        </div>
+                        <div className="text-white text-xs font-mono"></div>
+                      </div>
+                    </div>
+
+                    {/* Card Body */}
+                    <div className="p-4 bg-white">
+                      <div className="flex space-x-4">
+                        {/* Photo Section */}
+                        <div className="flex-shrink-0">
+                          <div className="w-16 h-20 bg-gray-100 border-2 border-gray-300 rounded flex items-center justify-center">
+                            <div className="w-14 h-18 bg-gradient-to-b from-blue-500 to-blue-600 rounded flex items-center justify-center">
+                              <span className="text-white font-bold text-lg">
+                                {currentUser?.first_name &&
+                                currentUser?.last_name
+                                  ? `${currentUser.first_name[0]}${currentUser.last_name[0]}`
+                                  : currentUser?.name
+                                  ? currentUser.name
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")
+                                  : currentUser?.email?.[0]?.toUpperCase() ||
+                                    "U"}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-center mt-1">
+                            <div className="text-xs text-gray-500">PHOTO</div>
+                          </div>
+                        </div>
+
+                        {/* Information Section */}
+                        <div className="flex-1 space-y-2">
+                          {/* Name */}
+                          <div>
+                            <div className="text-xs text-gray-500 uppercase font-semibold">
+                              Full Name
+                            </div>
+                            <div className="text-sm font-bold text-gray-900 leading-tight">
+                              {currentUser?.first_name && currentUser?.last_name
+                                ? `${currentUser.first_name} ${
+                                    currentUser.middle_name
+                                      ? currentUser.middle_name[0] + "."
+                                      : ""
+                                  } ${currentUser.last_name}`.trim()
+                                : currentUser?.name || "NOT PROVIDED"}
+                            </div>
+                          </div>
+
+                          {/* Position */}
+                          <div>
+                            <div className="text-xs text-gray-500 uppercase font-semibold">
+                              Position
+                            </div>
+                            <div className="text-xs font-semibold text-gray-800">
+                              {currentUser?.rank_name || "SEAFARER"}
+                            </div>
+                          </div>
+
+                          {/* Two Column Layout for IDs */}
+                          <div className="grid grid-cols-2 gap-2 pt-1">
+                            <div>
+                              <div className="text-xs text-gray-500 uppercase font-semibold">
+                                Crew ID
+                              </div>
+                              <div className="text-xs font-mono font-bold text-gray-900">
+                                {currentUser?.crew_id || "N/A"}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 uppercase font-semibold">
+                                SRN
+                              </div>
+                              <div className="text-xs font-mono font-bold text-gray-900">
+                                {currentUser?.srn || "N/A"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Email Section */}
+                      <div className="mt-3 pt-2 border-t border-gray-200">
+                        <div className="text-xs text-gray-500 uppercase font-semibold">
+                          Email Address
+                        </div>
+                        <div className="text-xs font-semibold text-gray-800 truncate">
+                          {currentUser?.email || "NOT PROVIDED"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Footer */}
+                    <div className="bg-gray-50 px-4 py-2 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-xs text-gray-600 font-medium">
+                            ACTIVE
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Valid: {new Date().getFullYear()}
+                        </div>
+                        <div className="text-xs text-gray-400 font-mono">
+                          ★ AUTHORIZED ★
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Security Stripe */}
+                    <div className="h-1 bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600"></div>
+
+                    {/* Flip Indicator */}
+                    <div className="absolute bottom-2 right-2 bg-black/20 rounded-full p-1">
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Back Side */}
+                  <div
+                    className={`absolute inset-0 w-full h-full backface-hidden rounded-xl shadow-2xl overflow-hidden border border-gray-200 rotate-y-180 ${
+                      isCardFlipped ? "" : "rotate-y-180"
+                    }`}
+                    style={{
+                      background: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)), url("/anchor.jpg")`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      backgroundRepeat: "no-repeat",
+                    }}
+                  >
+                    {/* Back Header */}
+                    <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-white text-xs font-bold">
+                            NYK-FIL CREW PORTAL
+                          </div>
+                          <div className="text-gray-200 text-xs">
+                            QR CODE VERIFICATION
+                          </div>
+                        </div>
+                        <div className="text-white text-xs">BACK</div>
+                      </div>
+                    </div>
+
+                    {/* QR Code Section */}
+                    <div className="p-6 bg-white flex flex-col items-center justify-center h-full mt-4">
+                      {/* QR Code */}
+                      <div className="bg-white p-4 border-2 border-gray-300 rounded-lg shadow-inner mt-4">
+                        {qrCodeDataUrl ? (
+                          <img
+                            src={qrCodeDataUrl}
+                            alt={`QR Code for Crew ID: ${
+                              currentUser?.crew_id || "N/A"
+                            }`}
+                            className="w-32 h-32 rounded"
+                          />
+                        ) : (
+                          <div
+                            className="w-32 h-32 bg-gray-900 rounded flex items-center justify-center"
+                            style={{
+                              backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='qr' width='10' height='10' patternUnits='userSpaceOnUse'%3e%3crect width='5' height='5' fill='%23000'/%3e%3crect x='5' y='5' width='5' height='5' fill='%23000'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100' height='100' fill='url(%23qr)'/%3e%3c/svg%3e")`,
+                              backgroundSize: "10px 10px",
+                            }}
+                          >
+                            <div className="text-white text-xs">Loading...</div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Crew ID Info */}
+                      <div className="mt-4 text-center">
+                        <div className="text-xs text-gray-500 uppercase font-semibold mb-1">
+                          Crew ID
+                        </div>
+                        <div className="text-lg font-mono font-bold text-gray-900 mb-2">
+                          {currentUser?.crew_id || "N/A"}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          This QR code contains encrypted crew identification
+                          data for security verification purposes.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Back Footer */}
+                    <div className="bg-gray-50 px-4 py-2 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-gray-600">
+                          📱 Scan to verify
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Security Level: HIGH
+                        </div>
+                        <div className="text-xs text-gray-400 font-mono">
+                          🔒 ENCRYPTED
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Security Stripe */}
+                    <div className="h-1 bg-gradient-to-r from-gray-600 via-gray-400 to-gray-600"></div>
+
+                    {/* Flip Indicator */}
+                    <div className="absolute bottom-2 right-2 bg-black/20 rounded-full p-1">
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Instructions */}
+                <div className="text-center mt-2">
+                  <div className="text-xs text-gray-500">
+                    💡 Click the card to flip and view QR code
+                  </div>
                 </div>
               </div>
             </div>
