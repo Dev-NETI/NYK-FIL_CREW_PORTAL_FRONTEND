@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 interface CrewDetailsPageProps {
   params: Promise<{
-    crew_id: string;
+    id: string;
   }>;
 }
 
@@ -19,7 +19,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   const [activeTab, setActiveTab] = useState("basic");
   const router = useRouter();
   const resolvedParams = use(params);
-  const crewId = resolvedParams.crew_id;
+  const crewId = resolvedParams.id;
 
   // Sample employment data
   const sampleEmploymentData = [
@@ -60,16 +60,19 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     const loadCrewProfile = async () => {
       try {
         setLoading(true);
-        
+
         // Try admin endpoint first
         try {
           const profileResponse = await UserService.getCrewProfile(crewId);
-          if (profileResponse.success && profileResponse.crew) {
-            setProfile(profileResponse.crew);
+          if (profileResponse.success && profileResponse.user) {
+            setProfile(profileResponse.user);
             return;
           }
         } catch (adminError) {
-          console.warn("Admin endpoint failed, trying alternative approach:", adminError);
+          console.warn(
+            "Admin endpoint failed, trying alternative approach:",
+            adminError
+          );
         }
 
         // Fallback: Try the crew profile endpoint
@@ -87,7 +90,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         try {
           const crewListResponse = await UserService.getAllCrew();
           if (crewListResponse.success && crewListResponse.crew) {
-            const crewMember = crewListResponse.crew.find(c => c.id.toString() === crewId);
+            const crewMember = crewListResponse.crew.find(
+              (c) => c.id.toString() === crewId
+            );
             if (crewMember) {
               setProfile(crewMember);
               return;
@@ -127,8 +132,12 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         <div className="text-center">
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <i className="bi bi-person-x text-6xl text-gray-300 mb-4"></i>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Crew Member Not Found</h2>
-            <p className="text-gray-600 mb-6">The requested crew member could not be found.</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Crew Member Not Found
+            </h2>
+            <p className="text-gray-600 mb-6">
+              The requested crew member could not be found.
+            </p>
             <button
               onClick={() => router.push("/admin/crew")}
               className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
@@ -173,9 +182,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
             }`}
             style={{
               backgroundImage: 'url("/anchor.jpg")',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundBlendMode: 'overlay'
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundBlendMode: "overlay",
             }}
           >
             <div className="relative px-6 sm:px-8 lg:px-12 py-10 sm:py-12 lg:py-16">
@@ -195,14 +204,20 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                 </div>
                 <div className="lg:flex-1 text-center lg:text-left">
                   <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4">
-                    {profile.name || profile.email}
+                    {profile.name ||
+                      profile.profile?.full_name ||
+                      profile.email}
                   </h1>
                   <p className="text-xl sm:text-2xl lg:text-3xl text-blue-100 mb-2 sm:mb-3">
-                    {profile.rank_name || "Not assigned"}
+                    {profile.employment?.rank_name ||
+                      profile.rank_name ||
+                      "Not assigned"}
                   </p>
                   <p className="text-lg sm:text-xl text-blue-200 mb-4 sm:mb-6">
-                    {profile.crew_id
-                      ? `Crew ID: ${profile.crew_id}`
+                    {profile.profile?.crew_id || profile.crew_id
+                      ? `Crew ID: ${
+                          profile.profile?.crew_id || profile.crew_id
+                        }`
                       : "No crew assignment"}
                   </p>
                   <div className="flex flex-wrap justify-center lg:justify-start gap-4 text-blue-100">
@@ -210,15 +225,23 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                       <i className="bi bi-envelope text-lg"></i>
                       <span>{profile.email}</span>
                     </div>
-                    {profile.fleet_name && (
+                    {(profile.employment?.fleet_name || profile.fleet_name) && (
                       <div className="flex items-center space-x-2">
                         <i className="bi bi-ship text-lg"></i>
-                        <span>Fleet: {profile.fleet_name}</span>
+                        <span>
+                          Fleet:{" "}
+                          {profile.employment?.fleet_name || profile.fleet_name}
+                        </span>
                       </div>
                     )}
                     <div className="flex items-center space-x-2">
                       <i className="bi bi-person-badge text-lg"></i>
-                      <span>Status: {profile.crew_status || "Active"}</span>
+                      <span>
+                        Status:{" "}
+                        {profile.employment?.crew_status ||
+                          profile.crew_status ||
+                          "Active"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -259,13 +282,13 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                 <span className="text-xl sm:text-2xl">📅</span>
               </div>
               <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                {profile.hire_date
-                  ? new Date(profile.hire_date).getFullYear()
+                {profile.employment?.hire_date || profile.hire_date
+                  ? new Date(
+                      profile.employment?.hire_date || profile.hire_date
+                    ).getFullYear()
                   : "N/A"}
               </div>
-              <p className="text-gray-600 text-xs sm:text-sm">
-                Year joined
-              </p>
+              <p className="text-gray-600 text-xs sm:text-sm">Year joined</p>
             </div>
 
             <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
@@ -276,7 +299,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                 <span className="text-xl sm:text-2xl">🚢</span>
               </div>
               <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 truncate">
-                {profile.fleet_name || "Unassigned"}
+                {profile.employment?.fleet_name ||
+                  profile.fleet_name ||
+                  "Unassigned"}
               </div>
               <p className="text-gray-600 text-xs sm:text-sm">
                 Current assignment
@@ -391,7 +416,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                             Last Name
                           </label>
                           <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                            {profile.last_name || "Not provided"}
+                            {profile.profile?.last_name ||
+                              profile.last_name ||
+                              "Not provided"}
                           </p>
                         </div>
 
@@ -400,7 +427,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                             First Name
                           </label>
                           <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                            {profile.first_name || "Not provided"}
+                            {profile.profile?.first_name ||
+                              profile.first_name ||
+                              "Not provided"}
                           </p>
                         </div>
 
@@ -409,7 +438,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                             Middle Name
                           </label>
                           <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                            {profile.middle_name || "Not provided"}
+                            {profile.profile?.middle_name ||
+                              profile.middle_name ||
+                              "Not provided"}
                           </p>
                         </div>
 
@@ -418,7 +449,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                             Suffix
                           </label>
                           <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                            {profile.suffix || "Not provided"}
+                            {profile.profile?.suffix ||
+                              profile.suffix ||
+                              "Not provided"}
                           </p>
                         </div>
 
@@ -436,7 +469,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                             Gender
                           </label>
                           <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                            {profile.gender || "Not provided"}
+                            {profile.profile?.gender ||
+                              profile.gender ||
+                              "Not provided"}
                           </p>
                         </div>
 
@@ -454,15 +489,18 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                             Birth Date
                           </label>
                           <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                            {profile.birth_date
-                              ? new Date(profile.birth_date).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  }
-                                )
+                            {profile.profile?.date_of_birth ||
+                            profile.date_of_birth ||
+                            profile.birth_date
+                              ? new Date(
+                                  profile.profile?.date_of_birth ||
+                                    profile.date_of_birth ||
+                                    profile.birth_date
+                                ).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                })
                               : "Not provided"}
                           </p>
                         </div>
@@ -509,8 +547,11 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                             Height (cm)
                           </label>
                           <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                            {profile.height
-                              ? `${profile.height} cm`
+                            {profile.physical_traits?.height || profile.height
+                              ? `${
+                                  profile.physical_traits?.height ||
+                                  profile.height
+                                } cm`
                               : "Not provided"}
                           </p>
                         </div>
@@ -520,8 +561,11 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                             Weight (kg)
                           </label>
                           <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                            {profile.weight
-                              ? `${profile.weight} kg`
+                            {profile.physical_traits?.weight || profile.weight
+                              ? `${
+                                  profile.physical_traits?.weight ||
+                                  profile.weight
+                                } kg`
                               : "Not provided"}
                           </p>
                         </div>
@@ -531,7 +575,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                             Eyes (Color)
                           </label>
                           <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                            {profile.eye_color || "Not provided"}
+                            {profile.physical_traits?.eye_color ||
+                              profile.eye_color ||
+                              "Not provided"}
                           </p>
                         </div>
 
@@ -540,7 +586,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                             Hair (Color)
                           </label>
                           <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                            {profile.hair_color || "Not provided"}
+                            {profile.physical_traits?.hair_color ||
+                              profile.hair_color ||
+                              "Not provided"}
                           </p>
                         </div>
                       </div>
@@ -703,7 +751,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                               Mobile No.
                             </label>
                             <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
-                              {profile.mobile_number || "Not provided"}
+                              {profile.contacts?.mobile_number ||
+                                profile.mobile_number ||
+                                "Not provided"}
                             </p>
                           </div>
 
@@ -970,7 +1020,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                   </button>
                   <button className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-red-50 rounded-xl transition-all duration-300 group border border-red-200">
                     <i className="bi bi-person-x mr-3 text-xl group-hover:scale-110 transition-transform duration-300 text-red-600"></i>
-                    <span className="font-medium text-red-600">Deactivate Account</span>
+                    <span className="font-medium text-red-600">
+                      Deactivate Account
+                    </span>
                   </button>
                 </div>
               </div>

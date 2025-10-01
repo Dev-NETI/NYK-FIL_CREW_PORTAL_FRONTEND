@@ -20,6 +20,8 @@ export default function Dashboard() {
     setCurrentUser(user);
     setIsLoaded(true);
 
+    console.log(user);
+
     // Generate QR code when user data is available
     if (user?.crew_id) {
       QRCode.toDataURL(user.crew_id, {

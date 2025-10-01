@@ -225,7 +225,7 @@ export default function Navigation({
                   <div className="px-2 pb-2">
                     <DropdownMenuItem asChild>
                       <Link
-                        href={`profile/${currentUser?.crew_id || ""}`}
+                        href={`/crew/profile/${currentUser?.crew_id || ""}`}
                         className="flex items-center space-x-3 px-2 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-blue-800 transition-all duration-300"
                       >
                         <i className="bi bi-person-circle text-lg"></i>
@@ -310,7 +310,7 @@ export default function Navigation({
             {/* User Actions */}
             <div className="space-y-1 pt-3 border-t border-blue-700/50">
               <Link
-                href={`profile/${currentUser?.crew_id || ""}`}
+                href={`/crew/profile/${currentUser?.crew_id || ""}`}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg text-blue-100 hover:text-white hover:bg-blue-800 transition-all duration-300"
               >

@@ -17,8 +17,6 @@ interface Crew {
 
 interface CrewTableProps {
   crews: Crew[];
-  onEdit: (crew: Crew) => void;
-  onDelete: (id: string) => void;
   currentPage: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
@@ -26,8 +24,6 @@ interface CrewTableProps {
 
 export default function CrewTable({
   crews,
-  onEdit,
-  onDelete,
   currentPage,
   itemsPerPage,
   onPageChange,
@@ -198,20 +194,6 @@ export default function CrewTable({
                     >
                       <i className="bi bi-eye text-lg"></i>
                     </button>
-                    <button
-                      onClick={() => onEdit(crew)}
-                      className="text-blue-600 hover:text-blue-900 transition-colors duration-200"
-                      title="Edit crew member"
-                    >
-                      <i className="bi bi-pencil-square text-lg"></i>
-                    </button>
-                    <button
-                      onClick={() => onDelete(crew.id)}
-                      className="text-red-600 hover:text-red-900 transition-colors duration-200"
-                      title="Delete crew member"
-                    >
-                      <i className="bi bi-trash3 text-lg"></i>
-                    </button>
                   </div>
                 </td>
               </tr>
@@ -253,20 +235,6 @@ export default function CrewTable({
                     title="View crew details"
                   >
                     <i className="bi bi-eye text-lg"></i>
-                  </button>
-                  <button
-                    onClick={() => onEdit(crew)}
-                    className="text-blue-600 hover:text-blue-900 transition-colors duration-200 p-1"
-                    title="Edit crew member"
-                  >
-                    <i className="bi bi-pencil-square text-lg"></i>
-                  </button>
-                  <button
-                    onClick={() => onDelete(crew.id)}
-                    className="text-red-600 hover:text-red-900 transition-colors duration-200 p-1"
-                    title="Delete crew member"
-                  >
-                    <i className="bi bi-trash3 text-lg"></i>
                   </button>
                 </div>
               </div>

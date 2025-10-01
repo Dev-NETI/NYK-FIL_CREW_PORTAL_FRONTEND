@@ -26,12 +26,12 @@ export default function AdminLayout({
   useEffect(() => {
     const loadUserData = () => {
       try {
-        const userData = localStorage.getItem('user');
+        const userData = localStorage.getItem("user");
         if (userData) {
           setCurrentUser(JSON.parse(userData));
         }
       } catch (error) {
-        console.error('Error loading user data from localStorage:', error);
+        console.error("Error loading user data from localStorage:", error);
       }
     };
 
@@ -40,36 +40,36 @@ export default function AdminLayout({
 
   // Get user initials for avatar
   const getUserInitials = (user: any) => {
-    if (!user) return 'A';
-    
+    if (!user) return "A";
+
     if (user.name) {
       return user.name
-        .split(' ')
+        .split(" ")
         .map((n: string) => n[0])
-        .join('')
+        .join("")
         .toUpperCase()
         .slice(0, 2);
     }
-    
+
     if (user.email) {
       return user.email.charAt(0).toUpperCase();
     }
-    
-    return 'A';
+
+    return "A";
   };
 
   // Get user display name
   const getUserDisplayName = (user: any) => {
-    if (!user) return 'Admin User';
-    
+    if (!user) return "Admin User";
+
     if (user.name) return user.name;
     if (user.first_name && user.last_name) {
       return `${user.first_name} ${user.last_name}`;
     }
     if (user.first_name) return user.first_name;
-    if (user.email) return user.email.split('@')[0];
-    
-    return 'Admin User';
+    if (user.email) return user.email.split("@")[0];
+
+    return "Admin User";
   };
 
   const handleLogout = async () => {
@@ -105,13 +105,13 @@ export default function AdminLayout({
       >
         <div className="p-6">
           <div className="flex items-center justify-center">
-            <div className="flex items-center space-x-3">
-              <i className="bi bi-ship text-4xl text-white"></i>
-              <div className="text-white">
-                <h1 className="text-xl font-bold">NYK-FIL</h1>
-                <p className="text-sm text-blue-200">Crew Portal</p>
-              </div>
-            </div>
+            <Image
+              src="/nykfil.png"
+              alt="Logo"
+              width={150}
+              height={100}
+              className="object-contain"
+            />
           </div>
         </div>
 
@@ -264,8 +264,8 @@ export default function AdminLayout({
                 </h2>
                 <p className="text-xs lg:text-sm text-gray-600 hidden sm:block">
                   <i>
-                    Welcome back, {getUserDisplayName(currentUser)}! Here&apos;s what&apos;s
-                    happening today.
+                    Welcome back, {getUserDisplayName(currentUser)}! Here&apos;s
+                    what&apos;s happening today.
                   </i>
                 </p>
               </div>

@@ -2,9 +2,6 @@
 
 import { useState, useEffect } from "react";
 import CrewTable from "@/components/CrewTable";
-import CrewForm from "@/components/CrewForm";
-import DeleteConfirmModal from "@/components/DeleteConfirmModal";
-import Pagination from "@/components/Pagination";
 import { UserService } from "@/services";
 import { User } from "@/types/api";
 import toast from "react-hot-toast";
@@ -22,10 +19,6 @@ interface Crew {
 
 export default function CrewManagement() {
   const [crews, setCrews] = useState<Crew[]>([]);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingCrew, setEditingCrew] = useState<Crew | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deletingCrewId, setDeletingCrewId] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,16 +29,19 @@ export default function CrewManagement() {
     id: user.id.toString(),
     name:
       user.name ||
-      `${user.first_name || ""} ${user.middle_name || ""} ${
-        user.last_name || ""
+      user.profile?.full_name ||
+      `${user.profile?.first_name || ""} ${user.profile?.middle_name || ""} ${
+        user.profile?.last_name || ""
       }`.trim() ||
+      user.first_name ||
       user.email,
-    position: user.rank_name || "Not assigned",
-    department: user.fleet_name || "Not assigned",
-    status: user.crew_status || "active",
-    joinDate: user.hire_date || "Unknown",
+    position: user.employment?.rank_name || user.rank_name || "Not assigned",
+    department:
+      user.employment?.fleet_name || user.fleet_name || "Not assigned",
+    status: user.employment?.crew_status || user.crew_status || "active",
+    joinDate: user.employment?.hire_date || user.hire_date || "Unknown",
     email: user.email,
-    phone: user.mobile_number || "Not provided",
+    phone: user.contacts?.mobile_number || user.mobile_number || "Not provided",
   });
 
   // Load crew data from API
@@ -74,54 +70,6 @@ export default function CrewManagement() {
     loadCrewData();
   }, []);
 
-  const handleAddCrew = () => {
-    setEditingCrew(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditCrew = (crew: Crew) => {
-    setEditingCrew(crew);
-    setIsFormOpen(true);
-  };
-
-  const handleSaveCrew = (crewData: Omit<Crew, "id"> | Crew) => {
-    if ("id" in crewData) {
-      // Editing existing crew
-      setCrews((prev) =>
-        prev.map((crew) => (crew.id === crewData.id ? crewData : crew))
-      );
-    } else {
-      // Adding new crew
-      const newCrew: Crew = {
-        ...crewData,
-        id: Date.now().toString(), // Simple ID generation for demo
-      };
-      setCrews((prev) => [...prev, newCrew]);
-    }
-
-    setIsFormOpen(false);
-    setEditingCrew(null);
-  };
-
-  const handleDeleteCrew = (id: string) => {
-    setDeletingCrewId(id);
-    setIsDeleteModalOpen(true);
-  };
-
-  const confirmDeleteCrew = () => {
-    if (deletingCrewId) {
-      setCrews((prev) => prev.filter((crew) => crew.id !== deletingCrewId));
-      setIsDeleteModalOpen(false);
-      setDeletingCrewId(null);
-    }
-  };
-
-  const cancelDelete = () => {
-    setIsDeleteModalOpen(false);
-    setDeletingCrewId(null);
-  };
-
-  const deletingCrew = crews.find((crew) => crew.id === deletingCrewId);
 
   if (loading) {
     return (
@@ -155,18 +103,6 @@ export default function CrewManagement() {
                   <p className="text-gray-600 mt-1 text-sm sm:text-base">
                     Manage your crew members information
                   </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                  <button
-                    onClick={handleAddCrew}
-                    className="w-full sm:w-auto bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2"
-                  >
-                    <i className="bi bi-plus-circle text-lg"></i>
-                    <span className="hidden xs:inline">
-                      Add New Crew Member
-                    </span>
-                    <span className="xs:hidden">Add Crew</span>
-                  </button>
                 </div>
               </div>
             </div>
@@ -246,8 +182,6 @@ export default function CrewManagement() {
             >
               <CrewTable
                 crews={crews}
-                onEdit={handleEditCrew}
-                onDelete={handleDeleteCrew}
                 currentPage={currentPage}
                 itemsPerPage={itemsPerPage}
                 onPageChange={setCurrentPage}
@@ -257,31 +191,6 @@ export default function CrewManagement() {
         </div>
       </div>
 
-      {/* Crew Form Modal */}
-      <CrewForm
-        crew={editingCrew}
-        onSave={handleSaveCrew}
-        onCancel={() => {
-          setIsFormOpen(false);
-          setEditingCrew(null);
-        }}
-        isOpen={isFormOpen}
-      />
-
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
-        isOpen={isDeleteModalOpen}
-        onConfirm={confirmDeleteCrew}
-        onCancel={cancelDelete}
-        title="Delete Crew Member"
-        message={
-          deletingCrew
-            ? `Are you sure you want to delete "${deletingCrew.name}"? This action cannot be undone.`
-            : "Are you sure you want to delete this crew member?"
-        }
-        confirmText="Delete"
-        cancelText="Cancel"
-      />
     </>
   );
 }
