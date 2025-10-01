@@ -37,4 +37,12 @@ export class UserService {
     const response = await api.get<CrewListResponse>('/admin/crew');
     return response.data;
   }
+
+  /**
+   * Get crew member profile by ID (admin only)
+   */
+  static async getCrewProfile(crewId: string): Promise<UserProfileResponse> {
+    const response = await api.get<UserProfileResponse>(`/admin/crew/${crewId}`);
+    return response.data;
+  }
 }

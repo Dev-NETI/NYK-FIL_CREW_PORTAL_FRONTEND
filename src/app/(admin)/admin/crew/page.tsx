@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import CrewTable from "@/components/CrewTable";
 import CrewForm from "@/components/CrewForm";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import Pagination from "@/components/Pagination";
 import { UserService } from "@/services";
 import { User } from "@/types/api";
 import toast from "react-hot-toast";
@@ -27,17 +28,24 @@ export default function CrewManagement() {
   const [deletingCrewId, setDeletingCrewId] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Convert User data to Crew format for compatibility with existing components
   const convertUserToCrew = (user: User): Crew => ({
     id: user.id.toString(),
-    name: user.name || `${user.first_name || ''} ${user.middle_name || ''} ${user.last_name || ''}`.trim() || user.email,
-    position: user.rank_name || 'Not assigned',
-    department: user.fleet_name || 'Not assigned',
-    status: user.crew_status || 'active',
-    joinDate: user.hire_date || 'Unknown',
+    name:
+      user.name ||
+      `${user.first_name || ""} ${user.middle_name || ""} ${
+        user.last_name || ""
+      }`.trim() ||
+      user.email,
+    position: user.rank_name || "Not assigned",
+    department: user.fleet_name || "Not assigned",
+    status: user.crew_status || "active",
+    joinDate: user.hire_date || "Unknown",
     email: user.email,
-    phone: user.mobile_number || 'Not provided',
+    phone: user.mobile_number || "Not provided",
   });
 
   // Load crew data from API
@@ -46,16 +54,16 @@ export default function CrewManagement() {
       try {
         setLoading(true);
         const response = await UserService.getAllCrew();
-        
+
         if (response.success && response.crew) {
           const convertedCrew = response.crew.map(convertUserToCrew);
           setCrews(convertedCrew);
         } else {
-          toast.error(response.message || 'Failed to load crew data');
+          toast.error(response.message || "Failed to load crew data");
         }
       } catch (error) {
-        console.error('Error loading crew data:', error);
-        toast.error('Failed to load crew data');
+        console.error("Error loading crew data:", error);
+        toast.error("Failed to load crew data");
       } finally {
         setLoading(false);
         setIsLoaded(true);
@@ -199,7 +207,7 @@ export default function CrewManagement() {
               <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
                 <div className="flex items-center justify-between mb-2 sm:mb-4">
                   <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
-                    On Leave
+                    On Vacation
                   </h3>
                   <span className="text-xl sm:text-2xl">🏖️</span>
                 </div>
@@ -235,6 +243,9 @@ export default function CrewManagement() {
                 crews={crews}
                 onEdit={handleEditCrew}
                 onDelete={handleDeleteCrew}
+                currentPage={currentPage}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
               />
             </div>
           </div>
