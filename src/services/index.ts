@@ -1,6 +1,8 @@
 // Export all API services
 export { AuthService } from './auth';
 export { UserService } from './user';
+export { ProgramService } from './program';
+export { EmploymentService } from './employment';
 
 // You can add more services here as you build them
 // export { VesselService } from './vessel';
