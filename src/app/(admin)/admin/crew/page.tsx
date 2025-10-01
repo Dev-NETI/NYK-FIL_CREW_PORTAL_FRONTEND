@@ -49,27 +49,28 @@ export default function CrewManagement() {
   });
 
   // Load crew data from API
-  useEffect(() => {
-    const loadCrewData = async () => {
-      try {
-        setLoading(true);
-        const response = await UserService.getAllCrew();
+  const loadCrewData = async () => {
+    try {
+      setLoading(true);
+      const response = await UserService.getAllCrew();
 
-        if (response.success && response.crew) {
-          const convertedCrew = response.crew.map(convertUserToCrew);
-          setCrews(convertedCrew);
-        } else {
-          toast.error(response.message || "Failed to load crew data");
-        }
-      } catch (error) {
-        console.error("Error loading crew data:", error);
-        toast.error("Failed to load crew data");
-      } finally {
-        setLoading(false);
-        setIsLoaded(true);
+      if (response.success && response.crew) {
+        const convertedCrew = response.crew.map(convertUserToCrew);
+        setCrews(convertedCrew);
+        toast.success("Crew data loaded successfully");
+      } else {
+        toast.error(response.message || "Failed to load crew data");
       }
-    };
+    } catch (error) {
+      console.error("Error loading crew data:", error);
+      toast.error("Failed to load crew data");
+    } finally {
+      setLoading(false);
+      setIsLoaded(true);
+    }
+  };
 
+  useEffect(() => {
     loadCrewData();
   }, []);
 
@@ -155,14 +156,18 @@ export default function CrewManagement() {
                     Manage your crew members information
                   </p>
                 </div>
-                <button
-                  onClick={handleAddCrew}
-                  className="w-full sm:w-auto bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2"
-                >
-                  <i className="bi bi-plus-circle text-lg"></i>
-                  <span className="hidden xs:inline">Add New Crew Member</span>
-                  <span className="xs:hidden">Add Crew</span>
-                </button>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <button
+                    onClick={handleAddCrew}
+                    className="w-full sm:w-auto bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2"
+                  >
+                    <i className="bi bi-plus-circle text-lg"></i>
+                    <span className="hidden xs:inline">
+                      Add New Crew Member
+                    </span>
+                    <span className="xs:hidden">Add Crew</span>
+                  </button>
+                </div>
               </div>
             </div>
 

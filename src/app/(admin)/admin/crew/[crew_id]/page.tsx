@@ -64,8 +64,8 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         // Try admin endpoint first
         try {
           const profileResponse = await UserService.getCrewProfile(crewId);
-          if (profileResponse.success && profileResponse.user) {
-            setProfile(profileResponse.user);
+          if (profileResponse.success && profileResponse.crew) {
+            setProfile(profileResponse.crew);
             return;
           }
         } catch (adminError) {

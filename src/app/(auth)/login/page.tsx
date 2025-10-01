@@ -140,17 +140,18 @@ export default function LoginPage() {
         });
       }
     } catch (err) {
-      console.error("OTP verification error:", err);
+      // console.error("OTP verification error:", err);
       // Always dismiss loading toast first
       toast.dismiss(loadingToast);
 
       if (err instanceof AxiosError) {
         const errorData = err.response?.data as ApiErrorResponse;
         const statusCode = err.response?.status;
-        
+
         if (statusCode === 401) {
           // Handle 401 Unauthorized - Invalid OTP
-          const errorMessage = errorData?.message || "Invalid OTP. Please try again.";
+          const errorMessage =
+            errorData?.message || "Invalid OTP. Please try again.";
           toast.error(errorMessage, {
             icon: "🔢",
             duration: 5000,
