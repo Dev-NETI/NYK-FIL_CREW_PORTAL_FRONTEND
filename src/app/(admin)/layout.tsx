@@ -3,7 +3,7 @@ import { Poppins } from "next/font/google";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AuthService } from "@/services/auth";
 
 const poppins = Poppins({
@@ -20,6 +20,57 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Load user data from localStorage on mount
+  useEffect(() => {
+    const loadUserData = () => {
+      try {
+        const userData = localStorage.getItem("user");
+        if (userData) {
+          setCurrentUser(JSON.parse(userData));
+        }
+      } catch (error) {
+        console.error("Error loading user data from localStorage:", error);
+      }
+    };
+
+    loadUserData();
+  }, []);
+
+  // Get user initials for avatar
+  const getUserInitials = (user: any) => {
+    if (!user) return "A";
+
+    if (user.name) {
+      return user.name
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    }
+
+    if (user.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+
+    return "A";
+  };
+
+  // Get user display name
+  const getUserDisplayName = (user: any) => {
+    if (!user) return "Admin User";
+
+    if (user.name) return user.name;
+    if (user.first_name && user.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    if (user.first_name) return user.first_name;
+    if (user.email) return user.email.split("@")[0];
+
+    return "Admin User";
+  };
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -48,7 +99,7 @@ export default function AdminLayout({
 
       {/* Sidebar */}
       <aside
-        className={`w-64 bg-white shadow-lg h-screen overflow-y-auto z-50 transform transition-transform duration-300 ease-in-out fixed inset-y-0 left-0 lg:relative lg:sticky lg:top-0 ${
+        className={`w-64 bg-blue-900 shadow-2xl h-screen overflow-y-auto z-50 transform transition-transform duration-300 ease-in-out fixed inset-y-0 left-0 lg:relative lg:sticky lg:top-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -66,7 +117,7 @@ export default function AdminLayout({
 
         <nav className="mt-8">
           <div className="px-6 py-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">
               Dashboard
             </p>
           </div>
@@ -77,8 +128,8 @@ export default function AdminLayout({
                 href="/admin"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname === "/admin"
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-house-door mr-3"></i>
@@ -90,8 +141,8 @@ export default function AdminLayout({
                 href="/admin/crew"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/crew")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-people mr-3"></i>
@@ -103,8 +154,8 @@ export default function AdminLayout({
                 href="/admin/applications"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/applications")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-file-earmark-text mr-3"></i>
@@ -116,8 +167,8 @@ export default function AdminLayout({
                 href="/admin/job-descriptions"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/job-descriptions")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-file-earmark-check mr-3"></i>
@@ -129,8 +180,8 @@ export default function AdminLayout({
                 href="/admin/documents"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/documents")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-folder mr-3"></i>
@@ -142,8 +193,8 @@ export default function AdminLayout({
                 href="/admin/reports"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/reports")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-graph-up mr-3"></i>
@@ -153,7 +204,7 @@ export default function AdminLayout({
           </ul>
 
           <div className="px-6 py-3 mt-8">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">
               Settings
             </p>
           </div>
@@ -164,8 +215,8 @@ export default function AdminLayout({
                 href="/admin/settings"
                 className={`flex items-center px-6 py-3 transition-colors ${
                   pathname.startsWith("/admin/settings")
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                    : "text-white hover:bg-blue-800 hover:text-blue-100"
                 }`}
               >
                 <i className="bi bi-gear mr-3"></i>
@@ -176,7 +227,7 @@ export default function AdminLayout({
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="flex items-center w-full px-6 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center w-full px-6 py-3 text-white hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <i
                   className={`bi ${
@@ -213,8 +264,8 @@ export default function AdminLayout({
                 </h2>
                 <p className="text-xs lg:text-sm text-gray-600 hidden sm:block">
                   <i>
-                    Welcome back, Angelo Peria! Here&apos;s what&apos;s
-                    happening today.
+                    Welcome back, {getUserDisplayName(currentUser)}! Here&apos;s
+                    what&apos;s happening today.
                   </i>
                 </p>
               </div>
@@ -225,10 +276,12 @@ export default function AdminLayout({
               </button>
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">A</span>
+                  <span className="text-white font-semibold text-sm">
+                    {getUserInitials(currentUser)}
+                  </span>
                 </div>
                 <span className="text-sm font-medium text-gray-700 hidden md:block">
-                  Admin User
+                  {getUserDisplayName(currentUser)}
                 </span>
               </div>
             </div>

@@ -16,51 +16,6 @@ export default function Home() {
     return null;
   }
 
-  const features = [
-    {
-      icon: "👤",
-      title: "Profile Management",
-      description: "Manage your personal and professional information",
-      color: "from-blue-500 to-purple-600",
-      delay: "delay-100",
-    },
-    {
-      icon: "📄",
-      title: "Document Center",
-      description: "Upload, organize and access your documents securely",
-      color: "from-green-500 to-blue-500",
-      delay: "delay-200",
-    },
-    {
-      icon: "🔐",
-      title: "Secure Access",
-      description: "Enterprise-grade security for your data protection",
-      color: "from-purple-500 to-pink-500",
-      delay: "delay-300",
-    },
-    {
-      icon: "📊",
-      title: "Analytics Dashboard",
-      description: "Track your performance and productivity metrics",
-      color: "from-orange-500 to-red-500",
-      delay: "delay-500",
-    },
-    {
-      icon: "🔔",
-      title: "Smart Notifications",
-      description: "Stay updated with real-time alerts and reminders",
-      color: "from-teal-500 to-green-500",
-      delay: "delay-700",
-    },
-    {
-      icon: "⚡",
-      title: "Quick Actions",
-      description: "Streamlined workflows for maximum efficiency",
-      color: "from-yellow-500 to-orange-500",
-      delay: "delay-1000",
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-white">
       <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12">

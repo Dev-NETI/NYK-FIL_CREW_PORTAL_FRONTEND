@@ -1,27 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AuthService } from "@/services/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { User } from "@/types/api";
 
 interface NavigationProps {
   currentPath?: string;
+  user?: User;
 }
 
-export default function Navigation({ currentPath = "/" }: NavigationProps) {
+export default function Navigation({
+  currentPath = "/",
+  user,
+}: NavigationProps) {
   const [clickedItem, setClickedItem] = useState<string | null>(null);
   const [previousActive, setPreviousActive] = useState<string | null>(
     currentPath
   );
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(user || null);
+
+  // Get user from localStorage if not provided as prop
+  useEffect(() => {
+    if (!user && typeof window !== "undefined") {
+      const storedUser = AuthService.getStoredUser();
+      setCurrentUser(storedUser);
+    }
+  }, [user]);
 
   const navItems = [
     {
@@ -60,12 +75,12 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
 
   return (
     <>
-      <nav className="bg-white/95 backdrop-blur-md border-b border-gray-200 fixed top-0 left-0 right-0 z-50 shadow-sm">
+      <nav className="bg-blue-900/95 backdrop-blur-md border-b border-blue-800 fixed top-0 left-0 right-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <Link href="/home" className="flex items-center group">
+              <Link href="/crew/home" className="flex items-center group">
                 <Image
                   src="/nykfil.png"
                   alt="Logo"
@@ -75,6 +90,18 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
                 />
               </Link>
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-white hover:bg-blue-800 transition-all duration-300"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <i
+                className={`bi ${
+                  isMobileMenuOpen ? "bi-x" : "bi-list"
+                } text-xl`}
+              ></i>
+            </button>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
@@ -89,10 +116,10 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
                       : "scale-100"
                   } ${
                     isActive(item.href)
-                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-xl shadow-blue-200 animate-in slide-in-from-bottom-2 fade-in duration-500"
+                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-xl shadow-blue-300/30 animate-in slide-in-from-bottom-2 fade-in duration-500"
                       : previousActive === item.href && !isActive(item.href)
-                      ? "bg-gradient-to-r from-gray-300 to-gray-400 text-gray-600 animate-out slide-out-to-top-2 fade-out duration-300"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md"
+                      ? "bg-gradient-to-r from-blue-700 to-blue-800 text-blue-200 animate-out slide-out-to-top-2 fade-out duration-300"
+                      : "text-white hover:text-blue-100 hover:bg-gradient-to-r hover:from-blue-800 hover:to-blue-700 hover:shadow-md"
                   }`}
                 >
                   <div
@@ -132,58 +159,181 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
               ))}
             </div>
 
-            {/* Right Side Actions */}
-            <div className="flex items-center space-x-2 lg:space-x-3">
-              {/* User Menu */}
-              <div className="flex items-center space-x-2 lg:space-x-3">
-                {/* Mobile: direct link */}
-                <Link
-                  href="/profile"
-                  className="flex md:hidden items-center space-x-2 p-2 lg:p-3 rounded-xl hover:bg-gray-100 transition-all duration-300"
-                >
-                  <i className="bi bi-person-circle lg"></i>
-                  <Avatar className="w-9 h-9 lg:w-10 lg:h-10">
-                    <AvatarImage src="/default-avatar.png" alt="User Avatar" />
-                    <AvatarFallback className="text-sm lg:text-base font-medium">
-                      P
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
+            {/* Desktop User Menu */}
+            <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center space-x-3 p-2 lg:p-3 rounded-xl hover:bg-blue-800 transition-all duration-300 text-white">
+                    <Avatar className="w-9 h-9 lg:w-10 lg:h-10">
+                      <AvatarImage
+                        src="/default-avatar.png"
+                        alt="User Avatar"
+                      />
+                      <AvatarFallback className="text-sm lg:text-base font-medium bg-blue-600 text-white">
+                        {currentUser?.name
+                          ? currentUser.name.charAt(0).toUpperCase()
+                          : "P"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="hidden lg:block text-left">
+                      <p className="text-white font-medium text-sm">
+                        {currentUser?.name
+                          ? `Hello, ${
+                              currentUser.first_name || currentUser.name
+                            }!`
+                          : "Welcome back!"}
+                      </p>
+                      <p className="text-blue-200 text-xs">
+                        {currentUser?.crew_id
+                          ? `Crew ID: ${currentUser.crew_id}`
+                          : currentUser?.name || "Portal User"}
+                      </p>
+                    </div>
+                    <i className="bi bi-chevron-down text-blue-200 text-sm hidden lg:block"></i>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64 mt-2 bg-blue-900/98 backdrop-blur-md border border-blue-700/50 shadow-xl">
+                  {/* User Welcome Section in Dropdown */}
+                  <div className="flex items-center space-x-3 px-4 py-3 mb-2 bg-blue-800/50 rounded-lg border border-blue-700/50 mx-2 mt-2">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage
+                        src="/default-avatar.png"
+                        alt="User Avatar"
+                      />
+                      <AvatarFallback className="text-sm font-medium bg-blue-600 text-white">
+                        {currentUser?.name
+                          ? currentUser.name.charAt(0).toUpperCase()
+                          : "P"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="text-white font-medium text-sm">
+                        {currentUser?.name
+                          ? `Hello, ${
+                              currentUser.first_name || currentUser.name
+                            }!`
+                          : "Welcome back!"}
+                      </p>
+                      <p className="text-blue-200 text-xs">
+                        {currentUser?.crew_id
+                          ? `Crew ID: ${currentUser.crew_id}`
+                          : currentUser?.name || "Portal User"}
+                      </p>
+                    </div>
+                  </div>
 
-                {/* Desktop/Tablet: dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="hidden md:flex items-center space-x-2 p-2 lg:p-3 rounded-xl hover:bg-gray-100 transition-all duration-300">
-                      <Avatar className="w-9 h-9 lg:w-10 lg:h-10">
-                        <AvatarImage
-                          src="/default-avatar.png"
-                          alt="User Avatar"
-                        />
-                        <AvatarFallback className="text-sm lg:text-base font-medium">
-                          P
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-40 mt-2">
+                  <div className="px-2 pb-2">
                     <DropdownMenuItem asChild>
-                      <Link href="/profile">Profile</Link>
+                      <Link
+                        href={`/crew/profile/${currentUser?.crew_id || ""}`}
+                        className="flex items-center space-x-3 px-2 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-blue-800 transition-all duration-300"
+                      >
+                        <i className="bi bi-person-circle text-lg"></i>
+                        <span>Profile</span>
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <button onClick={handleLogout} className="w-38">
-                        <Link href="/login">Sign Out</Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center space-x-3 px-2 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-red-600 transition-all duration-300"
+                      >
+                        <i className="bi bi-box-arrow-right text-lg"></i>
+                        <span>Sign Out</span>
                       </button>
                     </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Dropdown Menu */}
+        <div
+          className={`md:hidden bg-blue-900/98 backdrop-blur-md border-b border-blue-800 transition-all duration-300 ease-in-out ${
+            isMobileMenuOpen
+              ? "max-h-96 opacity-100"
+              : "max-h-0 opacity-0 overflow-hidden"
+          }`}
+        >
+          <div className="px-4 py-3">
+            {/* User Welcome Section */}
+            <div className="flex items-center space-x-3 px-4 py-3 mb-3 bg-blue-800/50 rounded-lg border border-blue-700/50">
+              <Avatar className="w-10 h-10">
+                <AvatarImage src="/default-avatar.png" alt="User Avatar" />
+                <AvatarFallback className="text-sm font-medium bg-blue-600 text-white">
+                  {currentUser?.name
+                    ? currentUser.name.charAt(0).toUpperCase()
+                    : "P"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="text-white font-medium text-sm">
+                  {currentUser?.name
+                    ? `Hello, ${currentUser.first_name || currentUser.name}!`
+                    : "Welcome back!"}
+                </p>
+                <p className="text-blue-200 text-xs">
+                  {currentUser?.crew_id
+                    ? `Crew ID: ${currentUser.crew_id}`
+                    : currentUser?.email || "Portal User"}
+                </p>
               </div>
+            </div>
+
+            {/* Navigation Items */}
+            <div className="space-y-1 mb-3">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => {
+                    handleNavClick(item.href);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 ${
+                    isActive(item.href)
+                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg"
+                      : "text-blue-100 hover:text-white hover:bg-blue-800"
+                  }`}
+                >
+                  <i
+                    className={`bi bi-${
+                      isActive(item.href) ? item.activeIcon : item.icon
+                    } text-lg`}
+                  ></i>
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
+
+            {/* User Actions */}
+            <div className="space-y-1 pt-3 border-t border-blue-700/50">
+              <Link
+                href={`/crew/profile/${currentUser?.crew_id || ""}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg text-blue-100 hover:text-white hover:bg-blue-800 transition-all duration-300"
+              >
+                <i className="bi bi-person-circle text-lg"></i>
+                <span className="text-base font-medium">Profile</span>
+              </Link>
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-blue-100 hover:text-white hover:bg-red-600 transition-all duration-300"
+              >
+                <i className="bi bi-box-arrow-right text-lg"></i>
+                <span className="text-base font-medium">Sign Out</span>
+              </button>
             </div>
           </div>
         </div>
       </nav>
 
       {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 z-40 md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 bg-blue-900/95 backdrop-blur-md border-t border-blue-800 z-40 md:hidden">
         <div className="grid grid-cols-3 py-2 sm:py-3">
           {navItems.map((item) => (
             <Link
@@ -194,10 +344,10 @@ export default function Navigation({ currentPath = "/" }: NavigationProps) {
                 clickedItem === item.href ? "scale-105 -rotate-1" : "scale-100"
               } ${
                 isActive(item.href)
-                  ? "bg-gradient-to-t from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-200 animate-in zoom-in-75 slide-in-from-bottom-3 duration-500"
+                  ? "bg-gradient-to-t from-blue-500 to-blue-400 text-white shadow-lg shadow-blue-300/30 animate-in zoom-in-75 slide-in-from-bottom-3 duration-500"
                   : previousActive === item.href && !isActive(item.href)
-                  ? "bg-gradient-to-t from-gray-400 to-gray-300 text-gray-600 animate-out zoom-out-95 slide-out-to-top-3 duration-350"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gradient-to-t hover:from-gray-100 hover:to-gray-50"
+                  ? "bg-gradient-to-t from-blue-700 to-blue-800 text-blue-200 animate-out zoom-out-95 slide-out-to-top-3 duration-350"
+                  : "text-blue-100 hover:text-white hover:bg-gradient-to-t hover:from-blue-800 hover:to-blue-700"
               }`}
             >
               <div
