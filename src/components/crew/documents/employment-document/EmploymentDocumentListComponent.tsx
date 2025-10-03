@@ -1,6 +1,5 @@
-import { useState } from "react";
 import EmploymentDocumentListItemComponent from "./EmploymentDocumentListItemComponent";
-import { User } from "@/types/api";
+import { useUser } from "@/hooks/useUser";
 
 interface EmploymentDocument {
   id: number;
@@ -19,7 +18,8 @@ interface EmploymentDocumentListComponentProps {
 export default function EmploymentDocumentListComponent({
   documents,
 }: EmploymentDocumentListComponentProps) {
-  // const [user, setUser] = useState(User);
+  const { user, loading } = useUser();
+  user && console.log(user?.profile?.crew_id);
 
   return (
     <div className="space-y-4 mb-28">
