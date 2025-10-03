@@ -110,14 +110,14 @@ export interface User {
   last_login_ip?: string;
   is_crew: number; // 1 = crew, 0 = admin
   role?: string; // 'crew' or 'admin'
-  
+
   // Organized nested data
   profile?: UserProfile;
   contacts?: UserContact;
   employment?: UserEmployment;
   education?: UserEducation;
   physical_traits?: UserPhysicalTraits;
-  
+
   // Backward compatibility fields (flattened for existing clients)
   crew_id?: string;
   fleet_name?: string;
@@ -141,7 +141,7 @@ export interface User {
   seaman_book_number?: string;
   seaman_book_expiry?: string;
   primary_allotee_id?: number;
-  
+
   // Legacy fields that might still be used
   birth_date?: string;
   birth_place?: string;
@@ -153,7 +153,7 @@ export interface User {
   blood_type?: string;
   eye_color?: string;
   hair_color?: string;
-  
+
   // Address fields (temporary backward compatibility)
   permanent_region?: string;
   permanent_province?: string;
@@ -167,11 +167,11 @@ export interface User {
   contact_barangay?: string;
   contact_street?: string;
   contact_postal_code?: string;
-  
+
   // Contact fields
   emergency_contact_number?: string;
   emergency_contact_relation?: string;
-  
+
   // Education fields
   highschool_name?: string;
   highschool_graduation_date?: string;
