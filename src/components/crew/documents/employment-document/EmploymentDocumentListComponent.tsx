@@ -1,11 +1,17 @@
 import { useState, useEffect } from "react";
 import EmploymentDocumentListItemComponent from "./EmploymentDocumentListItemComponent";
+import MissingEmploymentDocumentCardComponent from "./MissingEmploymentDocumentCardComponent";
+import AddEmploymentDocumentModal from "./AddEmploymentDocumentModal";
 import { useUser } from "@/hooks/useUser";
 import {
   EmploymentDocumentService,
   EmploymentDocument as APIEmploymentDocument,
 } from "@/services/employment-document";
 import EmploymentDocumentListSkeleton from "./EmploymentDocumentListSkeleton";
+import {
+  EmploymentDocumentTypeService,
+  EmploymentDocumentType as APIEmploymentDocumentType,
+} from "@/services/employment-document-type";
 
 interface EmploymentDocument {
   id: number;
@@ -23,7 +29,13 @@ export default function EmploymentDocumentListComponent() {
   const [employmentDocuments, setEmploymentDocuments] = useState<
     APIEmploymentDocument[]
   >([]);
+  const [employmentDocumentTypes, setEmploymentDocumentTypes] = useState<
+    APIEmploymentDocumentType[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDocumentType, setSelectedDocumentType] =
+    useState<APIEmploymentDocumentType | null>(null);
 
   const fetchEmploymentDocuments = async () => {
     if (user?.profile?.crew_id) {
@@ -33,8 +45,12 @@ export default function EmploymentDocumentListComponent() {
           await EmploymentDocumentService.getEmploymentDocumentsByCrewId(
             user.profile.crew_id
           );
-        console.log("Employment Documents:", data);
+        const eDocDataType =
+          await EmploymentDocumentTypeService.getEmploymentDocumentTypes();
+        // console.log("Employment Documents Type:", eDocDataType);
+        // console.log("Employment Documents:", data);
         setEmploymentDocuments(data || []);
+        setEmploymentDocumentTypes(eDocDataType || []);
       } catch (error) {
         console.error("Error fetching employment documents:", error);
       } finally {
@@ -58,6 +74,17 @@ export default function EmploymentDocumentListComponent() {
     return iconMap[documentType] || "bi-file-earmark-text";
   };
 
+  const getDocumentColor = (documentType: string): string => {
+    const colorMap: Record<string, string> = {
+      TIN: "blue",
+      SSS: "green",
+      "PAG-IBIG": "purple",
+      PHILHEALTH: "orange",
+      SRN: "indigo",
+    };
+    return colorMap[documentType] || "gray";
+  };
+
   const mappedDocuments: EmploymentDocument[] =
     employmentDocuments?.map((doc) => ({
       id: doc.id,
@@ -69,6 +96,14 @@ export default function EmploymentDocumentListComponent() {
       modifiedBy: doc.modified_by,
       icon: getDocumentIcon(doc.employment_document_type.name),
     })) || [];
+
+  // Find missing document types
+  const existingDocumentTypeIds = employmentDocuments.map(
+    (doc) => doc.employment_document_type_id
+  );
+  const missingDocumentTypes = employmentDocumentTypes.filter(
+    (type) => !existingDocumentTypeIds.includes(type.id)
+  );
 
   if (isLoading) {
     return <EmploymentDocumentListSkeleton />;
@@ -83,6 +118,34 @@ export default function EmploymentDocumentListComponent() {
           onUpdate={fetchEmploymentDocuments}
         />
       ))}
+
+      {/* Missing Document Type Cards */}
+      {missingDocumentTypes.map((type) => (
+        <MissingEmploymentDocumentCardComponent
+          key={type.id}
+          documentType={type.name}
+          icon={getDocumentIcon(type.name)}
+          onAdd={() => {
+            setSelectedDocumentType(type);
+            setIsModalOpen(true);
+          }}
+        />
+      ))}
+
+      {/* Add Employment Document Modal */}
+      {selectedDocumentType && user?.profile?.crew_id && (
+        <AddEmploymentDocumentModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedDocumentType(null);
+          }}
+          documentType={selectedDocumentType.name}
+          documentTypeId={selectedDocumentType.id}
+          crewId={user.profile.crew_id}
+          icon={getDocumentIcon(selectedDocumentType.name)}
+        />
+      )}
     </div>
   );
 }
