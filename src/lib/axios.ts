@@ -1,23 +1,23 @@
-import axios from 'axios';
+import axios from "axios";
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api',
+  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL + "/api",
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
   },
   timeout: 10000, // 10 seconds timeout
   withCredentials: true, // Enable cookies for CSRF protection
-  withXSRFToken: true
+  withXSRFToken: true,
 });
 
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
     // Get token from localStorage if it exists
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("auth_token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -32,7 +32,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error('❌ Request Error:', error);
+    console.error("❌ Request Error:", error);
     return Promise.reject(error);
   }
 );
@@ -60,20 +60,21 @@ api.interceptors.response.use(
     // Handle specific error cases
     if (error.response?.status === 401) {
       // Unauthorized - clear token and redirect to login
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user');
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user");
         // Only redirect if we're not already on the login page
-        if (!window.location.pathname.includes('/login')) {
-          window.location.href = '/login';
+        if (!window.location.pathname.includes("/login")) {
+          window.location.href = "/login";
         }
       }
     }
 
     // Handle network errors
     if (!error.response) {
-      console.error('❌ Network Error: Unable to connect to the server');
-      error.message = 'Network error. Please check your connection and try again.';
+      console.error("❌ Network Error: Unable to connect to the server");
+      error.message =
+        "Network error. Please check your connection and try again.";
     }
 
     return Promise.reject(error);
