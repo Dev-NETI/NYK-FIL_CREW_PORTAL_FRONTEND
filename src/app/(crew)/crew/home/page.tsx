@@ -23,8 +23,8 @@ export default function Dashboard() {
     console.log(user);
 
     // Generate QR code when user data is available
-    if (user?.crew_id) {
-      QRCode.toDataURL(user.crew_id, {
+    if (user?.profile?.crew_id) {
+      QRCode.toDataURL(user.profile.crew_id, {
         width: 128,
         margin: 1,
         color: {
@@ -63,8 +63,8 @@ export default function Dashboard() {
         icon: "person-badge",
         title: "My Profile",
         description: "View and update your crew information and certifications",
-        href: currentUser?.crew_id
-          ? `/crew/profile/${currentUser.crew_id}`
+        href: currentUser?.profile?.crew_id
+          ? `/crew/profile/${currentUser.profile.crew_id}`
           : "/crew/profile",
         color: "from-blue-500 to-purple-600",
         delay: "delay-100",
@@ -226,9 +226,9 @@ export default function Dashboard() {
                           <div className="w-16 h-20 bg-gray-100 border-2 border-gray-300 rounded flex items-center justify-center">
                             <div className="w-14 h-18 bg-gradient-to-b from-blue-500 to-blue-600 rounded flex items-center justify-center">
                               <span className="text-white font-bold text-lg">
-                                {currentUser?.first_name &&
-                                currentUser?.last_name
-                                  ? `${currentUser.first_name[0]}${currentUser.last_name[0]}`
+                                {currentUser?.profile?.first_name &&
+                                currentUser?.profile?.last_name
+                                  ? `${currentUser.profile.first_name[0]}${currentUser.profile?.last_name[0]}`
                                   : currentUser?.name
                                   ? currentUser.name
                                       .split(" ")

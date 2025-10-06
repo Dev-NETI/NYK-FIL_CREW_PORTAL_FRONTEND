@@ -289,7 +289,7 @@ export default function AdminLayout({
         </header>
 
         {/* Page Content */}
-        <div className="p-4 lg:p-6 overflow-y-auto flex-1">{children}</div>
+        <div className="overflow-y-auto flex-1">{children}</div>
 
         {/* Footer */}
         <footer className="bg-white shadow-sm px-4 lg:px-6 py-3">

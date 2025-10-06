@@ -7,6 +7,11 @@ import { User } from "@/types/api";
 import { Program } from "@/services/program";
 import { EmploymentRecord } from "@/services/employment";
 import toast from "react-hot-toast";
+import BasicInformation from "@/components/crew-profile/BasicInformation";
+import PhysicalTraits from "@/components/crew-profile/PhysicalTraits";
+import ContactInformation from "@/components/crew-profile/ContactInformation";
+import EmploymentInformation from "@/components/crew-profile/EmploymentInformation";
+import EducationInformation from "@/components/crew-profile/EducationInformation";
 
 interface CrewDetailsPageProps {
   params: Promise<{
@@ -91,7 +96,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         // Try admin endpoint first
         try {
           const profileResponse = await UserService.getCrewProfile(id);
-          console.log(profileResponse.user);
           if (profileResponse.success && profileResponse.user) {
             setProfile(profileResponse.user);
             setEditedProfile(profileResponse.user);
@@ -340,103 +344,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     loadEmploymentRecords();
   };
 
-  const renderField = (
-    label: string,
-    value: string,
-    field: string,
-    required: boolean = false
-  ) => {
-    return (
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-        {isEditing ? (
-          <input
-            type="text"
-            value={(editedProfile?.[field as keyof User] as string) || ""}
-            onChange={(e) => handleInputChange(field, e.target.value)}
-            className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-            placeholder={`Enter ${label.toLowerCase()}`}
-          />
-        ) : (
-          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-            {value || "Not provided"}
-          </p>
-        )}
-      </div>
-    );
-  };
-
-  const renderNestedField = (
-    label: string,
-    value: string,
-    parent: string,
-    field: string,
-    required: boolean = false
-  ) => {
-    return (
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-        {isEditing ? (
-          <input
-            type="text"
-            value={
-              ((
-                editedProfile?.[parent as keyof User] as Record<string, unknown>
-              )?.[field] as string) || ""
-            }
-            onChange={(e) =>
-              handleNestedInputChange(parent, field, e.target.value)
-            }
-            className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-            placeholder={`Enter ${label.toLowerCase()}`}
-          />
-        ) : (
-          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-            {value || "Not provided"}
-          </p>
-        )}
-      </div>
-    );
-  };
-
-  const renderSelectField = (
-    label: string,
-    value: string,
-    field: string,
-    options: string[],
-    required: boolean = false
-  ) => {
-    return (
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-        {isEditing ? (
-          <select
-            value={(editedProfile?.[field as keyof User] as string) || ""}
-            onChange={(e) => handleInputChange(field, e.target.value)}
-            className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-          >
-            <option value="">Select {label.toLowerCase()}</option>
-            {options.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-            {value || "Not provided"}
-          </p>
-        )}
-      </div>
-    );
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -473,93 +380,45 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 md:pb-8">
-      <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-        <div className="max-w-7xl mx-auto">
-          {/* Edit Mode Banner */}
-          {isEditing && (
-            <div className="mb-6 bg-blue-100 border border-blue-300 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <i className="bi bi-pencil-square text-blue-600 text-xl mr-3"></i>
-                  <div>
-                    <h3 className="text-blue-800 font-semibold">
-                      Edit Mode Active
-                    </h3>
-                    <p className="text-blue-600 text-sm">
-                      Make your changes and click Save to update the profile.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm disabled:opacity-50"
-                  >
-                    {saving ? (
-                      <>
-                        <i className="bi bi-arrow-clockwise animate-spin mr-2"></i>
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-check mr-2"></i>
-                        Save Changes
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200 text-sm"
-                  >
-                    <i className="bi bi-x mr-2"></i>
-                    Cancel
-                  </button>
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Navigation */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 backdrop-blur-md border-b border-white/20 sticky top-0 ">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <button
+              onClick={() => router.push("/admin/crew")}
+              className="flex items-center space-x-2 text-white hover:text-gray-700 transition-colors duration-200 group"
+            >
+              <i className="bi bi-arrow-left text-lg group-hover:-translate-x-1 transition-transform duration-200"></i>
+              <span className="font-medium">Back to Crew List</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Profile Header Card */}
+        <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-xl border border-white/20 overflow-hidden mb-8">
+          <div className="relative">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800">
+              <div className="absolute inset-0 opacity-30">
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                    backgroundSize: "60px 60px",
+                  }}
+                ></div>
               </div>
             </div>
-          )}
 
-          {/* Header with Back Button */}
-          <div
-            className={`mb-6 sm:mb-8 transform transition-all duration-1000 ${
-              isLoaded
-                ? "translate-y-0 opacity-100"
-                : "translate-y-10 opacity-0"
-            }`}
-          >
-            <div className="flex items-center space-x-4 mb-6">
-              <button
-                onClick={() => router.push("/admin/crew")}
-                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors duration-200"
-              >
-                <i className="bi bi-arrow-left text-lg"></i>
-                <span className="font-medium">Back to Crew List</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Hero Section */}
-          <div
-            className={`bg-gradient-to-r from-blue-700 to-cyan-800 rounded-3xl shadow-2xl overflow-hidden transform transition-all duration-1000 mb-8 ${
-              isLoaded
-                ? "translate-y-0 opacity-100"
-                : "translate-y-10 opacity-0"
-            }`}
-            style={{
-              backgroundImage: 'url("/anchor.jpg")',
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundBlendMode: "overlay",
-            }}
-          >
-            <div className="relative px-6 sm:px-8 lg:px-12 py-10 sm:py-12 lg:py-16">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-700/90 to-cyan-800/90"></div>
-              <div className="relative lg:flex lg:items-center lg:space-x-12">
-                <div className="text-center lg:text-left lg:flex-shrink-0">
-                  <div className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 bg-white/20 backdrop-blur-sm rounded-full mx-auto lg:mx-0 mb-6 lg:mb-0 flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-300 border-4 border-white/30">
-                    <span className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
+            <div className="relative px-8 py-12">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-8">
+                {/* Avatar */}
+                <div className="flex-shrink-0 mb-6 lg:mb-0">
+                  <div className="w-32 h-32 lg:w-40 lg:h-40 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-2xl ring-4 ring-white/30">
+                    <span className="text-4xl lg:text-5xl font-bold text-white">
                       {profile.name
                         ? profile.name
                             .split(" ")
@@ -569,1330 +428,319 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     </span>
                   </div>
                 </div>
-                <div className="lg:flex-1 text-center lg:text-left">
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4">
+
+                {/* Profile Info */}
+                <div className="flex-1 text-center lg:text-left">
+                  <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
                     {profile.name ||
                       profile.profile?.full_name ||
                       profile.email}
                   </h1>
-                  <p className="text-xl sm:text-2xl lg:text-3xl text-blue-100 mb-2 sm:mb-3">
-                    {profile.employment?.rank_name ||
-                      profile.rank_name ||
-                      "Not assigned"}
+                  <p className="text-xl text-blue-100 mb-4">
+                    {profile.employment?.rank_name || "Not assigned"}
                   </p>
-                  <p className="text-lg sm:text-xl text-blue-200 mb-2 sm:mb-3">
-                    {profile.profile?.crew_id || profile.crew_id
-                      ? `Crew ID: ${
-                          profile.profile?.crew_id || profile.crew_id
-                        }`
-                      : "No crew assignment"}
-                  </p>
-                  <p className="text-lg sm:text-xl text-blue-200 mb-4 sm:mb-6">
-                    User ID: {profile.id || id}
-                  </p>
-                  <div className="flex flex-wrap justify-center lg:justify-start gap-4 text-blue-100">
-                    <div className="flex items-center space-x-2">
-                      <i className="bi bi-hash text-lg"></i>
+
+                  {/* Quick Info Tags */}
+                  <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+                    <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm flex items-center space-x-2">
+                      <i className="bi bi-hash"></i>
                       <span>ID: {profile.id || id}</span>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <i className="bi bi-envelope text-lg"></i>
-                      <span>{profile.email}</span>
-                    </div>
-                    {(profile.employment?.fleet_name || profile.fleet_name) && (
-                      <div className="flex items-center space-x-2">
-                        <i className="bi bi-ship text-lg"></i>
-                        <span>
-                          Fleet:{" "}
-                          {profile.employment?.fleet_name || profile.fleet_name}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex items-center space-x-2">
-                      <i className="bi bi-person-badge text-lg"></i>
-                      <span>
-                        Status:{" "}
-                        {profile.employment?.crew_status ||
-                          profile.crew_status ||
-                          "Active"}
+                    <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm flex items-center space-x-2">
+                      <i className="bi bi-envelope"></i>
+                      <span className="truncate max-w-[200px]">
+                        {profile.email}
                       </span>
+                    </div>
+                    <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm flex items-center space-x-2">
+                      <i className="bi bi-person-badge"></i>
+                      <span>Active</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Stats Cards */}
-          <div
-            className={`grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 transform transition-all duration-1000 delay-200 ${
-              isLoaded
-                ? "translate-y-0 opacity-100"
-                : "translate-y-10 opacity-0"
-            }`}
-          >
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-              <div className="flex items-center justify-between mb-2 sm:mb-4">
-                <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
-                  Account Status
-                </h3>
-                <span className="text-xl sm:text-2xl">
-                  {profile.email_verified_at ? "✅" : "⏳"}
-                </span>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <i className="bi bi-check-circle text-green-600 text-xl"></i>
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                {profile.email_verified_at ? "Verified" : "Pending"}
-              </div>
-              <p className="text-gray-600 text-xs sm:text-sm">
-                Email verification
-              </p>
+              <span className="text-2xl">
+                {profile.email_verified_at ? "✅" : "⏳"}
+              </span>
             </div>
-
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-              <div className="flex items-center justify-between mb-2 sm:mb-4">
-                <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
-                  Hire Date
-                </h3>
-                <span className="text-xl sm:text-2xl">📅</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                {profile.employment?.hire_date
-                  ? new Date(profile.employment?.hire_date).toLocaleDateString()
-                  : "Not provided"}
-              </div>
-              <p className="text-gray-600 text-xs sm:text-sm">Year joined</p>
+            <div className="text-2xl font-bold text-gray-900 mb-1">
+              {profile.email_verified_at ? "Verified" : "Pending"}
             </div>
+            <p className="text-gray-600 text-sm">Account Status</p>
+          </div>
 
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-              <div className="flex items-center justify-between mb-2 sm:mb-4">
-                <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
-                  Fleet
-                </h3>
-                <span className="text-xl sm:text-2xl">🚢</span>
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <i className="bi bi-calendar-date text-blue-600 text-xl"></i>
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 truncate">
-                {profile.employment?.fleet_name ||
-                  profile.fleet_name ||
-                  "Unassigned"}
-              </div>
-              <p className="text-gray-600 text-xs sm:text-sm">
-                Current assignment
-              </p>
+              <span className="text-2xl">📅</span>
             </div>
+            <div className="text-2xl font-bold text-gray-900 mb-1">
+              {profile.employment?.hire_date
+                ? new Date(profile.employment?.hire_date).getFullYear()
+                : "N/A"}
+            </div>
+            <p className="text-gray-600 text-sm">Hire Year</p>
+          </div>
 
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-              <div className="flex items-center justify-between mb-2 sm:mb-4">
-                <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
-                  Last Login
-                </h3>
-                <span className="text-xl sm:text-2xl">🕒</span>
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <i className="bi bi-ship text-purple-600 text-xl"></i>
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                {profile.last_login_at
-                  ? new Date(profile.last_login_at).toLocaleDateString()
-                  : "Never"}
+              <span className="text-2xl">🚢</span>
+            </div>
+            <div className="text-lg font-bold text-gray-900 mb-1 truncate">
+              {profile.employment?.fleet_name || "Unassigned"}
+            </div>
+            <p className="text-gray-600 text-sm">Fleet Assignment</p>
+          </div>
+
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <i className="bi bi-clock-history text-orange-600 text-xl"></i>
               </div>
-              <p className="text-gray-600 text-xs sm:text-sm">
-                Activity status
-              </p>
+              <span className="text-2xl">🕒</span>
+            </div>
+            <div className="text-lg font-bold text-gray-900 mb-1">
+              {profile.last_login_at
+                ? new Date(profile.last_login_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })
+                : "Never"}
+            </div>
+            <p className="text-gray-600 text-sm">Last Login</p>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          {/* Profile Tabs - Takes up 3 columns */}
+          <div className="xl:col-span-3">
+            <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+              {/* Enhanced Tab Navigation */}
+              <div className="border-b border-gray-200/50 bg-gray-50/50">
+                <nav
+                  className="flex space-x-8 px-6 overflow-x-auto"
+                  aria-label="Tabs"
+                >
+                  {[
+                    { id: "basic", label: "Basic Info", icon: "bi-person" },
+                    { id: "physical", label: "Physical", icon: "bi-body-text" },
+                    { id: "contact", label: "Contact", icon: "bi-geo-alt" },
+                    {
+                      id: "employment",
+                      label: "Employment",
+                      icon: "bi-briefcase",
+                    },
+                    {
+                      id: "education",
+                      label: "Education",
+                      icon: "bi-mortarboard",
+                    },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-all duration-200 flex items-center space-x-2 ${
+                        activeTab === tab.id
+                          ? "border-blue-500 text-blue-600 bg-blue-50/50"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      <i className={`${tab.icon} text-base`}></i>
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </nav>
+              </div>
+
+              {/* Tab Content */}
+              <div className="p-8">
+                {activeTab === "basic" && (
+                  <BasicInformation
+                    profile={profile}
+                    editedProfile={editedProfile}
+                    isEditing={isEditing}
+                    saving={saving}
+                    onEdit={handleEdit}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    onInputChange={handleInputChange}
+                    onNestedInputChange={handleNestedInputChange}
+                  />
+                )}
+
+                {activeTab === "physical" && (
+                  <PhysicalTraits
+                    profile={profile}
+                    editedProfile={editedProfile}
+                    isEditing={isEditing}
+                    saving={saving}
+                    onEdit={handleEdit}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    onInputChange={handleInputChange}
+                  />
+                )}
+
+                {activeTab === "contact" && (
+                  <ContactInformation
+                    profile={profile}
+                    editedProfile={editedProfile}
+                    isEditing={isEditing}
+                    saving={saving}
+                    onEdit={handleEdit}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    onInputChange={handleInputChange}
+                  />
+                )}
+
+                {activeTab === "employment" && (
+                  <EmploymentInformation
+                    profile={profile}
+                    isEditing={isEditing}
+                    saving={saving}
+                    programs={programs}
+                    employmentRecords={employmentRecords}
+                    editingEmploymentId={editingEmploymentId}
+                    showProgramSelection={showProgramSelection}
+                    selectedProgramId={selectedProgramId}
+                    batchInput={batchInput}
+                    onEdit={handleEdit}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    onAddEmploymentRecord={addEmploymentRecord}
+                    onProgramSelect={handleProgramSelect}
+                    onBatchSave={handleBatchSave}
+                    onCancelBatchInput={cancelBatchInput}
+                    onUpdateEmploymentRecord={updateEmploymentRecord}
+                    onDeleteEmploymentRecord={deleteEmploymentRecord}
+                    onSaveEmploymentRecord={saveEmploymentRecord}
+                    onCancelEmploymentEdit={cancelEmploymentEdit}
+                    onSetEditingEmploymentId={setEditingEmploymentId}
+                    onSetShowProgramSelection={setShowProgramSelection}
+                    onSetBatchInput={setBatchInput}
+                  />
+                )}
+
+                {activeTab === "education" && (
+                  <EducationInformation
+                    profile={profile}
+                    editedProfile={editedProfile}
+                    isEditing={isEditing}
+                    saving={saving}
+                    onEdit={handleEdit}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    onInputChange={handleInputChange}
+                  />
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Main Content Grid */}
-          <div className="lg:grid lg:grid-cols-3 lg:gap-8 space-y-8 lg:space-y-0">
-            {/* Profile Information with Tabs */}
-            <div className="lg:col-span-2">
-              <div
-                className={`bg-white rounded-2xl shadow-lg overflow-hidden transform transition-all duration-1000 delay-300 ${
-                  isLoaded
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-10 opacity-0"
-                }`}
-              >
-                {/* Tab Navigation */}
-                <div className="border-b border-gray-200">
-                  <nav
-                    className="flex space-x-8 px-6 sm:px-8 overflow-x-auto"
-                    aria-label="Tabs"
+          {/* Sidebar - Takes up 1 column */}
+          <div className="space-y-6">
+            {/* Quick Actions */}
+            <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                <i className="bi bi-lightning text-blue-600 mr-2"></i>
+                Quick Actions
+              </h3>
+              <div className="space-y-3">
+                {[
+                  {
+                    icon: "bi-file-earmark-medical",
+                    label: "Medical Records",
+                    color: "text-green-600 bg-green-50",
+                  },
+                  {
+                    icon: "bi-award",
+                    label: "Certificates",
+                    color: "text-purple-600 bg-purple-50",
+                  },
+                  {
+                    icon: "bi-envelope",
+                    label: "Send Message",
+                    color: "text-blue-600 bg-blue-50",
+                  },
+                  {
+                    icon: "bi-download",
+                    label: "Export Profile",
+                    color: "text-indigo-600 bg-indigo-50",
+                  },
+                ].map((action, index) => (
+                  <button
+                    key={index}
+                    className="w-full flex items-center px-4 py-3 text-left hover:bg-gray-50 rounded-xl transition-all duration-200 group"
                   >
-                    <button
-                      onClick={() => setActiveTab("basic")}
-                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                        activeTab === "basic"
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
+                    <div
+                      className={`p-2 rounded-lg mr-3 ${action.color} group-hover:scale-110 transition-transform duration-200`}
                     >
-                      Basic Information
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("physical")}
-                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                        activeTab === "physical"
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      Physical Traits
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("contact")}
-                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                        activeTab === "contact"
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      Contact
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("employment")}
-                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                        activeTab === "employment"
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      Employment Info
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("education")}
-                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                        activeTab === "education"
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      Education
-                    </button>
-                  </nav>
-                </div>
-
-                {/* Tab Content */}
-                <div className="p-6 sm:p-8">
-                  {/* Basic Information Tab */}
-                  {activeTab === "basic" && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold text-gray-900">
-                          Basic Information
-                        </h2>
-                        {!isEditing ? (
-                          <button
-                            onClick={handleEdit}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm"
-                          >
-                            <i className="bi bi-pencil mr-2"></i>
-                            Edit Profile
-                          </button>
-                        ) : (
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={handleCancel}
-                              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200 text-sm"
-                            >
-                              <i className="bi bi-x mr-2"></i>
-                              Cancel
-                            </button>
-                            <button
-                              onClick={handleSave}
-                              disabled={saving}
-                              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm disabled:opacity-50"
-                            >
-                              {saving ? (
-                                <>
-                                  <i className="bi bi-arrow-clockwise animate-spin mr-2"></i>
-                                  Saving...
-                                </>
-                              ) : (
-                                <>
-                                  <i className="bi bi-check mr-2"></i>
-                                  Save
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {renderNestedField(
-                          "Last Name",
-                          profile.profile?.last_name ||
-                            profile.last_name ||
-                            "Not provided",
-                          "profile",
-                          "last_name",
-                          true
-                        )}
-
-                        {renderNestedField(
-                          "First Name",
-                          profile.profile?.first_name ||
-                            profile.first_name ||
-                            "Not provided",
-                          "profile",
-                          "first_name",
-                          true
-                        )}
-
-                        {renderNestedField(
-                          "Middle Name",
-                          profile.profile?.middle_name ||
-                            profile.middle_name ||
-                            "Not provided",
-                          "profile",
-                          "middle_name"
-                        )}
-
-                        {renderNestedField(
-                          "Suffix",
-                          profile.profile?.suffix ||
-                            profile.suffix ||
-                            "Not provided",
-                          "profile",
-                          "suffix"
-                        )}
-
-                        {renderField(
-                          "Nationality",
-                          profile.nationality || "Not provided",
-                          "nationality"
-                        )}
-
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Gender
-                          </label>
-                          {isEditing ? (
-                            <select
-                              value={
-                                ((
-                                  editedProfile?.profile as Record<
-                                    string,
-                                    unknown
-                                  >
-                                )?.gender as string) ||
-                                editedProfile?.gender ||
-                                ""
-                              }
-                              onChange={(e) =>
-                                handleNestedInputChange(
-                                  "profile",
-                                  "gender",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-                            >
-                              <option value="">Select gender</option>
-                              <option value="Male">Male</option>
-                              <option value="Female">Female</option>
-                              <option value="Other">Other</option>
-                              <option value="Prefer not to say">
-                                Prefer not to say
-                              </option>
-                            </select>
-                          ) : (
-                            <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                              {profile.profile?.gender ||
-                                profile.gender ||
-                                "Not provided"}
-                            </p>
-                          )}
-                        </div>
-
-                        {renderSelectField(
-                          "Civil Status",
-                          profile.civil_status || "Not provided",
-                          "civil_status",
-                          [
-                            "Single",
-                            "Married",
-                            "Divorced",
-                            "Widowed",
-                            "Separated",
-                          ]
-                        )}
-
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Birth Date
-                          </label>
-                          {isEditing ? (
-                            <input
-                              type="date"
-                              value={editedProfile?.date_of_birth || ""}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  "date_of_birth",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-                            />
-                          ) : (
-                            <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                              {profile.date_of_birth
-                                ? new Date(
-                                    profile.date_of_birth
-                                  ).toLocaleDateString()
-                                : "Not provided"}
-                            </p>
-                          )}
-                        </div>
-
-                        {renderField(
-                          "Birth Place",
-                          profile.birth_place || "Not provided",
-                          "birth_place"
-                        )}
-
-                        {renderSelectField(
-                          "Blood Type",
-                          profile.blood_type || "Not provided",
-                          "blood_type",
-                          ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
-                        )}
-
-                        {renderField(
-                          "Religion",
-                          profile.religion || "Not provided",
-                          "religion"
-                        )}
-                      </div>
+                      <i className={`${action.icon}`}></i>
                     </div>
-                  )}
-
-                  {/* Physical Traits Tab */}
-                  {activeTab === "physical" && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold text-gray-900">
-                          Physical Traits
-                        </h2>
-                        {!isEditing ? (
-                          <button
-                            onClick={handleEdit}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm"
-                          >
-                            <i className="bi bi-pencil mr-2"></i>
-                            Edit Physical Info
-                          </button>
-                        ) : (
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={handleCancel}
-                              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200 text-sm"
-                            >
-                              <i className="bi bi-x mr-2"></i>
-                              Cancel
-                            </button>
-                            <button
-                              onClick={handleSave}
-                              disabled={saving}
-                              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm disabled:opacity-50"
-                            >
-                              {saving ? (
-                                <>
-                                  <i className="bi bi-arrow-clockwise animate-spin mr-2"></i>
-                                  Saving...
-                                </>
-                              ) : (
-                                <>
-                                  <i className="bi bi-check mr-2"></i>
-                                  Save
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Height (cm)
-                          </label>
-                          {isEditing ? (
-                            <input
-                              type="number"
-                              value={editedProfile?.height || ""}
-                              onChange={(e) =>
-                                handleInputChange("height", e.target.value)
-                              }
-                              className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-                              placeholder="Enter height in cm"
-                              min="0"
-                              max="300"
-                            />
-                          ) : (
-                            <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                              {profile.physical_traits?.height || profile.height
-                                ? `${
-                                    profile.physical_traits?.height ||
-                                    profile.height
-                                  } cm`
-                                : "Not provided"}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Weight (kg)
-                          </label>
-                          {isEditing ? (
-                            <input
-                              type="number"
-                              value={editedProfile?.weight || ""}
-                              onChange={(e) =>
-                                handleInputChange("weight", e.target.value)
-                              }
-                              className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-                              placeholder="Enter weight in kg"
-                              min="0"
-                              max="500"
-                            />
-                          ) : (
-                            <p className="text-gray-900 py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                              {profile.physical_traits?.weight || profile.weight
-                                ? `${
-                                    profile.physical_traits?.weight ||
-                                    profile.weight
-                                  } kg`
-                                : "Not provided"}
-                            </p>
-                          )}
-                        </div>
-
-                        {renderField(
-                          "Eye Color",
-                          profile.physical_traits?.eye_color ||
-                            profile.eye_color ||
-                            "Not provided",
-                          "eye_color"
-                        )}
-
-                        {renderField(
-                          "Hair Color",
-                          profile.physical_traits?.hair_color ||
-                            profile.hair_color ||
-                            "Not provided",
-                          "hair_color"
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Contact Tab */}
-                  {activeTab === "contact" && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold text-gray-900">
-                          Contact Information
-                        </h2>
-                        {!isEditing ? (
-                          <button
-                            onClick={handleEdit}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm"
-                          >
-                            <i className="bi bi-pencil mr-2"></i>
-                            Edit Contact Info
-                          </button>
-                        ) : (
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={handleCancel}
-                              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200 text-sm"
-                            >
-                              <i className="bi bi-x mr-2"></i>
-                              Cancel
-                            </button>
-                            <button
-                              onClick={handleSave}
-                              disabled={saving}
-                              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm disabled:opacity-50"
-                            >
-                              {saving ? (
-                                <>
-                                  <i className="bi bi-arrow-clockwise animate-spin mr-2"></i>
-                                  Saving...
-                                </>
-                              ) : (
-                                <>
-                                  <i className="bi bi-check mr-2"></i>
-                                  Save
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Mailing/Permanent Address Section */}
-                      <div className="bg-blue-50 rounded-xl p-6 mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          Mailing Address / Permanent Address
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {renderField(
-                            "Region",
-                            profile.permanent_region || "Not provided",
-                            "permanent_region"
-                          )}
-
-                          {renderField(
-                            "Province",
-                            profile.permanent_province || "Not provided",
-                            "permanent_province"
-                          )}
-
-                          {renderField(
-                            "City/Municipality",
-                            profile.permanent_city || "Not provided",
-                            "permanent_city"
-                          )}
-
-                          {renderField(
-                            "Subdivision/Barangay",
-                            profile.permanent_barangay || "Not provided",
-                            "permanent_barangay"
-                          )}
-
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                              Building Name, Floor, Unit Number, Street Name
-                            </label>
-                            {isEditing ? (
-                              <textarea
-                                value={editedProfile?.permanent_street || ""}
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    "permanent_street",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-                                placeholder="Enter complete address"
-                                rows={3}
-                              />
-                            ) : (
-                              <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
-                                {profile.permanent_street || "Not provided"}
-                              </p>
-                            )}
-                          </div>
-
-                          {renderField(
-                            "Postal Code",
-                            profile.permanent_postal_code || "Not provided",
-                            "permanent_postal_code"
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Contact Address Section */}
-                      <div className="bg-green-50 rounded-xl p-6 mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          Contact Address
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {renderField(
-                            "Region",
-                            profile.contact_region || "Not provided",
-                            "contact_region"
-                          )}
-
-                          {renderField(
-                            "Province",
-                            profile.contact_province || "Not provided",
-                            "contact_province"
-                          )}
-
-                          {renderField(
-                            "City/Municipality",
-                            profile.contact_city || "Not provided",
-                            "contact_city"
-                          )}
-
-                          {renderField(
-                            "Subdivision/Barangay",
-                            profile.contact_barangay || "Not provided",
-                            "contact_barangay"
-                          )}
-
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                              Building Name, Floor, Unit Number, Street Name
-                            </label>
-                            {isEditing ? (
-                              <textarea
-                                value={editedProfile?.contact_street || ""}
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    "contact_street",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-                                placeholder="Enter complete address"
-                                rows={3}
-                              />
-                            ) : (
-                              <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
-                                {profile.contact_street || "Not provided"}
-                              </p>
-                            )}
-                          </div>
-
-                          {renderField(
-                            "Postal Code",
-                            profile.contact_postal_code || "Not provided",
-                            "contact_postal_code"
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Contact Information Section */}
-                      <div className="bg-orange-50 rounded-xl p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          Contact Information
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                              Email Address
-                            </label>
-                            {isEditing ? (
-                              <input
-                                type="email"
-                                value={editedProfile?.email || ""}
-                                onChange={(e) =>
-                                  handleInputChange("email", e.target.value)
-                                }
-                                className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-                                placeholder="Enter email address"
-                              />
-                            ) : (
-                              <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
-                                {profile.email}
-                                {profile.email_verified_at && (
-                                  <span className="ml-2 text-green-600 text-sm">
-                                    ✓ Verified
-                                  </span>
-                                )}
-                              </p>
-                            )}
-                          </div>
-
-                          {renderField(
-                            "Mobile No.",
-                            profile.contacts?.mobile_number ||
-                              profile.mobile_number ||
-                              "Not provided",
-                            "mobile_number"
-                          )}
-
-                          {renderField(
-                            "Emergency Contact Number",
-                            profile.emergency_contact_number || "Not provided",
-                            "emergency_contact_number"
-                          )}
-
-                          {renderField(
-                            "Emergency Contact Relation",
-                            profile.emergency_contact_relation ||
-                              "Not provided",
-                            "emergency_contact_relation"
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Employment Information Tab */}
-                  {activeTab === "employment" && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold text-gray-900">
-                          Employment Information
-                        </h2>
-                        {!isEditing ? (
-                          <button
-                            onClick={handleEdit}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm"
-                          >
-                            <i className="bi bi-pencil mr-2"></i>
-                            Edit Employment Info
-                          </button>
-                        ) : (
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={handleCancel}
-                              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200 text-sm"
-                            >
-                              <i className="bi bi-x mr-2"></i>
-                              Cancel
-                            </button>
-                            <button
-                              onClick={handleSave}
-                              disabled={saving}
-                              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm disabled:opacity-50"
-                            >
-                              {saving ? (
-                                <>
-                                  <i className="bi bi-arrow-clockwise animate-spin mr-2"></i>
-                                  Saving...
-                                </>
-                              ) : (
-                                <>
-                                  <i className="bi bi-check mr-2"></i>
-                                  Save
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="bg-purple-50 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            Employment History
-                          </h3>
-                          <button
-                            onClick={addEmploymentRecord}
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm"
-                          >
-                            <i className="bi bi-plus mr-2"></i>
-                            Add Employment
-                          </button>
-                        </div>
-
-                        {/* Program Selection Modal */}
-                        {showProgramSelection && (
-                          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                            <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
-                              <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                                Select Program
-                              </h3>
-                              <div className="space-y-3 max-h-60 overflow-y-auto">
-                                {programs.map((program) => (
-                                  <button
-                                    key={program.id}
-                                    onClick={() =>
-                                      handleProgramSelect(program.id)
-                                    }
-                                    className="w-full text-left p-3 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors duration-200"
-                                  >
-                                    <div className="font-medium text-gray-900">
-                                      {program.name}
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                              <div className="flex justify-end space-x-3 mt-6">
-                                <button
-                                  onClick={() => setShowProgramSelection(false)}
-                                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Batch Input Interface */}
-                        {selectedProgramId && (
-                          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-4">
-                              <h4 className="text-lg font-semibold text-gray-900">
-                                Add Employment Record
-                              </h4>
-                              <button
-                                onClick={cancelBatchInput}
-                                className="text-gray-500 hover:text-gray-700"
-                              >
-                                <i className="bi bi-x-lg"></i>
-                              </button>
-                            </div>
-                            <div className="space-y-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Selected Program
-                                </label>
-                                <p className="text-gray-900 py-2 px-3 bg-white rounded-lg border border-gray-200">
-                                  {
-                                    programs.find(
-                                      (p) => p.id === selectedProgramId
-                                    )?.name
-                                  }
-                                </p>
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Batch <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                  type="text"
-                                  value={batchInput}
-                                  onChange={(e) =>
-                                    setBatchInput(e.target.value)
-                                  }
-                                  placeholder="e.g., BATCH 2025, Q1 2025, etc."
-                                  className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                              </div>
-                              <div className="flex justify-end space-x-3">
-                                <button
-                                  onClick={cancelBatchInput}
-                                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
-                                >
-                                  Cancel
-                                </button>
-                                <button
-                                  onClick={handleBatchSave}
-                                  disabled={!batchInput.trim()}
-                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                  Save Employment Record
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {employmentRecords.length === 0 ? (
-                          <div className="text-center py-8">
-                            <i className="bi bi-briefcase text-4xl text-gray-300 mb-3"></i>
-                            <p className="text-gray-500 mb-4">
-                              No employment records found
-                            </p>
-                            <button
-                              onClick={addEmploymentRecord}
-                              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                            >
-                              Add First Employment Record
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="overflow-x-auto">
-                            <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-sm">
-                              <thead className="bg-gray-50">
-                                <tr>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Program
-                                  </th>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Batch
-                                  </th>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-200">
-                                {employmentRecords.map((employment) => (
-                                  <tr
-                                    key={employment.id}
-                                    className="hover:bg-gray-50 transition-colors duration-200"
-                                  >
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                      {editingEmploymentId === employment.id ? (
-                                        <select
-                                          value={employment.program_id}
-                                          onChange={(e) =>
-                                            updateEmploymentRecord(
-                                              employment.id,
-                                              "program_id",
-                                              parseInt(e.target.value)
-                                            )
-                                          }
-                                          className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        >
-                                          <option value="">
-                                            Select program
-                                          </option>
-                                          {programs.map((program) => (
-                                            <option
-                                              key={program.id}
-                                              value={program.id}
-                                            >
-                                              {program.name}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      ) : (
-                                        <div className="flex items-center">
-                                          <div className="flex-shrink-0 h-3 w-3 bg-blue-600 rounded-full mr-3"></div>
-                                          <div className="text-sm font-medium text-gray-900">
-                                            {employment.program?.name ||
-                                              "Not assigned"}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                      {editingEmploymentId === employment.id ? (
-                                        <input
-                                          type="text"
-                                          value={employment.batch}
-                                          onChange={(e) =>
-                                            updateEmploymentRecord(
-                                              employment.id,
-                                              "batch",
-                                              e.target.value
-                                            )
-                                          }
-                                          placeholder="e.g., BATCH 2025"
-                                          className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        />
-                                      ) : (
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                          {employment.batch || "Not provided"}
-                                        </span>
-                                      )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                      {editingEmploymentId === employment.id ? (
-                                        <div className="flex space-x-2">
-                                          <button
-                                            onClick={() =>
-                                              saveEmploymentRecord(
-                                                employment.id
-                                              )
-                                            }
-                                            className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-100"
-                                          >
-                                            <i className="bi bi-check-lg"></i>
-                                          </button>
-                                          <button
-                                            onClick={() =>
-                                              cancelEmploymentEdit()
-                                            }
-                                            className="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-100"
-                                          >
-                                            <i className="bi bi-x-lg"></i>
-                                          </button>
-                                        </div>
-                                      ) : (
-                                        <div className="flex space-x-2">
-                                          <button
-                                            onClick={() =>
-                                              setEditingEmploymentId(
-                                                employment.id
-                                              )
-                                            }
-                                            className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-100"
-                                          >
-                                            <i className="bi bi-pencil"></i>
-                                          </button>
-                                          <button
-                                            onClick={() =>
-                                              deleteEmploymentRecord(
-                                                employment.id
-                                              )
-                                            }
-                                            className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-100"
-                                          >
-                                            <i className="bi bi-trash"></i>
-                                          </button>
-                                        </div>
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Educational Background Tab */}
-                  {activeTab === "education" && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold text-gray-900">
-                          Educational Background
-                        </h2>
-                        {!isEditing ? (
-                          <button
-                            onClick={handleEdit}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm"
-                          >
-                            <i className="bi bi-pencil mr-2"></i>
-                            Edit Education Info
-                          </button>
-                        ) : (
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={handleCancel}
-                              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200 text-sm"
-                            >
-                              <i className="bi bi-x mr-2"></i>
-                              Cancel
-                            </button>
-                            <button
-                              onClick={handleSave}
-                              disabled={saving}
-                              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm disabled:opacity-50"
-                            >
-                              {saving ? (
-                                <>
-                                  <i className="bi bi-arrow-clockwise animate-spin mr-2"></i>
-                                  Saving...
-                                </>
-                              ) : (
-                                <>
-                                  <i className="bi bi-check mr-2"></i>
-                                  Save
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* High School Section */}
-                      <div className="bg-green-50 rounded-xl p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                          <div className="w-3 h-3 bg-green-600 rounded-full mr-3"></div>
-                          High School
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {renderField(
-                            "School Name",
-                            profile.highschool_name || "Not provided",
-                            "highschool_name"
-                          )}
-
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                              Date Graduated
-                            </label>
-                            {isEditing ? (
-                              <input
-                                type="date"
-                                value={
-                                  editedProfile?.highschool_graduation_date ||
-                                  ""
-                                }
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    "highschool_graduation_date",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-                              />
-                            ) : (
-                              <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
-                                {profile.highschool_graduation_date
-                                  ? new Date(
-                                      profile.highschool_graduation_date
-                                    ).toLocaleDateString("en-US", {
-                                      year: "numeric",
-                                      month: "long",
-                                    })
-                                  : "Not provided"}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* College Section */}
-                      <div className="bg-blue-50 rounded-xl p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                          <div className="w-3 h-3 bg-blue-600 rounded-full mr-3"></div>
-                          College
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {renderField(
-                            "School Name",
-                            profile.college_name || "Not provided",
-                            "college_name"
-                          )}
-
-                          {renderField(
-                            "Degree Earned",
-                            profile.college_degree || "Not provided",
-                            "college_degree"
-                          )}
-
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                              Date Graduated
-                            </label>
-                            {isEditing ? (
-                              <input
-                                type="date"
-                                value={
-                                  editedProfile?.college_graduation_date || ""
-                                }
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    "college_graduation_date",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-                              />
-                            ) : (
-                              <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
-                                {profile.college_graduation_date
-                                  ? new Date(
-                                      profile.college_graduation_date
-                                    ).toLocaleDateString("en-US", {
-                                      year: "numeric",
-                                      month: "long",
-                                    })
-                                  : "Not provided"}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Higher Attainment Section */}
-                      <div className="bg-purple-50 rounded-xl p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                          <div className="w-3 h-3 bg-purple-600 rounded-full mr-3"></div>
-                          Higher Attainment
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {renderField(
-                            "School Name",
-                            profile.higher_education_name || "Not provided",
-                            "higher_education_name"
-                          )}
-
-                          {renderField(
-                            "Degree Earned",
-                            profile.higher_education_degree || "Not provided",
-                            "higher_education_degree"
-                          )}
-
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                              Date Graduated
-                            </label>
-                            {isEditing ? (
-                              <input
-                                type="date"
-                                value={
-                                  editedProfile?.higher_education_graduation_date ||
-                                  ""
-                                }
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    "higher_education_graduation_date",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-                              />
-                            ) : (
-                              <p className="text-gray-900 py-3 px-4 bg-white rounded-xl border border-gray-200">
-                                {profile.higher_education_graduation_date
-                                  ? new Date(
-                                      profile.higher_education_graduation_date
-                                    ).toLocaleDateString("en-US", {
-                                      year: "numeric",
-                                      month: "long",
-                                    })
-                                  : "Not provided"}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                    <span className="font-medium text-gray-700">
+                      {action.label}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Right Sidebar */}
-            <div className="space-y-8">
-              {/* Admin Actions */}
-              <div
-                className={`bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-1000 delay-400 ${
-                  isLoaded
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-10 opacity-0"
-                }`}
-              >
-                <h3 className="text-lg font-bold text-gray-900 mb-4">
-                  Admin Actions
-                </h3>
-                <div className="space-y-3">
-                  <button
-                    onClick={isEditing ? handleCancel : handleEdit}
-                    className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group"
+            {/* Recent Activity */}
+            <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                <i className="bi bi-clock-history text-blue-600 mr-2"></i>
+                Recent Activity
+              </h3>
+              <div className="space-y-4">
+                {recentActivity.map((activity, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-xl transition-all duration-200"
                   >
-                    <i
-                      className={`bi ${
-                        isEditing ? "bi-x" : "bi-pencil-square"
-                      } mr-3 text-xl group-hover:scale-110 transition-transform duration-300 text-blue-600`}
-                    ></i>
-                    <span className="font-medium">
-                      {isEditing ? "Cancel Edit" : "Edit Profile"}
-                    </span>
-                  </button>
-                  <button className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group">
-                    <i className="bi bi-file-earmark-medical mr-3 text-xl group-hover:scale-110 transition-transform duration-300 text-green-600"></i>
-                    <span className="font-medium">Medical Records</span>
-                  </button>
-                  <button className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group">
-                    <i className="bi bi-award mr-3 text-xl group-hover:scale-110 transition-transform duration-300 text-purple-600"></i>
-                    <span className="font-medium">Certificates</span>
-                  </button>
-                  <button className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group">
-                    <i className="bi bi-envelope mr-3 text-xl group-hover:scale-110 transition-transform duration-300 text-orange-600"></i>
-                    <span className="font-medium">Send Message</span>
-                  </button>
-                  <button className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-red-50 rounded-xl transition-all duration-300 group border border-red-200">
-                    <i className="bi bi-person-x mr-3 text-xl group-hover:scale-110 transition-transform duration-300 text-red-600"></i>
-                    <span className="font-medium text-red-600">
-                      Deactivate Account
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Recent Activity */}
-              <div
-                className={`bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-1000 delay-500 ${
-                  isLoaded
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-10 opacity-0"
-                }`}
-              >
-                <h3 className="text-lg font-bold text-gray-900 mb-4">
-                  Recent Activity
-                </h3>
-                <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-xl transition-all duration-300"
-                    >
+                    <div className="p-2 bg-blue-50 rounded-lg">
                       <i
-                        className={`bi bi-${activity.icon} text-lg flex-shrink-0 text-blue-600`}
+                        className={`bi bi-${activity.icon} text-blue-600 text-sm`}
                       ></i>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
-                          {activity.action}
-                        </p>
-                        <p className="text-xs text-gray-500">{activity.time}</p>
-                      </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {activity.action}
+                      </p>
+                      <p className="text-xs text-gray-500">{activity.time}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="bg-red-50/70 backdrop-blur-md rounded-2xl shadow-lg border border-red-200/20 p-6">
+              <h3 className="text-lg font-bold text-red-900 mb-4 flex items-center">
+                <i className="bi bi-exclamation-triangle text-red-600 mr-2"></i>
+                Danger Zone
+              </h3>
+              <button className="w-full flex items-center justify-center px-4 py-3 text-red-600 hover:bg-red-100 rounded-xl transition-all duration-200 border border-red-200">
+                <i className="bi bi-person-x mr-2"></i>
+                <span className="font-medium">Deactivate Account</span>
+              </button>
             </div>
           </div>
         </div>
