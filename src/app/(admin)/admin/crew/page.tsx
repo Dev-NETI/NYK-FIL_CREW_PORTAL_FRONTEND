@@ -33,15 +33,25 @@ export default function CrewManagement() {
       `${user.profile?.first_name || ""} ${user.profile?.middle_name || ""} ${
         user.profile?.last_name || ""
       }`.trim() ||
-      user.first_name ||
+      user.profile?.first_name ||
       user.email,
-    position: user.employment?.rank_name || user.rank_name || "Not assigned",
+    position:
+      user.employment?.rank_name ||
+      user.employment?.rank_name ||
+      "Not assigned",
     department:
-      user.employment?.fleet_name || user.fleet_name || "Not assigned",
-    status: user.employment?.crew_status || user.crew_status || "active",
-    joinDate: user.employment?.hire_date || user.hire_date || "Unknown",
+      user.employment?.fleet_name ||
+      user.employment?.fleet_name ||
+      "Not assigned",
+    status:
+      user.employment?.crew_status || user.employment?.crew_status || "active",
+    joinDate:
+      user.employment?.hire_date || user.employment?.hire_date || "Unknown",
     email: user.email,
-    phone: user.contacts?.mobile_number || user.mobile_number || "Not provided",
+    phone:
+      user.contacts?.mobile_number ||
+      user.contacts?.mobile_number ||
+      "Not provided",
   });
 
   // Load crew data from API
@@ -69,7 +79,6 @@ export default function CrewManagement() {
   useEffect(() => {
     loadCrewData();
   }, []);
-
 
   if (loading) {
     return (
@@ -190,7 +199,6 @@ export default function CrewManagement() {
           </div>
         </div>
       </div>
-
     </>
   );
 }

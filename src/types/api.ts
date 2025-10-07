@@ -45,9 +45,13 @@ export interface UserProfile {
   last_name?: string;
   suffix?: string;
   date_of_birth?: string;
+  place_of_birth?: string;
   age?: number;
   gender?: string;
   full_name?: string;
+  nationality?: string;
+  civil_status?: string;
+  religion?: string;
 }
 
 export interface UserContact {
@@ -82,11 +86,7 @@ export interface UserEducation {
   graduated_school_id?: number;
   date_graduated?: string;
   degree?: string;
-  field_of_study?: string;
-  gpa?: number;
   education_level?: string;
-  certifications?: string;
-  additional_training?: string;
 }
 
 export interface UserPhysicalTraits {
@@ -95,9 +95,8 @@ export interface UserPhysicalTraits {
   blood_type?: string;
   eye_color?: string;
   hair_color?: string;
-  distinguishing_marks?: string;
-  medical_conditions?: string;
 }
+
 
 // Updated User interface with new structure
 export interface User {
@@ -118,41 +117,6 @@ export interface User {
   education?: UserEducation;
   physical_traits?: UserPhysicalTraits;
 
-  // Backward compatibility fields (flattened for existing clients)
-  crew_id?: string;
-  fleet_name?: string;
-  rank_name?: string;
-  first_name?: string;
-  middle_name?: string;
-  last_name?: string;
-  suffix?: string;
-  date_of_birth?: string;
-  age?: number;
-  gender?: string;
-  mobile_number?: string;
-  permanent_address_id?: number;
-  graduated_school_id?: number;
-  date_graduated?: string;
-  crew_status?: string;
-  hire_status?: string;
-  hire_date?: string;
-  passport_number?: string;
-  passport_expiry?: string;
-  seaman_book_number?: string;
-  seaman_book_expiry?: string;
-  primary_allotee_id?: number;
-
-  // Legacy fields that might still be used
-  birth_date?: string;
-  birth_place?: string;
-  nationality?: string;
-  civil_status?: string;
-  religion?: string;
-  height?: number;
-  weight?: number;
-  blood_type?: string;
-  eye_color?: string;
-  hair_color?: string;
 
   // Address fields (temporary backward compatibility)
   permanent_region?: string;

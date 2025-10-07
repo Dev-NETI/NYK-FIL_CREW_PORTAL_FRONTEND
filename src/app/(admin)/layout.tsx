@@ -99,7 +99,7 @@ export default function AdminLayout({
 
       {/* Sidebar */}
       <aside
-        className={`w-64 bg-blue-900 shadow-2xl h-screen overflow-y-auto z-50 transform transition-transform duration-300 ease-in-out fixed inset-y-0 left-0 lg:relative lg:sticky lg:top-0 ${
+        className={`w-64 bg-blue-900 shadow-2xl h-screen overflow-y-auto z-50 transform transition-transform duration-300 ease-in-out fixed inset-y-0 left-0 lg:sticky lg:top-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -289,7 +289,7 @@ export default function AdminLayout({
         </header>
 
         {/* Page Content */}
-        <div className="p-4 lg:p-6 overflow-y-auto flex-1">{children}</div>
+        <div className="overflow-y-auto flex-1">{children}</div>
 
         {/* Footer */}
         <footer className="bg-white shadow-sm px-4 lg:px-6 py-3">
