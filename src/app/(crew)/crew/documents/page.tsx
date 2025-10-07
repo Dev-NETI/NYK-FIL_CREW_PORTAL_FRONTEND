@@ -36,7 +36,7 @@ export default function DocumentsPage() {
       title: "Travel Documents",
       description: "Passport, visas, seaman's book, and travel permits",
       icon: "✈️",
-      path: "/crew/documents/travel",
+      path: "/crew/documents/travel-document",
       color: "from-purple-500 to-purple-700",
       hoverColor: "hover:from-purple-600 hover:to-purple-800",
     },

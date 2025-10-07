@@ -37,6 +37,7 @@ export default function EmploymentDocumentListComponent() {
   const [selectedDocumentType, setSelectedDocumentType] =
     useState<APIEmploymentDocumentType | null>(null);
 
+  console.log(user);
   const fetchEmploymentDocuments = async () => {
     if (user?.profile?.crew_id) {
       try {
