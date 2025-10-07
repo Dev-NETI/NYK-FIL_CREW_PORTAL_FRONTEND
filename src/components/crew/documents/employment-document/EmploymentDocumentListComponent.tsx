@@ -140,6 +140,7 @@ export default function EmploymentDocumentListComponent() {
             setIsModalOpen(false);
             setSelectedDocumentType(null);
           }}
+          onSuccess={fetchEmploymentDocuments}
           documentType={selectedDocumentType.name}
           documentTypeId={selectedDocumentType.id}
           crewId={user.profile.crew_id}
