@@ -2,10 +2,12 @@ import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
+import { EmploymentDocumentService } from "@/services/employment-document";
 
 interface AddEmploymentDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess: () => void;
   documentType: string;
   documentTypeId: number;
   crewId: string;
@@ -22,6 +24,7 @@ const documentNumberSchema = Yup.string()
 export default function AddEmploymentDocumentModal({
   isOpen,
   onClose,
+  onSuccess,
   documentType,
   documentTypeId,
   crewId,
@@ -29,6 +32,7 @@ export default function AddEmploymentDocumentModal({
 }: AddEmploymentDocumentModalProps) {
   const [documentNumber, setDocumentNumber] = useState("");
   const [validationError, setValidationError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const validateDocumentNumber = async (value: string): Promise<boolean> => {
     try {
@@ -53,19 +57,38 @@ export default function AddEmploymentDocumentModal({
 
     const trimmedValue = documentNumber.trim();
 
-    // Console log the data
-    console.log({
-      crew_id: crewId,
+    const employmentDocData = {
+      crew_id: parseInt(crewId),
       employment_document_type_id: documentTypeId,
       document_number: trimmedValue,
-    });
+    };
 
-    toast.success(`${documentType} document added successfully!`);
+    setIsSaving(true);
 
-    // Reset form and close modal
-    setDocumentNumber("");
-    setValidationError("");
-    onClose();
+    try {
+      const response = await EmploymentDocumentService.createEmploymentDocument(
+        employmentDocData
+      );
+
+      if (response.success) {
+        toast.success(`${documentType} document added successfully!`);
+
+        // Reset form and close modal
+        setDocumentNumber("");
+        setValidationError("");
+        onClose();
+
+        // Reload the list
+        onSuccess();
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || "Failed to save employment document";
+      toast.error(errorMessage);
+      console.error("Error saving employment document:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleClose = () => {
@@ -198,14 +221,16 @@ export default function AddEmploymentDocumentModal({
                   <button
                     type="button"
                     onClick={handleSave}
-                    className={`flex-1 ${colors.bg} ${colors.hover} text-white px-4 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 ${colors.ring} focus:ring-offset-2`}
+                    disabled={isSaving}
+                    className={`flex-1 ${colors.bg} ${colors.hover} text-white px-4 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 ${colors.ring} focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    Save Document
+                    {isSaving ? "Saving..." : "Save Document"}
                   </button>
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                    disabled={isSaving}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>

@@ -25,6 +25,16 @@ export interface UpdateEmploymentDocumentData {
   document_number: string;
 }
 
+export interface CreateEmploymentDocumentData {
+  crew_id: number;
+  employment_document_type_id: number;
+  document_number: string;
+}
+
+export interface CreateEmploymentDocumentResponse extends BaseApiResponse {
+  data?: EmploymentDocument;
+}
+
 export interface UpdateEmploymentDocumentResponse extends BaseApiResponse {
   data?: EmploymentDocument;
 }
@@ -38,6 +48,19 @@ export class EmploymentDocumentService {
   ): Promise<EmploymentDocument[]> {
     const response = await api.get<EmploymentDocument[]>(
       `/employment-documents/${crewId}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Create employment document
+   */
+  static async createEmploymentDocument(
+    data: CreateEmploymentDocumentData
+  ): Promise<CreateEmploymentDocumentResponse> {
+    const response = await api.post<CreateEmploymentDocumentResponse>(
+      `/employment-documents`,
+      data
     );
     return response.data;
   }
