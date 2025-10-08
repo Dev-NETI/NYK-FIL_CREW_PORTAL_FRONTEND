@@ -44,6 +44,21 @@ export interface SaveTravelDocumentResponse {
   message: string;
 }
 
+export interface UpdateTravelDocumentPayload {
+  id_no?: string;
+  place_of_issue?: string;
+  date_of_issue?: string;
+  expiration_date?: string;
+  remaining_pages?: number;
+  is_US_VISA?: boolean;
+  visa_type?: string;
+}
+
+export interface UpdateTravelDocumentResponse {
+  success: boolean;
+  message: string;
+}
+
 export class TravelDocumentService {
   /**
    * Get travel documents by crew ID
@@ -65,6 +80,20 @@ export class TravelDocumentService {
   ): Promise<SaveTravelDocumentResponse> {
     const response = await api.post<SaveTravelDocumentResponse>(
       "/travel-documents",
+      payload
+    );
+    return response.data;
+  }
+
+  /**
+   * Update an existing travel document
+   */
+  static async updateTravelDocument(
+    travelDocumentId: number,
+    payload: UpdateTravelDocumentPayload
+  ): Promise<UpdateTravelDocumentResponse> {
+    const response = await api.put<UpdateTravelDocumentResponse>(
+      `/travel-documents/${travelDocumentId}`,
       payload
     );
     return response.data;

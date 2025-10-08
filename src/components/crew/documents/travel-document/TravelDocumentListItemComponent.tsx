@@ -1,4 +1,7 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
+import * as Yup from "yup";
+import { TravelDocumentService } from "@/services/travel-document";
 
 interface TravelDocument {
   id: number;
@@ -18,17 +21,118 @@ interface TravelDocument {
 
 interface TravelDocumentListItemComponentProps {
   document: TravelDocument;
+  onUpdate?: () => void;
 }
+
+// Yup validation schema
+const travelDocumentSchema = Yup.object().shape({
+  documentNumber: Yup.string().required("ID Number is required"),
+  issuingCountry: Yup.string()
+    .required("Place of Issue is required")
+    .max(255, "Place of Issue must not exceed 255 characters"),
+  issueDate: Yup.date()
+    .required("Date of Issue is required")
+    .typeError("Date of Issue must be a valid date"),
+  expiryDate: Yup.date()
+    .required("Expiration Date is required")
+    .typeError("Expiration Date must be a valid date")
+    .test(
+      "is-after-issue-date",
+      "Expiration Date must be after Date of Issue",
+      function (value) {
+        const { issueDate } = this.parent;
+        if (!value || !issueDate) return true;
+        return new Date(value) > new Date(issueDate);
+      }
+    ),
+  remaining_pages: Yup.number()
+    .nullable()
+    .integer("Remaining Pages must be a whole number")
+    .min(0, "Remaining Pages must be at least 0"),
+});
 
 export default function TravelDocumentListItemComponent({
   document,
+  onUpdate,
 }: TravelDocumentListItemComponentProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedDocument, setEditedDocument] = useState(document);
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
+  };
+
+  const formatDateForInput = (dateString: string) => {
+    return new Date(dateString).toISOString().split("T")[0];
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setEditedDocument(document);
+    setIsEditing(false);
+  };
+
+  const handleSave = async () => {
+    // Validate form using Yup
+    try {
+      await travelDocumentSchema.validate(editedDocument, {
+        abortEarly: false,
+      });
+    } catch (validationError) {
+      if (validationError instanceof Yup.ValidationError) {
+        // Show the first validation error
+        toast.error(validationError.errors[0]);
+      }
+      return;
+    }
+
+    try {
+      const dataToSave = {
+        id_no: editedDocument.documentNumber,
+        place_of_issue: editedDocument.issuingCountry,
+        date_of_issue: editedDocument.issueDate,
+        expiration_date: editedDocument.expiryDate,
+        remaining_pages: editedDocument.remaining_pages,
+        is_US_VISA: editedDocument.travel_document_type_id === 4,
+        visa_type:
+          editedDocument.travel_document_type_id === 4
+            ? editedDocument.visa_type
+            : undefined,
+      };
+
+      const response = await TravelDocumentService.updateTravelDocument(
+        document.id,
+        dataToSave
+      );
+
+      if (response.success) {
+        toast.success(response.message);
+        setIsEditing(false);
+
+        // Refresh the travel document list
+        if (onUpdate) {
+          onUpdate();
+        }
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Failed to update document"
+      );
+      console.error(error);
+    }
+  };
+
+  const handleInputChange = (
+    field: keyof TravelDocument,
+    value: string | number
+  ) => {
+    setEditedDocument({ ...editedDocument, [field]: value });
   };
 
   const getDaysUntilExpiry = () => {
@@ -128,7 +232,7 @@ export default function TravelDocumentListItemComponent({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-3">
-            <div>
+            <div className="flex-1">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                 {document.documentType}
               </h3>
@@ -143,12 +247,42 @@ export default function TravelDocumentListItemComponent({
               </p>
             </div>
 
-            {/* Status Badge */}
-            <span
-              className={`${expiryStatus.bgColor} ${expiryStatus.color} px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex-shrink-0 border ${expiryStatus.borderColor}`}
-            >
-              {expiryStatus.text}
-            </span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Status Badge */}
+              <span
+                className={`${expiryStatus.bgColor} ${expiryStatus.color} px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold border ${expiryStatus.borderColor}`}
+              >
+                {expiryStatus.text}
+              </span>
+
+              {/* Edit/Save/Cancel Buttons */}
+              {!isEditing ? (
+                <button
+                  onClick={handleEdit}
+                  className={`${colors.bg} text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-1`}
+                >
+                  <i className="bi bi-pencil-square"></i>
+                  <span className="hidden sm:inline">Edit</span>
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSave}
+                    className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold hover:bg-green-700 transition-colors flex items-center gap-1"
+                  >
+                    <i className="bi bi-check-lg"></i>
+                    <span className="hidden sm:inline">Save</span>
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold hover:bg-gray-700 transition-colors flex items-center gap-1"
+                  >
+                    <i className="bi bi-x-lg"></i>
+                    <span className="hidden sm:inline">Cancel</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -159,9 +293,20 @@ export default function TravelDocumentListItemComponent({
               ></i>
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-gray-600 font-medium">ID Number</p>
-                <p className="text-sm sm:text-base text-gray-900 font-semibold break-all">
-                  {document.documentNumber}
-                </p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedDocument.documentNumber}
+                    onChange={(e) =>
+                      handleInputChange("documentNumber", e.target.value)
+                    }
+                    className="w-full text-sm sm:text-base text-gray-900 font-semibold border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-sm sm:text-base text-gray-900 font-semibold break-all">
+                    {document.documentNumber}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -174,9 +319,20 @@ export default function TravelDocumentListItemComponent({
                 <p className="text-xs text-gray-600 font-medium">
                   Place of Issue
                 </p>
-                <p className="text-sm sm:text-base text-gray-900 font-semibold">
-                  {document.issuingCountry}
-                </p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedDocument.issuingCountry}
+                    onChange={(e) =>
+                      handleInputChange("issuingCountry", e.target.value)
+                    }
+                    className="w-full text-sm sm:text-base text-gray-900 font-semibold border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-sm sm:text-base text-gray-900 font-semibold">
+                    {document.issuingCountry}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -189,9 +345,20 @@ export default function TravelDocumentListItemComponent({
                 <p className="text-xs text-gray-600 font-medium">
                   Date of Issue
                 </p>
-                <p className="text-sm sm:text-base text-gray-900">
-                  {formatDate(document.issueDate)}
-                </p>
+                {isEditing ? (
+                  <input
+                    type="date"
+                    value={formatDateForInput(editedDocument.issueDate)}
+                    onChange={(e) =>
+                      handleInputChange("issueDate", e.target.value)
+                    }
+                    className="w-full text-sm sm:text-base text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-sm sm:text-base text-gray-900">
+                    {formatDate(document.issueDate)}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -204,13 +371,26 @@ export default function TravelDocumentListItemComponent({
                 <p className="text-xs text-gray-600 font-medium">
                   Expiration Date
                 </p>
-                <p className="text-sm sm:text-base text-gray-900">
-                  {formatDate(document.expiryDate)}
-                </p>
-                {getDaysUntilExpiry() > 0 && (
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {getDaysUntilExpiry()} days remaining
-                  </p>
+                {isEditing ? (
+                  <input
+                    type="date"
+                    value={formatDateForInput(editedDocument.expiryDate)}
+                    onChange={(e) =>
+                      handleInputChange("expiryDate", e.target.value)
+                    }
+                    className="w-full text-sm sm:text-base text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <>
+                    <p className="text-sm sm:text-base text-gray-900">
+                      {formatDate(document.expiryDate)}
+                    </p>
+                    {getDaysUntilExpiry() > 0 && (
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {getDaysUntilExpiry()} days remaining
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -251,24 +431,51 @@ export default function TravelDocumentListItemComponent({
                   <p className="text-xs text-gray-600 font-medium">
                     Remaining Pages
                   </p>
-                  <p className="text-sm sm:text-base text-gray-900 font-semibold">
-                    {document.remaining_pages}
-                  </p>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={editedDocument.remaining_pages || 0}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "remaining_pages",
+                          parseInt(e.target.value)
+                        )
+                      }
+                      className="w-full text-sm sm:text-base text-gray-900 font-semibold border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-sm sm:text-base text-gray-900 font-semibold">
+                      {document.remaining_pages}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Visa Type - Only for US VISA */}
-            {document.travel_document_type_id === 4 && document.visa_type && (
+            {document.travel_document_type_id === 4 && (
               <div className="flex items-start gap-2">
                 <i
                   className={`bi bi-tag ${colors.icon} text-sm mt-0.5 flex-shrink-0`}
                 ></i>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-gray-600 font-medium">Visa Type</p>
-                  <p className="text-sm sm:text-base text-gray-900 font-semibold">
-                    {document.visa_type}
-                  </p>
+                  {isEditing ? (
+                    <select
+                      value={editedDocument.visa_type || ""}
+                      onChange={(e) =>
+                        handleInputChange("visa_type", e.target.value)
+                      }
+                      className="w-full text-sm sm:text-base text-gray-900 font-semibold border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Visa Type</option>
+                      <option value="C1/D">C1/D</option>
+                    </select>
+                  ) : (
+                    <p className="text-sm sm:text-base text-gray-900 font-semibold">
+                      {document.visa_type}
+                    </p>
+                  )}
                 </div>
               </div>
             )}

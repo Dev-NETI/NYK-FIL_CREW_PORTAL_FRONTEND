@@ -113,7 +113,11 @@ export default function TravelDocumentListComponent() {
   return (
     <div className="space-y-4 mb-28">
       {travelDocuments.map((doc) => (
-        <TravelDocumentListItemComponent key={doc.id} document={doc} />
+        <TravelDocumentListItemComponent
+          key={doc.id}
+          document={doc}
+          onUpdate={fetchTravelDocuments}
+        />
       ))}
 
       {/* Missing Document Type Cards */}
