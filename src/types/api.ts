@@ -44,8 +44,8 @@ export interface UserProfile {
   middle_name?: string;
   last_name?: string;
   suffix?: string;
-  date_of_birth?: string;
-  place_of_birth?: string;
+  birth_date?: string;
+  birth_place?: string;
   age?: number;
   gender?: string;
   full_name?: string;

@@ -55,4 +55,18 @@ export class UserService {
     );
     return response.data;
   }
+
+  /**
+   * Update crew member profile (admin only)
+   */
+  static async updateCrewProfile(
+    id: string,
+    profileData: Partial<User>
+  ): Promise<UserProfileResponse> {
+    const response = await api.put<UserProfileResponse>(
+      `/admin/crew/${id}`,
+      profileData
+    );
+    return response.data;
+  }
 }
