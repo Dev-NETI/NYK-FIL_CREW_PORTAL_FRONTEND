@@ -21,6 +21,103 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [maintenanceDropdownOpen, setMaintenanceDropdownOpen] = useState(false);
+  const [generalSettingsDropdownOpen, setGeneralSettingsDropdownOpen] =
+    useState(false);
+
+  // Navigation links array for easy management
+  const navigationLinks = [
+    {
+      href: "/admin",
+      icon: "bi-house-door",
+      label: "Dashboard",
+      isActive: pathname === "/admin",
+    },
+    {
+      href: "/admin/crew",
+      icon: "bi-people",
+      label: "Crew Management",
+      isActive: pathname.startsWith("/admin/crew"),
+    },
+    {
+      href: "/admin/applications",
+      icon: "bi-file-earmark-text",
+      label: "Applications",
+      isActive: pathname.startsWith("/admin/applications"),
+    },
+    {
+      href: "/admin/job-descriptions",
+      icon: "bi-file-earmark-check",
+      label: "Job Descriptions",
+      isActive: pathname.startsWith("/admin/job-descriptions"),
+    },
+    {
+      href: "/admin/documents",
+      icon: "bi-folder",
+      label: "Documents",
+      isActive: pathname.startsWith("/admin/documents"),
+    },
+    {
+      href: "/admin/reports",
+      icon: "bi-graph-up",
+      label: "Reports",
+      isActive: pathname.startsWith("/admin/reports"),
+    },
+  ];
+
+  // General Settings sub-items
+  const generalSettingsItems = [
+    {
+      href: "/admin/programs",
+      icon: "bi-building",
+      label: "Programs",
+    },
+    {
+      href: "/admin/settings/general/appearance",
+      icon: "bi-palette",
+      label: "Appearance & Theme",
+    },
+    {
+      href: "/admin/settings/general/notifications",
+      icon: "bi-bell",
+      label: "Notification Settings",
+    },
+    {
+      href: "/admin/settings/general/email",
+      icon: "bi-envelope",
+      label: "Email Configuration",
+    },
+    {
+      href: "/admin/settings/general/security",
+      icon: "bi-shield-check",
+      label: "Security Settings",
+    },
+  ];
+
+  // Maintenance dropdown items
+  const maintenanceItems = [
+    {
+      href: "/admin/settings/general",
+      icon: "bi-gear",
+      label: "General Settings",
+      hasSubItems: true,
+    },
+    {
+      href: "/admin/settings/users",
+      icon: "bi-person-gear",
+      label: "User Management",
+    },
+    {
+      href: "/admin/settings/system",
+      icon: "bi-server",
+      label: "System Settings",
+    },
+    {
+      href: "/admin/settings/backup",
+      icon: "bi-cloud-download",
+      label: "Backup & Restore",
+    },
+  ];
 
   // Load user data from localStorage on mount
   useEffect(() => {
@@ -123,105 +220,116 @@ export default function AdminLayout({
           </div>
 
           <ul className="mt-2 space-y-1">
-            <li>
-              <Link
-                href="/admin"
-                className={`flex items-center px-6 py-3 transition-colors ${
-                  pathname === "/admin"
-                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
-                    : "text-white hover:bg-blue-800 hover:text-blue-100"
-                }`}
-              >
-                <i className="bi bi-house-door mr-3"></i>
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/admin/crew"
-                className={`flex items-center px-6 py-3 transition-colors ${
-                  pathname.startsWith("/admin/crew")
-                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
-                    : "text-white hover:bg-blue-800 hover:text-blue-100"
-                }`}
-              >
-                <i className="bi bi-people mr-3"></i>
-                Crew Management
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/admin/applications"
-                className={`flex items-center px-6 py-3 transition-colors ${
-                  pathname.startsWith("/admin/applications")
-                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
-                    : "text-white hover:bg-blue-800 hover:text-blue-100"
-                }`}
-              >
-                <i className="bi bi-file-earmark-text mr-3"></i>
-                Applications
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/admin/job-descriptions"
-                className={`flex items-center px-6 py-3 transition-colors ${
-                  pathname.startsWith("/admin/job-descriptions")
-                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
-                    : "text-white hover:bg-blue-800 hover:text-blue-100"
-                }`}
-              >
-                <i className="bi bi-file-earmark-check mr-3"></i>
-                Job Descriptions
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/admin/documents"
-                className={`flex items-center px-6 py-3 transition-colors ${
-                  pathname.startsWith("/admin/documents")
-                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
-                    : "text-white hover:bg-blue-800 hover:text-blue-100"
-                }`}
-              >
-                <i className="bi bi-folder mr-3"></i>
-                Documents
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/admin/reports"
-                className={`flex items-center px-6 py-3 transition-colors ${
-                  pathname.startsWith("/admin/reports")
-                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
-                    : "text-white hover:bg-blue-800 hover:text-blue-100"
-                }`}
-              >
-                <i className="bi bi-graph-up mr-3"></i>
-                Reports
-              </Link>
-            </li>
+            {navigationLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className={`flex items-center px-6 py-3 transition-colors ${
+                    link.isActive
+                      ? "bg-blue-700 text-white border-r-2 border-blue-300"
+                      : "text-white hover:bg-blue-800 hover:text-blue-100"
+                  }`}
+                >
+                  <i className={`bi ${link.icon} mr-3`}></i>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
           </ul>
 
           <div className="px-6 py-3 mt-8">
             <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">
-              Settings
+              Maintenance
             </p>
           </div>
 
           <ul className="mt-2 space-y-1">
             <li>
-              <Link
-                href="/admin/settings"
-                className={`flex items-center px-6 py-3 transition-colors ${
-                  pathname.startsWith("/admin/settings")
-                    ? "bg-blue-700 text-white border-r-2 border-blue-300"
-                    : "text-white hover:bg-blue-800 hover:text-blue-100"
-                }`}
+              <button
+                onClick={() =>
+                  setMaintenanceDropdownOpen(!maintenanceDropdownOpen)
+                }
+                className="flex items-center justify-between w-full px-6 py-3 text-white hover:bg-blue-800 hover:text-blue-100 transition-colors"
               >
-                <i className="bi bi-gear mr-3"></i>
-                Settings
-              </Link>
+                <div className="flex items-center">
+                  <i className="bi bi-tools mr-3"></i>
+                  Maintenance
+                </div>
+                <i
+                  className={`bi ${
+                    maintenanceDropdownOpen
+                      ? "bi-chevron-up"
+                      : "bi-chevron-down"
+                  } text-sm`}
+                ></i>
+              </button>
+
+              {maintenanceDropdownOpen && (
+                <ul className="ml-6 mt-1 space-y-1">
+                  {maintenanceItems.map((item) => (
+                    <li key={item.href}>
+                      {item.hasSubItems ? (
+                        <div>
+                          <button
+                            onClick={() =>
+                              setGeneralSettingsDropdownOpen(
+                                !generalSettingsDropdownOpen
+                              )
+                            }
+                            className="flex items-center justify-between w-full px-6 py-2 text-sm text-blue-200 hover:bg-blue-700 hover:text-white transition-colors"
+                          >
+                            <div className="flex items-center">
+                              <i className={`bi ${item.icon} mr-3`}></i>
+                              {item.label}
+                            </div>
+                            <i
+                              className={`bi ${
+                                generalSettingsDropdownOpen
+                                  ? "bi-chevron-up"
+                                  : "bi-chevron-down"
+                              } text-xs`}
+                            ></i>
+                          </button>
+
+                          {generalSettingsDropdownOpen && (
+                            <ul className="ml-6 mt-1 space-y-1">
+                              {generalSettingsItems.map((subItem) => (
+                                <li key={subItem.href}>
+                                  <Link
+                                    href={subItem.href}
+                                    className={`flex items-center px-6 py-2 text-xs transition-colors ${
+                                      pathname.startsWith(subItem.href)
+                                        ? "bg-blue-500 text-white border-r-2 border-blue-300"
+                                        : "text-blue-300 hover:bg-blue-600 hover:text-white"
+                                    }`}
+                                  >
+                                    <i
+                                      className={`bi ${subItem.icon} mr-3`}
+                                    ></i>
+                                    {subItem.label}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      ) : (
+                        <Link
+                          href={item.href}
+                          className={`flex items-center px-6 py-2 text-sm transition-colors ${
+                            pathname.startsWith(item.href)
+                              ? "bg-blue-600 text-white border-r-2 border-blue-300"
+                              : "text-blue-200 hover:bg-blue-700 hover:text-white"
+                          }`}
+                        >
+                          <i className={`bi ${item.icon} mr-3`}></i>
+                          {item.label}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
             <li>
               <button

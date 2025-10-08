@@ -12,6 +12,7 @@ import PhysicalTraits from "@/components/crew-profile/PhysicalTraits";
 import ContactInformation from "@/components/crew-profile/ContactInformation";
 import EmploymentInformation from "@/components/crew-profile/EmploymentInformation";
 import EducationInformation from "@/components/crew-profile/EducationInformation";
+import { Nationality, NationalityService } from "@/services/nationality";
 
 interface CrewDetailsPageProps {
   params: Promise<{
@@ -23,6 +24,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<User | null>(null);
+  const [nationalities, setNationalities] = useState<Nationality[]>([]);
   const [activeTab, setActiveTab] = useState("basic");
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState<User | null>(null);
@@ -50,6 +52,8 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     if (profile) {
       loadEmploymentRecords();
     }
+
+    loadNationality();
   }, [profile]);
 
   const loadEmploymentRecords = async () => {
@@ -60,6 +64,17 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
       }
     } catch (error) {
       console.error("Error loading employment records:", error);
+    }
+  };
+
+  const loadNationality = async () => {
+    try {
+      const response = await NationalityService.getNationalities();
+      if (response.success && response.data) {
+        setNationalities(response.data);
+      }
+    } catch (error) {
+      console.error("Error loading nationalities:", error);
     }
   };
 
@@ -97,8 +112,18 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         try {
           const profileResponse = await UserService.getCrewProfile(id);
           if (profileResponse.success && profileResponse.user) {
-            setProfile(profileResponse.user);
-            setEditedProfile(profileResponse.user);
+            const loadedProfile = profileResponse.user;
+            // Ensure all nested objects are properly initialized
+            const initializedProfile = {
+              ...loadedProfile,
+              profile: loadedProfile.profile || {},
+              physicalTraits: loadedProfile.physical_traits || {},
+              contacts: loadedProfile.contacts || {},
+              employment: loadedProfile.employment || {},
+              education: loadedProfile.education || {},
+            };
+            setProfile(initializedProfile);
+            setEditedProfile(initializedProfile);
             return;
           }
         } catch (adminError) {
@@ -123,12 +148,38 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
   const handleEdit = () => {
     setIsEditing(true);
-    setEditedProfile(profile ? { ...profile } : null);
+    if (profile) {
+      // Ensure all nested objects are properly initialized
+      const editableProfile = {
+        ...profile,
+        profile: profile.profile || {},
+        physicalTraits: profile.physical_traits || {},
+        contacts: profile.contacts || {},
+        employment: profile.employment || {},
+        education: profile.education || {},
+      };
+      setEditedProfile(editableProfile);
+    } else {
+      setEditedProfile(null);
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    setEditedProfile(profile);
+    if (profile) {
+      // Ensure all nested objects are properly initialized when canceling
+      const editableProfile = {
+        ...profile,
+        profile: profile.profile || {},
+        physicalTraits: profile.physical_traits || {},
+        contacts: profile.contacts || {},
+        employment: profile.employment || {},
+        education: profile.education || {},
+      };
+      setEditedProfile(editableProfile);
+    } else {
+      setEditedProfile(null);
+    }
   };
 
   const handleSave = async () => {
@@ -142,18 +193,45 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     try {
       setSaving(true);
 
-      // Here you would call the API to update the profile
-      // const updateResponse = await UserService.updateCrewProfile(id, editedProfile);
+      // Call the API to update the profile
+      const updateResponse = await UserService.updateCrewProfile(
+        id,
+        editedProfile
+      );
 
-      // For now, we'll simulate a successful update
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setProfile(editedProfile);
-      setIsEditing(false);
-      toast.success("Profile updated successfully!");
-    } catch (error) {
+      if (updateResponse.success && updateResponse.user) {
+        const updatedProfile = updateResponse.user;
+        // Ensure all nested objects are properly initialized
+        const initializedUpdatedProfile = {
+          ...updatedProfile,
+          profile: updatedProfile.profile || {},
+          physicalTraits: updatedProfile.physical_traits || {},
+          contacts: updatedProfile.contacts || {},
+          employment: updatedProfile.employment || {},
+          education: updatedProfile.education || {},
+        };
+        setProfile(initializedUpdatedProfile);
+        setEditedProfile(initializedUpdatedProfile);
+        setIsEditing(false);
+        toast.success("Profile updated successfully!");
+      } else {
+        throw new Error(updateResponse.message || "Update failed");
+      }
+    } catch (error: any) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+
+      // Handle specific validation errors
+      if (error?.response?.status === 422 && error?.response?.data?.errors) {
+        const validationErrors = error.response.data.errors;
+        const errorMessages = Object.values(validationErrors).flat();
+        toast.error(`Validation Error: ${errorMessages.join(", ")}`);
+      } else {
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to update profile";
+        toast.error(errorMessage);
+      }
     } finally {
       setSaving(false);
     }
@@ -175,11 +253,15 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   ) => {
     if (!editedProfile) return;
 
+    // Get the existing parent object or create an empty one
+    const existingParentObject = editedProfile[parent as keyof User] as
+      | Record<string, unknown>
+      | undefined;
+
     setEditedProfile({
       ...editedProfile,
       [parent]: {
-        ...((editedProfile[parent as keyof User] as Record<string, unknown>) ||
-          {}),
+        ...(existingParentObject || {}),
         [field]: value,
       },
     });
@@ -580,8 +662,8 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onEdit={handleEdit}
                     onSave={handleSave}
                     onCancel={handleCancel}
-                    onInputChange={handleInputChange}
                     onNestedInputChange={handleNestedInputChange}
+                    nationalities={nationalities}
                   />
                 )}
 
@@ -594,7 +676,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onEdit={handleEdit}
                     onSave={handleSave}
                     onCancel={handleCancel}
-                    onInputChange={handleInputChange}
+                    onNestedInputChange={handleNestedInputChange}
                   />
                 )}
 

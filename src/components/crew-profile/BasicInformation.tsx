@@ -1,37 +1,33 @@
 "use client";
 
+import React from "react";
 import { User } from "@/types/api";
-
-// Extended User interface to handle backward compatibility
-interface ExtendedUser extends User {
-  // Direct field access for backward compatibility
-  first_name?: string;
-  last_name?: string;
-  middle_name?: string;
-  suffix?: string;
-  nationality?: string;
-  gender?: string;
-  civil_status?: string;
-  date_of_birth?: string;
-  birth_place?: string;
-  blood_type?: string;
-  religion?: string;
-}
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  SelectChangeEvent,
+  Typography,
+} from "@mui/material";
+import { Nationality } from "@/services/nationality";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from "dayjs";
 
 interface BasicInformationProps {
-  profile: ExtendedUser;
-  editedProfile: ExtendedUser | null;
+  profile: User;
+  editedProfile: User | null;
   isEditing: boolean;
   saving: boolean;
   onEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
-  onInputChange: (field: string, value: string) => void;
   onNestedInputChange: (parent: string, field: string, value: string) => void;
+  nationalities: Nationality[];
 }
 
 // Field option configurations
-const GENDER_OPTIONS = ["Male", "Female", "Other", "Prefer not to say"];
+const GENDER_OPTIONS = ["Male", "Female"];
 const CIVIL_STATUS_OPTIONS = [
   "Single",
   "Married",
@@ -49,244 +45,29 @@ export default function BasicInformation({
   onEdit,
   onSave,
   onCancel,
-  onInputChange,
   onNestedInputChange,
+  nationalities,
 }: BasicInformationProps) {
-  // Utility function to get field value with fallback
-  const getFieldValue = (field: keyof ExtendedUser): string => {
-    return (
-      (profile.profile?.[field as keyof typeof profile.profile] as string) ||
-      (profile[field] as string) ||
-      "Not provided"
-    );
-  };
-
-  // Utility function to get edited field value
-  const getEditedFieldValue = (field: keyof ExtendedUser): string => {
-    return (editedProfile?.[field] as string) || "";
-  };
-
   // Utility function to get edited nested field value
   const getEditedNestedFieldValue = (parent: string, field: string): string => {
     return (
-      ((
-        editedProfile?.[parent as keyof ExtendedUser] as Record<string, unknown>
-      )?.[field] as string) || ""
+      ((editedProfile?.[parent as keyof User] as Record<string, unknown>)?.[
+        field
+      ] as string) || ""
     );
   };
 
-  // Base field component
-  const FieldContainer = ({
-    children,
-    label,
-    required = false,
-  }: {
-    children: React.ReactNode;
-    label: string;
-    required?: boolean;
-  }) => (
-    <div className="group">
-      <label className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      {children}
-    </div>
-  );
-
-  // Display component for non-editing state
-  const DisplayField = ({ value }: { value: string }) => (
-    <div className="py-4 px-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 group-hover:shadow-md transition-all duration-200">
-      <p className="text-gray-900 font-medium">
-        {value && value !== "Not provided" ? (
-          value
-        ) : (
-          <span className="text-gray-400 italic">Not provided</span>
-        )}
-      </p>
-    </div>
-  );
-
-  // Text input component
-  const TextInput = ({
-    value,
-    onChange,
-    placeholder,
-    type = "text",
-  }: {
-    value: string;
-    onChange: (value: string) => void;
-    placeholder: string;
-    type?: string;
-  }) => (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full py-4 px-4 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-200 hover:border-gray-300"
-      placeholder={placeholder}
-    />
-  );
-
-  // Select input component
-  const SelectInput = ({
-    value,
-    onChange,
-    options,
-    placeholder,
-  }: {
-    value: string;
-    onChange: (value: string) => void;
-    options: string[];
-    placeholder: string;
-  }) => (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full py-4 px-4 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-200 hover:border-gray-300"
-    >
-      <option value="">{placeholder}</option>
-      {options.map((option) => (
-        <option key={option} value={option}>
-          {option}
-        </option>
-      ))}
-    </select>
-  );
-
-  // Standard field renderer
-  const renderField = (
-    label: string,
-    field: keyof ExtendedUser,
-    required: boolean = false,
-    type: string = "text"
-  ) => {
-    const value = getFieldValue(field);
-    const editedValue = getEditedFieldValue(field);
-
-    return (
-      <FieldContainer label={label} required={required}>
-        {isEditing ? (
-          <TextInput
-            value={editedValue}
-            onChange={(val) => onInputChange(field as string, val)}
-            placeholder={`Enter ${label.toLowerCase()}`}
-            type={type}
-          />
-        ) : (
-          <DisplayField value={value} />
-        )}
-      </FieldContainer>
-    );
-  };
-
-  // Nested field renderer
-  const renderNestedField = (
-    label: string,
-    parent: string,
-    field: string,
-    required: boolean = false
-  ) => {
-    const value =
-      (profile.profile?.[field as keyof typeof profile.profile] as string) ||
-      (profile[field as keyof ExtendedUser] as string) ||
-      "Not provided";
-    const editedValue = getEditedNestedFieldValue(parent, field);
-
-    return (
-      <FieldContainer label={label} required={required}>
-        {isEditing ? (
-          <TextInput
-            value={editedValue}
-            onChange={(val) => onNestedInputChange(parent, field, val)}
-            placeholder={`Enter ${label.toLowerCase()}`}
-          />
-        ) : (
-          <DisplayField value={value} />
-        )}
-      </FieldContainer>
-    );
-  };
-
-  // Select field renderer
-  const renderSelectField = (
-    label: string,
-    field: keyof ExtendedUser,
-    options: string[],
-    required: boolean = false
-  ) => {
-    const value = getFieldValue(field);
-    const editedValue = getEditedFieldValue(field);
-
-    return (
-      <FieldContainer label={label} required={required}>
-        {isEditing ? (
-          <SelectInput
-            value={editedValue}
-            onChange={(val) => onInputChange(field as string, val)}
-            options={options}
-            placeholder={`Select ${label.toLowerCase()}`}
-          />
-        ) : (
-          <DisplayField value={value} />
-        )}
-      </FieldContainer>
-    );
-  };
-
-  // Special date field renderer
-  const renderDateField = (
-    label: string,
-    field: keyof ExtendedUser,
-    required: boolean = false
-  ) => {
-    const rawValue = getFieldValue(field);
-    const displayValue =
-      rawValue && rawValue !== "Not provided"
-        ? new Date(rawValue).toLocaleDateString()
-        : "Not provided";
-    const editedValue = getEditedFieldValue(field);
-
-    return (
-      <FieldContainer label={label} required={required}>
-        {isEditing ? (
-          <TextInput
-            value={editedValue}
-            onChange={(val) => onInputChange(field as string, val)}
-            placeholder={`Enter ${label.toLowerCase()}`}
-            type="date"
-          />
-        ) : (
-          <DisplayField value={displayValue} />
-        )}
-      </FieldContainer>
-    );
-  };
-
-  // Special gender field with nested handling
-  const renderGenderField = () => {
-    const value =
-      (profile.profile?.gender as string) ||
-      (profile.gender as string) ||
-      "Not provided";
-    const editedValue =
-      getEditedNestedFieldValue("profile", "gender") ||
-      getEditedFieldValue("gender");
-
-    return (
-      <FieldContainer label="Gender">
-        {isEditing ? (
-          <SelectInput
-            value={editedValue}
-            onChange={(val) => onNestedInputChange("profile", "gender", val)}
-            options={GENDER_OPTIONS}
-            placeholder="Select gender"
-          />
-        ) : (
-          <DisplayField value={value} />
-        )}
-      </FieldContainer>
-    );
+  // Utility function to format date from ISO to yyyy-MM-dd
+  const formatDateForInput = (
+    dateString: string | null | undefined
+  ): string => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split("T")[0];
+    } catch {
+      return "";
+    }
   };
 
   return (
@@ -301,6 +82,9 @@ export default function BasicInformation({
           <p className="text-gray-600 mt-1">
             Personal details and identification
           </p>
+          <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+            Please ensure all information is accurate and up to date
+          </Typography>
         </div>
 
         {/* Edit Controls */}
@@ -348,28 +132,395 @@ export default function BasicInformation({
       <div className="space-y-8">
         {/* Personal Name Fields - All in one row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {renderNestedField("Last Name", "profile", "last_name", true)}
-          {renderNestedField("First Name", "profile", "first_name", true)}
-          {renderNestedField("Middle Name", "profile", "middle_name")}
-          {renderNestedField("Suffix", "profile", "suffix")}
+          {/* Last Name */}
+          <div>
+            {isEditing ? (
+              <TextField
+                label="Last Name *"
+                value={getEditedNestedFieldValue("profile", "last_name")}
+                onChange={(e) =>
+                  onNestedInputChange("profile", "last_name", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+                required
+              />
+            ) : (
+              <TextField
+                label="Last Name *"
+                value={(profile.profile?.last_name as string) || ""}
+                fullWidth
+                variant="outlined"
+                disabled
+                required
+              />
+            )}
+          </div>
+
+          {/* First Name */}
+          <div>
+            {isEditing ? (
+              <TextField
+                label="First Name"
+                value={getEditedNestedFieldValue("profile", "first_name")}
+                onChange={(e) =>
+                  onNestedInputChange("profile", "first_name", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+                required
+              />
+            ) : (
+              <TextField
+                label="First Name"
+                value={(profile.profile?.first_name as string) || ""}
+                fullWidth
+                variant="outlined"
+                disabled
+                required
+              />
+            )}
+          </div>
+
+          {/* Middle Name */}
+          <div>
+            {isEditing ? (
+              <TextField
+                label="Middle Name"
+                value={getEditedNestedFieldValue("profile", "middle_name")}
+                onChange={(e) =>
+                  onNestedInputChange("profile", "middle_name", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+              />
+            ) : (
+              <TextField
+                label="Middle Name"
+                value={(profile.profile?.middle_name as string) || ""}
+                fullWidth
+                variant="outlined"
+                disabled
+              />
+            )}
+          </div>
+
+          {/* Suffix */}
+          <div>
+            {isEditing ? (
+              <TextField
+                label="Suffix"
+                value={getEditedNestedFieldValue("profile", "suffix")}
+                onChange={(e) =>
+                  onNestedInputChange("profile", "suffix", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+              />
+            ) : (
+              <TextField
+                label="Suffix"
+                value={(profile.profile?.suffix as string) || ""}
+                fullWidth
+                variant="outlined"
+                disabled
+              />
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {renderField("Nationality", "nationality")}
-          {renderGenderField()}
-          {renderSelectField(
-            "Civil Status",
-            "civil_status",
-            CIVIL_STATUS_OPTIONS
-          )}
+          {/* Nationality */}
+          <div>
+            {isEditing ? (
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={getEditedNestedFieldValue("profile", "nationality")}
+                  onChange={(e: SelectChangeEvent) =>
+                    onNestedInputChange(
+                      "profile",
+                      "nationality",
+                      e.target.value
+                    )
+                  }
+                  displayEmpty
+                  renderValue={(value) => {
+                    if (!value) return "Select Nationality";
+                    const nationality = nationalities.find(
+                      (n) => n.nationality === value
+                    );
+                    return nationality ? nationality.nationality : value;
+                  }}
+                >
+                  <MenuItem value="">Select Nationality</MenuItem>
+                  {nationalities.map((nationality) => (
+                    <MenuItem
+                      key={nationality.id}
+                      value={nationality.nationality}
+                    >
+                      {nationality.nationality}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : (
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={(profile.profile?.nationality as string) || ""}
+                  displayEmpty
+                  disabled
+                  renderValue={(value) => {
+                    if (!value) return "Not specified";
+                    const nationality = nationalities.find(
+                      (n) => n.nationality === value
+                    );
+                    return nationality ? nationality.nationality : value;
+                  }}
+                >
+                  <MenuItem value="">Not specified</MenuItem>
+                  {nationalities.map((nationality) => (
+                    <MenuItem
+                      key={nationality.id}
+                      value={nationality.nationality}
+                    >
+                      {nationality.nationality}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </div>
+
+          {/* Gender */}
+          <div>
+            {isEditing ? (
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={getEditedNestedFieldValue("profile", "gender")}
+                  onChange={(e: SelectChangeEvent) =>
+                    onNestedInputChange("profile", "gender", e.target.value)
+                  }
+                  displayEmpty
+                  renderValue={(value) => value || "Select Gender"}
+                >
+                  <MenuItem value="">Select Gender</MenuItem>
+                  {GENDER_OPTIONS.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : (
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={(profile.profile?.gender as string) || ""}
+                  displayEmpty
+                  disabled
+                  renderValue={(value) => value || "Not specified"}
+                >
+                  <MenuItem value="">Not specified</MenuItem>
+                  {GENDER_OPTIONS.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </div>
+
+          {/* Civil Status */}
+          <div>
+            {isEditing ? (
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={getEditedNestedFieldValue("profile", "civil_status")}
+                  onChange={(e: SelectChangeEvent) =>
+                    onNestedInputChange(
+                      "profile",
+                      "civil_status",
+                      e.target.value
+                    )
+                  }
+                  displayEmpty
+                  renderValue={(value) => value || "Select Civil Status"}
+                >
+                  <MenuItem value="">Select Civil Status</MenuItem>
+                  {CIVIL_STATUS_OPTIONS.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : (
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={(profile.profile?.civil_status as string) || ""}
+                  displayEmpty
+                  disabled
+                  renderValue={(value) => value || "Not specified"}
+                >
+                  <MenuItem value="">Not specified</MenuItem>
+                  {CIVIL_STATUS_OPTIONS.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </div>
         </div>
 
         {/* Basic Information Fields - Two columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {renderDateField("Birth Date", "date_of_birth")}
-          {renderField("Birth Place", "birth_place")}
-          {renderSelectField("Blood Type", "blood_type", BLOOD_TYPE_OPTIONS)}
-          {renderField("Religion", "religion")}
+          {/* Birth Date */}
+          <div>
+            {isEditing ? (
+              <DatePicker
+                label="Birth Date"
+                value={(() => {
+                  const dateValue =
+                    getEditedNestedFieldValue("profile", "birth_date") ||
+                    profile.profile?.birth_date;
+                  if (!dateValue) return null;
+                  try {
+                    return dayjs(dateValue).isValid() ? dayjs(dateValue) : null;
+                  } catch {
+                    return null;
+                  }
+                })()}
+                onChange={(newValue) => {
+                  try {
+                    const dateString =
+                      newValue && dayjs(newValue).isValid()
+                        ? dayjs(newValue).format("YYYY-MM-DD")
+                        : "";
+                    onNestedInputChange("profile", "birth_date", dateString);
+                  } catch (error) {
+                    console.error("Date picker error:", error);
+                    onNestedInputChange("profile", "birth_date", "");
+                  }
+                }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "outlined",
+                  },
+                }}
+              />
+            ) : (
+              <TextField
+                label="Birth Date"
+                type="date"
+                value={formatDateForInput(
+                  profile.profile?.birth_date as string
+                )}
+                fullWidth
+                variant="outlined"
+                disabled
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+              />
+            )}
+          </div>
+
+          {/* Birth Place */}
+          <div>
+            {isEditing ? (
+              <TextField
+                label="Birth Place"
+                value={getEditedNestedFieldValue("profile", "birth_place")}
+                onChange={(e) =>
+                  onNestedInputChange("profile", "birth_place", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+              />
+            ) : (
+              <TextField
+                label="Birth Place"
+                value={(profile.profile?.birth_place as string) || ""}
+                fullWidth
+                variant="outlined"
+                disabled
+              />
+            )}
+          </div>
+
+          {/* Blood Type */}
+          <div>
+            {isEditing ? (
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={getEditedNestedFieldValue(
+                    "physicalTraits",
+                    "blood_type"
+                  )}
+                  onChange={(e: SelectChangeEvent) =>
+                    onNestedInputChange(
+                      "physicalTraits",
+                      "blood_type",
+                      e.target.value
+                    )
+                  }
+                  displayEmpty
+                  renderValue={(value) => value || "Select Blood Type"}
+                >
+                  <MenuItem value="">Select Blood Type</MenuItem>
+                  {BLOOD_TYPE_OPTIONS.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : (
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={(profile.physical_traits?.blood_type as string) || ""}
+                  displayEmpty
+                  disabled
+                  renderValue={(value) => value || "Not specified"}
+                >
+                  <MenuItem value="">Not specified</MenuItem>
+                  {BLOOD_TYPE_OPTIONS.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </div>
+
+          {/* Religion */}
+          <div>
+            {isEditing ? (
+              <TextField
+                label="Religion"
+                value={getEditedNestedFieldValue("profile", "religion")}
+                onChange={(e) =>
+                  onNestedInputChange("profile", "religion", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+              />
+            ) : (
+              <TextField
+                label="Religion"
+                value={(profile.profile?.religion as string) || ""}
+                fullWidth
+                variant="outlined"
+                disabled
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

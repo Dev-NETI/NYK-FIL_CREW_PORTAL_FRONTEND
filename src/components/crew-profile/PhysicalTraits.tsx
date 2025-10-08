@@ -1,6 +1,7 @@
 "use client";
 
 import { User } from "@/types/api";
+import { TextField } from "@mui/material";
 
 interface PhysicalTraitsProps {
   profile: User;
@@ -10,7 +11,7 @@ interface PhysicalTraitsProps {
   onEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
-  onInputChange: (field: string, value: string) => void;
+  onNestedInputChange: (parent: string, field: string, value: string) => void;
 }
 
 export default function PhysicalTraits({
@@ -21,8 +22,17 @@ export default function PhysicalTraits({
   onEdit,
   onSave,
   onCancel,
-  onInputChange,
+  onNestedInputChange,
 }: PhysicalTraitsProps) {
+  // Utility function to get edited nested field value
+  const getEditedNestedFieldValue = (parent: string, field: string): string => {
+    return (
+      ((editedProfile?.[parent as keyof User] as Record<string, unknown>)?.[
+        field
+      ] as string) || ""
+    );
+  };
+
   const renderField = (
     label: string,
     value: string,
@@ -30,25 +40,26 @@ export default function PhysicalTraits({
     required: boolean = false
   ) => {
     return (
-      <div className="group">
-        <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-          {label} 
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
+      <div>
         {isEditing ? (
-          <input
-            type="text"
-            value={(editedProfile?.[field as keyof User] as string) || ""}
-            onChange={(e) => onInputChange(field, e.target.value)}
-            className="w-full py-4 px-4 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-200 hover:border-gray-300"
+          <TextField
+            label={label}
+            value={getEditedNestedFieldValue("physicalTraits", field)}
+            onChange={(e) => onNestedInputChange("physicalTraits", field, e.target.value)}
+            fullWidth
+            variant="outlined"
+            required={required}
             placeholder={`Enter ${label.toLowerCase()}`}
           />
         ) : (
-          <div className="py-4 px-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 group-hover:shadow-md transition-all duration-200">
-            <p className="text-gray-900 font-medium">
-              {value || <span className="text-gray-400 italic">Not provided</span>}
-            </p>
-          </div>
+          <TextField
+            label={label}
+            value={value || "Not provided"}
+            fullWidth
+            variant="outlined"
+            disabled
+            required={required}
+          />
         )}
       </div>
     );
@@ -63,9 +74,11 @@ export default function PhysicalTraits({
             <i className="bi bi-body-text text-blue-600 mr-3"></i>
             Physical Traits
           </h2>
-          <p className="text-gray-600 mt-1">Physical characteristics and measurements</p>
+          <p className="text-gray-600 mt-1">
+            Physical characteristics and measurements
+          </p>
         </div>
-        
+
         {/* Edit Controls */}
         <div className="flex items-center space-x-3">
           {!isEditing ? (
@@ -109,73 +122,79 @@ export default function PhysicalTraits({
 
       {/* Form Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="group">
-          <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-            Height (cm)
-          </label>
+        <div>
           {isEditing ? (
-            <input
+            <TextField
+              label="Height (cm)"
               type="number"
-              value={editedProfile?.height || ""}
-              onChange={(e) =>
-                onInputChange("height", e.target.value)
-              }
-              className="w-full py-4 px-4 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-200 hover:border-gray-300"
+              value={getEditedNestedFieldValue("physicalTraits", "height")}
+              onChange={(e) => onNestedInputChange("physicalTraits", "height", e.target.value)}
+              fullWidth
+              variant="outlined"
               placeholder="Enter height in cm"
-              min="0"
-              max="300"
+              slotProps={{
+                htmlInput: {
+                  min: 0,
+                  max: 300,
+                },
+              }}
             />
           ) : (
-            <div className="py-4 px-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 group-hover:shadow-md transition-all duration-200">
-              <p className="text-gray-900 font-medium">
-                {profile.physical_traits?.height || profile.height
-                  ? `${profile.physical_traits?.height || profile.height} cm`
-                  : <span className="text-gray-400 italic">Not provided</span>}
-              </p>
-            </div>
+            <TextField
+              label="Height (cm)"
+              value={
+                profile.physical_traits?.height
+                  ? `${profile.physical_traits?.height} cm`
+                  : "Not provided"
+              }
+              fullWidth
+              variant="outlined"
+              disabled
+            />
           )}
         </div>
 
-        <div className="group">
-          <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-            Weight (kg)
-          </label>
+        <div>
           {isEditing ? (
-            <input
+            <TextField
+              label="Weight (kg)"
               type="number"
-              value={editedProfile?.weight || ""}
-              onChange={(e) =>
-                onInputChange("weight", e.target.value)
-              }
-              className="w-full py-4 px-4 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-200 hover:border-gray-300"
+              value={getEditedNestedFieldValue("physicalTraits", "weight")}
+              onChange={(e) => onNestedInputChange("physicalTraits", "weight", e.target.value)}
+              fullWidth
+              variant="outlined"
               placeholder="Enter weight in kg"
-              min="0"
-              max="500"
+              slotProps={{
+                htmlInput: {
+                  min: 0,
+                  max: 500,
+                },
+              }}
             />
           ) : (
-            <div className="py-4 px-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 group-hover:shadow-md transition-all duration-200">
-              <p className="text-gray-900 font-medium">
-                {profile.physical_traits?.weight || profile.weight
-                  ? `${profile.physical_traits?.weight || profile.weight} kg`
-                  : <span className="text-gray-400 italic">Not provided</span>}
-              </p>
-            </div>
+            <TextField
+              label="Weight (kg)"
+              value={
+                profile.physical_traits?.weight
+                  ? `${profile.physical_traits?.weight} kg`
+                  : "Not provided"
+              }
+              fullWidth
+              variant="outlined"
+              disabled
+            />
           )}
         </div>
 
         {renderField(
           "Eye Color",
-          profile.physical_traits?.eye_color ||
-            profile.eye_color ||
-            "Not provided",
+          profile.physical_traits?.eye_color || "Not provided",
           "eye_color"
         )}
 
         {renderField(
           "Hair Color",
-          profile.physical_traits?.hair_color ||
-            profile.hair_color ||
-            "Not provided",
+          profile.physical_traits?.hair_color || "Not provided",
           "hair_color"
         )}
       </div>
