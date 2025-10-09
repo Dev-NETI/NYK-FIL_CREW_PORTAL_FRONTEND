@@ -17,11 +17,13 @@ import { User } from "@/types/api";
 interface NavigationProps {
   currentPath?: string;
   user?: User;
+  hideBottomNav?: boolean;
 }
 
 export default function Navigation({
   currentPath = "/",
   user,
+  hideBottomNav = false,
 }: NavigationProps) {
   const [clickedItem, setClickedItem] = useState<string | null>(null);
   const [previousActive, setPreviousActive] = useState<string | null>(
@@ -50,6 +52,12 @@ export default function Navigation({
       label: "Documents",
       icon: "file-earmark",
       activeIcon: "file-earmark-fill",
+    },
+    {
+      href: "/crew/inbox",
+      label: "Inbox",
+      icon: "chat",
+      activeIcon: "chat-fill",
     },
     {
       href: "/crew/job-description",
@@ -332,64 +340,66 @@ export default function Navigation({
         </div>
       </nav>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-blue-900/95 backdrop-blur-md border-t border-blue-800 z-40 md:hidden">
-        <div className="grid grid-cols-3 py-2 sm:py-3">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => handleNavClick(item.href)}
-              className={`flex flex-col items-center py-2 sm:py-3 px-1 sm:px-2 transition-all duration-600 ease-out rounded-lg mx-1 transform relative overflow-hidden ${
-                clickedItem === item.href ? "scale-105 -rotate-1" : "scale-100"
-              } ${
-                isActive(item.href)
-                  ? "bg-gradient-to-t from-blue-500 to-blue-400 text-white shadow-lg shadow-blue-300/30 animate-in zoom-in-75 slide-in-from-bottom-3 duration-500"
-                  : previousActive === item.href && !isActive(item.href)
-                  ? "bg-gradient-to-t from-blue-700 to-blue-800 text-blue-200 animate-out zoom-out-95 slide-out-to-top-3 duration-350"
-                  : "text-blue-100 hover:text-white hover:bg-gradient-to-t hover:from-blue-800 hover:to-blue-700"
-              }`}
-            >
-              <div
-                className={`absolute inset-0 bg-white/10 rounded-lg transform transition-all duration-300 ${
-                  clickedItem === item.href
-                    ? "scale-100 opacity-100"
-                    : "scale-0 opacity-0"
-                }`}
-              ></div>
-              <i
-                className={`bi bi-${
-                  isActive(item.href) ? item.activeIcon : item.icon
-                } text-lg sm:text-xl mb-1 transition-all duration-500 ease-out z-10 ${
-                  clickedItem === item.href
-                    ? "-rotate-6 scale-110"
-                    : "rotate-0 scale-100"
+      {/* Mobile Bottom Navigation - Hidden when chat is open */}
+      {!hideBottomNav && (
+        <div className="fixed bottom-0 left-0 right-0 bg-blue-900/95 backdrop-blur-md border-t border-blue-800 z-40 md:hidden">
+          <div className="grid grid-cols-4 py-2 sm:py-3">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => handleNavClick(item.href)}
+                className={`flex flex-col items-center py-2 sm:py-3 px-1 sm:px-2 transition-all duration-600 ease-out rounded-lg mx-1 transform relative overflow-hidden ${
+                  clickedItem === item.href ? "scale-105 -rotate-1" : "scale-100"
                 } ${
                   isActive(item.href)
-                    ? "animate-in spin-in-6 zoom-in-50 duration-400 delay-75"
-                    : ""
-                }`}
-              ></i>
-              <span
-                className={`text-xs sm:text-sm font-medium transition-all duration-400 ease-out z-10 ${
-                  clickedItem === item.href
-                    ? "translate-y-0.5 font-semibold"
-                    : "translate-y-0 font-medium"
-                } ${
-                  isActive(item.href)
-                    ? "animate-in slide-in-from-bottom-1 duration-400 delay-100"
-                    : ""
+                    ? "bg-gradient-to-t from-blue-500 to-blue-400 text-white shadow-lg shadow-blue-300/30 animate-in zoom-in-75 slide-in-from-bottom-3 duration-500"
+                    : previousActive === item.href && !isActive(item.href)
+                    ? "bg-gradient-to-t from-blue-700 to-blue-800 text-blue-200 animate-out zoom-out-95 slide-out-to-top-3 duration-350"
+                    : "text-blue-100 hover:text-white hover:bg-gradient-to-t hover:from-blue-800 hover:to-blue-700"
                 }`}
               >
-                {item.label}
-              </span>
-            </Link>
-          ))}
+                <div
+                  className={`absolute inset-0 bg-white/10 rounded-lg transform transition-all duration-300 ${
+                    clickedItem === item.href
+                      ? "scale-100 opacity-100"
+                      : "scale-0 opacity-0"
+                  }`}
+                ></div>
+                <i
+                  className={`bi bi-${
+                    isActive(item.href) ? item.activeIcon : item.icon
+                  } text-lg sm:text-xl mb-1 transition-all duration-500 ease-out z-10 ${
+                    clickedItem === item.href
+                      ? "-rotate-6 scale-110"
+                      : "rotate-0 scale-100"
+                  } ${
+                    isActive(item.href)
+                      ? "animate-in spin-in-6 zoom-in-50 duration-400 delay-75"
+                      : ""
+                  }`}
+                ></i>
+                <span
+                  className={`text-xs sm:text-sm font-medium transition-all duration-400 ease-out z-10 ${
+                    clickedItem === item.href
+                      ? "translate-y-0.5 font-semibold"
+                      : "translate-y-0 font-medium"
+                  } ${
+                    isActive(item.href)
+                      ? "animate-in slide-in-from-bottom-1 duration-400 delay-100"
+                      : ""
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Spacer for mobile bottom nav */}
-      <div className="h-16 sm:h-20 md:h-0 lg:h-18"></div>
+      {/* Spacer for mobile bottom nav - Only show when nav is visible */}
+      {!hideBottomNav && <div className="h-16 sm:h-20 md:h-0 lg:h-18"></div>}
     </>
   );
 }
