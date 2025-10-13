@@ -23,6 +23,11 @@ api.interceptors.request.use(
       }
     }
 
+    // If data is FormData, remove Content-Type header to let axios set it automatically with boundary
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
+
     // Log request for debugging
     // console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
     //   data: config.data,

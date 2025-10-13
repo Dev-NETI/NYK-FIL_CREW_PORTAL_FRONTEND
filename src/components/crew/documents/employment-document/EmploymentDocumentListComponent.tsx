@@ -22,6 +22,8 @@ interface EmploymentDocument {
   createdAt: string;
   modifiedBy: string;
   icon: string;
+  file_path?: string;
+  file_ext?: string;
 }
 
 export default function EmploymentDocumentListComponent() {
@@ -96,6 +98,8 @@ export default function EmploymentDocumentListComponent() {
       createdAt: doc.created_at,
       modifiedBy: doc.modified_by,
       icon: getDocumentIcon(doc.employment_document_type.name),
+      file_path: doc.file_path,
+      file_ext: doc.file_ext,
     })) || [];
 
   // Find missing document types

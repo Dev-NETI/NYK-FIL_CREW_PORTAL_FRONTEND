@@ -33,6 +33,8 @@ export default function AddEmploymentDocumentModal({
   const [documentNumber, setDocumentNumber] = useState("");
   const [validationError, setValidationError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState("");
 
   const validateDocumentNumber = async (value: string): Promise<boolean> => {
     try {
@@ -47,6 +49,47 @@ export default function AddEmploymentDocumentModal({
     }
   };
 
+  const validateFile = (file: File): boolean => {
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+    const ALLOWED_TYPES = [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError("File size must not exceed 5MB");
+      return false;
+    }
+
+    // Check file type
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setFileError(
+        "Only PDF and image files (JPEG, PNG, GIF, WebP) are allowed"
+      );
+      return false;
+    }
+
+    setFileError("");
+    return true;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (validateFile(file)) {
+        setDocumentFile(file);
+      } else {
+        setDocumentFile(null);
+        e.target.value = ""; // Reset input
+      }
+    }
+  };
+
   const handleSave = async () => {
     const isValid = await validateDocumentNumber(documentNumber);
 
@@ -55,19 +98,55 @@ export default function AddEmploymentDocumentModal({
       return;
     }
 
+    if (fileError) {
+      toast.error(fileError);
+      return;
+    }
+
     const trimmedValue = documentNumber.trim();
 
-    const employmentDocData = {
-      crew_id: parseInt(crewId),
-      employment_document_type_id: documentTypeId,
-      document_number: trimmedValue,
-    };
+    // Create FormData if file is uploaded, otherwise use JSON
+    let requestData: FormData | any;
+
+    if (documentFile) {
+      // Create FormData to handle file upload
+      const formData = new FormData();
+      formData.append("crew_id", crewId);
+      formData.append("employment_document_type_id", documentTypeId.toString());
+      formData.append("document_number", trimmedValue);
+      formData.append("file", documentFile);
+      requestData = formData;
+
+      // Debug: Log FormData contents
+      console.log("📤 Sending FormData with file:");
+      console.log("  - crew_id:", crewId);
+      console.log("  - employment_document_type_id:", documentTypeId);
+      console.log("  - document_number:", trimmedValue);
+      console.log(
+        "  - file:",
+        documentFile.name,
+        `(${(documentFile.size / 1024).toFixed(2)} KB)`
+      );
+
+      // Verify FormData entries
+      for (const pair of formData.entries()) {
+        console.log(`  - ${pair[0]}:`, pair[1]);
+      }
+    } else {
+      // Use JSON object if no file
+      requestData = {
+        crew_id: parseInt(crewId),
+        employment_document_type_id: documentTypeId,
+        document_number: trimmedValue,
+      };
+      console.log("📤 Sending JSON:", requestData);
+    }
 
     setIsSaving(true);
 
     try {
       const response = await EmploymentDocumentService.createEmploymentDocument(
-        employmentDocData
+        requestData
       );
 
       if (response.success) {
@@ -75,7 +154,9 @@ export default function AddEmploymentDocumentModal({
 
         // Reset form and close modal
         setDocumentNumber("");
+        setDocumentFile(null);
         setValidationError("");
+        setFileError("");
         onClose();
 
         // Reload the list
@@ -93,7 +174,9 @@ export default function AddEmploymentDocumentModal({
 
   const handleClose = () => {
     setDocumentNumber("");
+    setDocumentFile(null);
     setValidationError("");
+    setFileError("");
     onClose();
   };
 
@@ -187,33 +270,112 @@ export default function AddEmploymentDocumentModal({
                 </div>
 
                 {/* Form */}
-                <div className="mt-4">
-                  <label
-                    htmlFor="document-number"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Document Number
-                  </label>
-                  <input
-                    id="document-number"
-                    type="text"
-                    value={documentNumber}
-                    onChange={(e) => {
-                      setDocumentNumber(e.target.value);
-                      validateDocumentNumber(e.target.value);
-                    }}
-                    className={`w-full px-4 py-3 text-base border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                      validationError
-                        ? "border-red-500 focus:ring-red-500"
-                        : `border-gray-300 ${colors.ring} focus:border-transparent`
-                    }`}
-                    placeholder={`Enter ${documentType} number`}
-                  />
-                  {validationError && (
-                    <p className="mt-2 text-sm text-red-600 font-medium">
-                      {validationError}
-                    </p>
-                  )}
+                <div className="mt-4 space-y-4">
+                  {/* Document Number Field */}
+                  <div>
+                    <label
+                      htmlFor="document-number"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Document Number
+                    </label>
+                    <input
+                      id="document-number"
+                      type="text"
+                      value={documentNumber}
+                      onChange={(e) => {
+                        setDocumentNumber(e.target.value);
+                        validateDocumentNumber(e.target.value);
+                      }}
+                      className={`w-full px-4 py-3 text-base border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
+                        validationError
+                          ? "border-red-500 focus:ring-red-500"
+                          : `border-gray-300 ${colors.ring} focus:border-transparent`
+                      }`}
+                      placeholder={`Enter ${documentType} number`}
+                    />
+                    {validationError && (
+                      <p className="mt-2 text-sm text-red-600 font-medium">
+                        {validationError}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* File Upload Field */}
+                  <div>
+                    <label
+                      htmlFor="document-file"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Upload Document{" "}
+                      <span className="text-gray-400 text-xs">(Optional)</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="document-file"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,image/*,application/pdf"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="document-file"
+                        className={`flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                          fileError
+                            ? "border-red-500 bg-red-50"
+                            : documentFile
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                        }`}
+                      >
+                        <div className="text-center">
+                          {documentFile ? (
+                            <>
+                              <i className="bi bi-file-earmark-check text-3xl text-green-600 mb-2"></i>
+                              <p className="text-sm font-medium text-gray-700">
+                                {documentFile.name}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {(documentFile.size / 1024 / 1024).toFixed(2)}{" "}
+                                MB
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <i className="bi bi-cloud-upload text-3xl text-gray-400 mb-2"></i>
+                              <p className="text-sm font-medium text-gray-700">
+                                Click to upload document
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                PDF or Image (Max 5MB)
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                    {fileError && (
+                      <p className="mt-2 text-sm text-red-600 font-medium">
+                        {fileError}
+                      </p>
+                    )}
+                    {documentFile && !fileError && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDocumentFile(null);
+                          setFileError("");
+                          const fileInput = document.getElementById(
+                            "document-file"
+                          ) as HTMLInputElement;
+                          if (fileInput) fileInput.value = "";
+                        }}
+                        className="mt-2 text-sm text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Remove file
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Buttons */}

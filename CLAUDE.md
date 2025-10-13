@@ -12,10 +12,12 @@ NYK-FIL Crew Portal Frontend is a Next.js 15 application for maritime crew manag
 - **Styling**: TailwindCSS 4 with custom design system
 - **State**: React hooks and client-side state
 - **HTTP Client**: Axios with interceptors
-- **UI Components**: Radix UI primitives + custom components
+- **UI Components**: Radix UI primitives + custom components + Material-UI (date pickers)
 - **Notifications**: react-hot-toast
-- **Icons**: Bootstrap Icons (CDN)
+- **Icons**: Bootstrap Icons (CDN) + Lucide React
 - **Fonts**: Poppins (Google Fonts)
+- **Date Handling**: Day.js with MUI DatePicker
+- **Validation**: Yup schema validation
 
 ## Development Commands
 
@@ -47,6 +49,8 @@ src/app/
 │   │   ├── home/
 │   │   ├── profile/[crew_id]/
 │   │   ├── documents/
+│   │   │   ├── employment-document/
+│   │   │   └── travel-document/
 │   │   ├── appointment-schedule/
 │   │   ├── job-description/
 │   │   ├── finance/
@@ -57,8 +61,12 @@ src/app/
     ├── layout.tsx   # Admin layout with sidebar
     └── admin/
         ├── crew/
+        │   └── [id]/       # Individual crew detail page
         ├── programs/
-        └── job-descriptions/
+        ├── job-descriptions/
+        ├── applications/
+        ├── documents/
+        └── reports/
 ```
 
 ### Authentication & Authorization
@@ -83,10 +91,12 @@ src/app/
 ### API Communication
 
 **Base Configuration:**
-- Base URL: `process.env.NEXT_PUBLIC_API_BASE_URL` (default: `http://localhost:8000/api`)
-- CSRF: Laravel Sanctum CSRF protection enabled
+- Base URL: `process.env.NEXT_PUBLIC_BACKEND_URL + '/api'` (default: `http://localhost:8000/api`)
+- CSRF: Laravel Sanctum CSRF protection enabled via `/sanctum/csrf-cookie`
 - Credentials: `withCredentials: true`
+- XSRF Token: `withXSRFToken: true`
 - Timeout: 10 seconds
+- Headers: `Content-Type: application/json`, `Accept: application/json`
 
 **Service Layer Pattern:**
 All API calls go through service classes in `src/services/`:
@@ -94,6 +104,10 @@ All API calls go through service classes in `src/services/`:
 - `user.ts` - User management
 - `program.ts` - Program management
 - `employment.ts` - Employment/contract data
+- `employment-document.ts` & `employment-document-type.ts` - Employment document management
+- `travel-document.ts` & `travel-document-type.ts` - Travel document management
+- `nationality.ts` - Nationality data
+- `index.ts` - Service exports
 
 **Standard Pattern:**
 ```typescript
@@ -115,6 +129,26 @@ src/components/
 │   ├── dropdown-menu.tsx
 │   ├── avatar.tsx
 │   └── textarea.tsx
+├── crew/                  # Crew-specific components
+│   └── documents/
+│       ├── employment-document/
+│       │   ├── EmploymentDocumentListComponent.tsx
+│       │   ├── EmploymentDocumentListItemComponent.tsx
+│       │   ├── EmploymentDocumentListSkeleton.tsx
+│       │   ├── AddEmploymentDocumentModal.tsx
+│       │   └── MissingEmploymentDocumentCardComponent.tsx
+│       └── travel-document/
+│           ├── TravelDocumentListComponent.tsx
+│           ├── TravelDocumentListItemComponent.tsx
+│           ├── TravelDocumentListSkeleton.tsx
+│           ├── AddTravelDocumentModal.tsx
+│           └── MissingTravelDocumentCardComponent.tsx
+├── crew-profile/          # Profile page components
+│   ├── BasicInformation.tsx
+│   ├── ContactInformation.tsx
+│   ├── EducationInformation.tsx
+│   ├── EmploymentInformation.tsx
+│   └── PhysicalTraits.tsx
 ├── job-description-module/  # Feature-specific module
 │   ├── JobDescriptionRequestForm.tsx
 │   ├── JobDescriptionStatus.tsx
@@ -124,13 +158,22 @@ src/components/
 ├── CrewForm.tsx
 ├── Navigation.tsx
 ├── Pagination.tsx
-└── OTPInput.tsx
+├── OTPInput.tsx
+├── DeleteConfirmModal.tsx
+└── FeedbackDialog.tsx
 ```
 
 **Layout Components:**
-- **Root Layout** (`src/app/layout.tsx`): Global styles, fonts, Toaster
-- **Admin Layout** (`src/app/(admin)/layout.tsx`): Sidebar, header, footer with user context
+- **Root Layout** (`src/app/layout.tsx`): Global styles, fonts, Toaster, LocalizationProvider (MUI DatePicker)
+- **Admin Layout** (`src/app/(admin)/layout.tsx`): Sidebar with nested dropdowns, header with user avatar, footer
 - **Auth Layout** (`src/app/(auth)/layout.tsx`): Minimal layout for login
+
+**Admin Sidebar Features:**
+- Collapsible navigation with dropdowns for Maintenance and General Settings
+- Active route highlighting with border indicators
+- User initials avatar generation
+- Mobile-responsive overlay menu
+- Logout button with loading state
 
 ### State Management
 
@@ -181,6 +224,27 @@ className="p-4 lg:p-6"  // 4 on mobile, 6 on desktop
 
 ## Special Features
 
+### Document Management System
+
+**Employment Documents:**
+- Upload and manage employment-related documents (contracts, certificates, etc.)
+- Document type classification with employment-document-type service
+- List, add, and track missing required documents
+- Skeleton loading states for better UX
+
+**Travel Documents:**
+- Manage passports, visas, and travel-related documents
+- Nationality selection with nationality service
+- Document expiry tracking
+- Add/edit/delete functionality with modals
+
+**Key Components Pattern:**
+- List component: Displays all documents
+- List item component: Individual document card
+- Skeleton component: Loading state
+- Add modal: Form for new documents
+- Missing card: Highlights required missing documents
+
 ### Job Description Module
 
 A comprehensive workflow system for crew job description requests:
@@ -192,13 +256,22 @@ A comprehensive workflow system for crew job description requests:
 - `JobDescriptionStatus` - Status tracking with progress indicators
 - `PDFViewer` variants - Browser-based PDF generation with digital signatures
 
-**Documentation:** See `src/components/job-description-module/README.md` for detailed API docs, integration points, and backend schema suggestions.
-
 **Key Features:**
 - Purpose selection (SSS, Pag-Ibig, PhilHealth, VISA)
 - VISA type sub-selection for VISA requests
 - Status flow: pending → in_progress → ready_for_approval → approved/disapproved
 - PDF generation using pdf-lib + QR codes
+
+### Crew Profile System
+
+Modular profile page with separate components for different information sections:
+- **BasicInformation**: Name, date of birth, civil status, nationality
+- **ContactInformation**: Email, phone, address details
+- **EducationInformation**: Educational background and qualifications
+- **EmploymentInformation**: Current and past employment records
+- **PhysicalTraits**: Height, weight, distinctive marks, etc.
+
+Each component can be edited independently with proper form validation.
 
 ## TypeScript Configuration
 
@@ -217,8 +290,10 @@ A comprehensive workflow system for crew job description requests:
 
 **Required:**
 ```bash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api  # Backend API URL
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000  # Backend base URL (API will be appended as /api)
 ```
+
+**Note:** The `.env` file should contain `NEXT_PUBLIC_BACKEND_URL` (not `NEXT_PUBLIC_API_BASE_URL`). The axios instance in `src/lib/axios.ts` appends `/api` automatically.
 
 ## Common Patterns
 
@@ -315,4 +390,17 @@ npm run lint  # Check for issues
 - **localStorage Usage**: Only access localStorage after checking `typeof window !== 'undefined'`
 - **Path Aliases**: Always use `@/` prefix for imports (e.g., `@/components/Button`)
 - **Bootstrap Icons**: Loaded via CDN in root layout, use `<i className="bi bi-icon-name" />`
-- **No Backend Yet**: Some features have mock data and are ready for API integration
+- **Mixed File Extensions**: Some files use `.tsx`, others use `.jsx` (e.g., travel-document page)
+- **Date Pickers**: Use MUI DatePicker wrapped with LocalizationProvider and Day.js adapter
+- **Form Validation**: Yup is available for schema validation in forms
+- **API Routes**: Next.js API routes available in `src/app/api/` (e.g., job-description-requests)
+
+## Development Best Practices
+
+- **Component Structure**: Follow the established pattern of List → ListItem → Skeleton → Modal for data views
+- **Service Layer**: Always use service classes for API calls, never call axios directly from components
+- **Error Handling**: Wrap all async operations in try-catch blocks with toast notifications
+- **Loading States**: Provide skeleton components or loading indicators for all data fetching
+- **Type Safety**: Define TypeScript interfaces in `src/types/api.ts` for all API responses
+- **Responsive Design**: Use mobile-first approach with Tailwind breakpoints (lg:, md:, sm:)
+- **Authentication**: Always check for authentication and role before rendering protected content
