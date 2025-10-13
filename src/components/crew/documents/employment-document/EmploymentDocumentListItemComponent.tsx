@@ -2,6 +2,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import * as Yup from "yup";
 import { EmploymentDocumentService } from "@/services/employment-document";
+import ViewEmploymentDocumentModal from "./ViewEmploymentDocumentModal";
 
 interface EmploymentDocument {
   id: number;
@@ -12,6 +13,8 @@ interface EmploymentDocument {
   createdAt: string;
   modifiedBy: string;
   icon: string;
+  file_path?: string;
+  file_ext?: string;
 }
 
 interface EmploymentDocumentListItemComponentProps {
@@ -35,6 +38,12 @@ export default function EmploymentDocumentListItemComponent({
     document.documentNumber
   );
   const [validationError, setValidationError] = useState("");
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -57,15 +66,94 @@ export default function EmploymentDocumentListItemComponent({
     }
   };
 
+  const validateFile = (file: File): boolean => {
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+    const ALLOWED_TYPES = [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError("File size must not exceed 5MB");
+      return false;
+    }
+
+    // Check file type
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setFileError(
+        "Only PDF and image files (JPEG, PNG, GIF, WebP) are allowed"
+      );
+      return false;
+    }
+
+    setFileError("");
+    return true;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (validateFile(file)) {
+        setDocumentFile(file);
+      } else {
+        setDocumentFile(null);
+        e.target.value = ""; // Reset input
+      }
+    }
+  };
+
   const handleEdit = () => {
     setIsEditing(true);
     setValidationError("");
+    setFileError("");
+    setDocumentFile(null);
   };
 
   const handleCancel = () => {
     setEditedDocumentNumber(document.documentNumber);
     setValidationError("");
+    setFileError("");
+    setDocumentFile(null);
     setIsEditing(false);
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setShowDeleteConfirm(false);
+    setIsDeleting(true);
+
+    try {
+      const loadingToast = toast.loading("Deleting employment document...");
+
+      await EmploymentDocumentService.deleteEmploymentDocument(document.id);
+
+      toast.dismiss(loadingToast);
+      toast.success(`${document.documentType} document deleted successfully!`);
+
+      // Reload the list after successful deletion
+      if (onUpdate) {
+        onUpdate();
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Failed to delete employment document"
+      );
+      console.error("Delete error:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false);
   };
 
   const handleSave = async () => {
@@ -76,15 +164,44 @@ export default function EmploymentDocumentListItemComponent({
       return;
     }
 
+    if (fileError) {
+      toast.error(fileError);
+      return;
+    }
+
     const trimmedValue = editedDocumentNumber.trim();
-    const requestData = {
-      id: document.id,
-      crew_id: document.crew_id,
-      employment_document_type_id: document.employment_document_type_id,
-      document_number: trimmedValue,
-    };
+
+    // Create FormData if file is uploaded, otherwise use JSON
+    let requestData: FormData | any;
+
+    if (documentFile) {
+      // Create FormData to handle file upload
+      const formData = new FormData();
+      formData.append("crew_id", document.crew_id);
+      formData.append(
+        "employment_document_type_id",
+        document.employment_document_type_id.toString()
+      );
+      formData.append("document_number", trimmedValue);
+      formData.append("file", documentFile);
+      formData.append("_method", "PUT"); // Laravel method spoofing for file uploads
+      requestData = formData;
+
+      console.log("📤 Updating with FormData (file included)");
+    } else {
+      // Use JSON object if no file
+      requestData = {
+        crew_id: document.crew_id,
+        employment_document_type_id: document.employment_document_type_id,
+        document_number: trimmedValue,
+      };
+      console.log("📤 Updating with JSON (no file)");
+    }
+
+    setIsSaving(true);
+
     try {
-      const loadingToast = toast.loading("Updating document number...");
+      const loadingToast = toast.loading("Updating employment document...");
 
       const response = await EmploymentDocumentService.updateEmploymentDocument(
         document.id,
@@ -95,31 +212,27 @@ export default function EmploymentDocumentListItemComponent({
 
       if (response.success) {
         toast.success(
-          response.message || "Document number updated successfully!"
+          response.message || "Employment document updated successfully!"
         );
 
-        // Console log the updated fields
-        // console.log({
-        //   id: document.id,
-        //   crew_id: document.crew_id,
-        //   employment_document_type_id: document.employment_document_type_id,
-        //   document_number: trimmedValue,
-        // });
-
         setIsEditing(false);
+        setDocumentFile(null);
+        setFileError("");
 
         // Reload the list after successful update
         if (onUpdate) {
           onUpdate();
         }
       } else {
-        toast.error(response.message || "Failed to update document number");
+        toast.error(response.message || "Failed to update employment document");
       }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "An error occurred while updating"
       );
       console.error("Update error:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -198,27 +311,58 @@ export default function EmploymentDocumentListItemComponent({
               {document.documentType}
             </h3>
 
-            {/* Edit/Cancel/Save Buttons */}
+            {/* View/Edit/Delete/Cancel/Save Buttons */}
             {!isEditing ? (
-              <button
-                onClick={handleEdit}
-                className={`${colors.bg} text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-1.5 flex-shrink-0`}
-              >
-                <i className="bi bi-pencil-square"></i>
-                <span className="hidden sm:inline">Edit</span>
-              </button>
+              <div className="flex gap-2 flex-shrink-0">
+                {document.file_path && (
+                  <button
+                    onClick={() => setIsViewModalOpen(true)}
+                    disabled={isDeleting}
+                    className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <i className="bi bi-eye"></i>
+                    <span className="hidden sm:inline">View</span>
+                  </button>
+                )}
+                <button
+                  onClick={handleEdit}
+                  disabled={isDeleting}
+                  className={`${colors.bg} text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <i className="bi bi-pencil-square"></i>
+                  <span className="hidden sm:inline">Edit</span>
+                </button>
+                <button
+                  onClick={handleDeleteClick}
+                  disabled={isDeleting}
+                  className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-red-700 transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <i
+                    className={
+                      isDeleting ? "bi bi-hourglass-split" : "bi bi-trash"
+                    }
+                  ></i>
+                  <span className="hidden sm:inline">
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </span>
+                </button>
+              </div>
             ) : (
               <div className="flex gap-2 flex-shrink-0">
                 <button
                   onClick={handleSave}
-                  className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                  disabled={isSaving}
+                  className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <i className="bi bi-check-lg"></i>
-                  <span className="hidden sm:inline">Save</span>
+                  <span className="hidden sm:inline">
+                    {isSaving ? "Saving..." : "Save"}
+                  </span>
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                  disabled={isSaving}
+                  className="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <i className="bi bi-x-lg"></i>
                   <span className="hidden sm:inline">Cancel</span>
@@ -267,6 +411,84 @@ export default function EmploymentDocumentListItemComponent({
               </div>
             </div>
 
+            {/* File Upload/Replace (only in edit mode) */}
+            {isEditing && (
+              <div className="flex items-start gap-2">
+                <i
+                  className={`bi bi-cloud-upload ${colors.icon} text-sm mt-0.5 flex-shrink-0`}
+                ></i>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-600 font-medium">
+                    {document.file_path
+                      ? "Replace Document"
+                      : "Upload Document"}{" "}
+                    <span className="text-gray-400">(Optional)</span>
+                  </p>
+                  <div className="mt-1">
+                    <input
+                      id={`document-file-${document.id}`}
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,image/*,application/pdf"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor={`document-file-${document.id}`}
+                      className={`inline-flex items-center px-3 py-2 border-2 border-dashed rounded-lg cursor-pointer text-xs sm:text-sm transition-colors ${
+                        fileError
+                          ? "border-red-500 bg-red-50 text-red-700"
+                          : documentFile
+                          ? "border-green-500 bg-green-50 text-green-700"
+                          : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      {documentFile ? (
+                        <>
+                          <i className="bi bi-file-earmark-check mr-2"></i>
+                          <span className="font-medium">
+                            {documentFile.name}
+                          </span>
+                          <span className="ml-2 text-xs">
+                            ({(documentFile.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-upload mr-2"></i>
+                          <span>
+                            {document.file_path
+                              ? "Choose new file to replace"
+                              : "Choose file to upload"}
+                          </span>
+                        </>
+                      )}
+                    </label>
+                    {fileError && (
+                      <p className="text-xs text-red-600 font-medium mt-1">
+                        {fileError}
+                      </p>
+                    )}
+                    {documentFile && !fileError && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDocumentFile(null);
+                          setFileError("");
+                          const fileInput = window.document.getElementById(
+                            `document-file-${document.id}`
+                          ) as HTMLInputElement;
+                          if (fileInput) fileInput.value = "";
+                        }}
+                        className="text-xs text-red-600 hover:text-red-800 font-medium mt-1"
+                      >
+                        Remove file
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Created At */}
             <div className="flex items-start gap-2">
               <i
@@ -292,9 +514,79 @@ export default function EmploymentDocumentListItemComponent({
                 </p>
               </div>
             </div>
+
+            {/* Uploaded File Indicator */}
+            {document.file_path && (
+              <div className="flex items-start gap-2">
+                <i
+                  className={`bi bi-paperclip ${colors.icon} text-sm mt-0.5 flex-shrink-0`}
+                ></i>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-600 font-medium">
+                    Attached File
+                  </p>
+                  <p className="text-sm sm:text-base text-gray-900 font-semibold">
+                    Document uploaded
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* View Document Modal */}
+      {document.file_path && (
+        <ViewEmploymentDocumentModal
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          documentType={document.documentType}
+          documentId={document.id}
+          fileExt={document.file_ext}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <i className="bi bi-exclamation-triangle text-red-600 text-2xl"></i>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Delete {document.documentType} Document?
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Are you sure you want to delete this document? This action
+                  cannot be undone.
+                </p>
+                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Document Number:</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {document.documentNumber}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleCancelDelete}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2.5 rounded-lg font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

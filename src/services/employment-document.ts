@@ -14,6 +14,8 @@ export interface EmploymentDocument {
   crew_id: string;
   employment_document_type_id: number;
   document_number: string;
+  file_path?: string;
+  file_ext?: string;
   modified_by: string;
   created_at: string;
   updated_at: string;
@@ -54,9 +56,10 @@ export class EmploymentDocumentService {
 
   /**
    * Create employment document
+   * Accepts either JSON object or FormData (for file uploads)
    */
   static async createEmploymentDocument(
-    data: CreateEmploymentDocumentData
+    data: CreateEmploymentDocumentData | FormData
   ): Promise<CreateEmploymentDocumentResponse> {
     const response = await api.post<CreateEmploymentDocumentResponse>(
       `/employment-documents`,
@@ -67,14 +70,34 @@ export class EmploymentDocumentService {
 
   /**
    * Update employment document
+   * Accepts either JSON object or FormData (for file uploads)
    */
   static async updateEmploymentDocument(
     documentId: number,
-    data: UpdateEmploymentDocumentData
+    data: UpdateEmploymentDocumentData | FormData
   ): Promise<UpdateEmploymentDocumentResponse> {
-    const response = await api.put<UpdateEmploymentDocumentResponse>(
-      `/employment-documents/${documentId}`,
-      data
+    // Use POST when FormData (for file uploads), PUT for JSON
+    const isFormData = data instanceof FormData;
+    const response = isFormData
+      ? await api.post<UpdateEmploymentDocumentResponse>(
+          `/employment-documents/${documentId}`,
+          data
+        )
+      : await api.put<UpdateEmploymentDocumentResponse>(
+          `/employment-documents/${documentId}`,
+          data
+        );
+    return response.data;
+  }
+
+  /**
+   * Delete employment document
+   */
+  static async deleteEmploymentDocument(
+    documentId: number
+  ): Promise<BaseApiResponse> {
+    const response = await api.delete<BaseApiResponse>(
+      `/employment-documents/${documentId}`
     );
     return response.data;
   }
