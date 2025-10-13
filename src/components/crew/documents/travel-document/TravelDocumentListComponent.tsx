@@ -76,6 +76,8 @@ export default function TravelDocumentListComponent() {
           travel_document_type_id: doc.travel_document_type_id,
           remaining_pages: doc.remaining_pages,
           visa_type: doc.visa_type ?? undefined,
+          file_path: doc.file_path,
+          file_ext: doc.file_ext,
         }));
 
         setTravelDocuments(mappedDocuments);

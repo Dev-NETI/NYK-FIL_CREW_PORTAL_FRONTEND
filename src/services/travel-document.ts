@@ -20,6 +20,8 @@ export interface TravelDocument {
   remaining_pages: number;
   is_US_VISA: number;
   visa_type: string | null;
+  file_path?: string;
+  file_ext?: string;
   modified_by: string;
   created_at: string;
   updated_at: string;
@@ -74,9 +76,10 @@ export class TravelDocumentService {
 
   /**
    * Save a new travel document
+   * Accepts either JSON object or FormData (for file uploads)
    */
   static async saveTravelDocument(
-    payload: SaveTravelDocumentPayload
+    payload: SaveTravelDocumentPayload | FormData
   ): Promise<SaveTravelDocumentResponse> {
     const response = await api.post<SaveTravelDocumentResponse>(
       "/travel-documents",
@@ -87,14 +90,34 @@ export class TravelDocumentService {
 
   /**
    * Update an existing travel document
+   * Accepts either JSON object or FormData (for file uploads)
    */
   static async updateTravelDocument(
     travelDocumentId: number,
-    payload: UpdateTravelDocumentPayload
+    payload: UpdateTravelDocumentPayload | FormData
   ): Promise<UpdateTravelDocumentResponse> {
-    const response = await api.put<UpdateTravelDocumentResponse>(
-      `/travel-documents/${travelDocumentId}`,
-      payload
+    // Use POST when FormData (for file uploads), PUT for JSON
+    const isFormData = payload instanceof FormData;
+    const response = isFormData
+      ? await api.post<UpdateTravelDocumentResponse>(
+          `/travel-documents/${travelDocumentId}`,
+          payload
+        )
+      : await api.put<UpdateTravelDocumentResponse>(
+          `/travel-documents/${travelDocumentId}`,
+          payload
+        );
+    return response.data;
+  }
+
+  /**
+   * Delete travel document
+   */
+  static async deleteTravelDocument(
+    documentId: number
+  ): Promise<BaseApiResponse> {
+    const response = await api.delete<BaseApiResponse>(
+      `/travel-documents/${documentId}`
     );
     return response.data;
   }
