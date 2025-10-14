@@ -6,11 +6,16 @@ import toast from "react-hot-toast";
 import { UserPlus } from "lucide-react";
 import AdminCardComponent from "@/components/admin/user-management/AdminCardComponent";
 import AdminListComponent from "@/components/admin/user-management/AdminListComponent";
+import AddAdminModal from "@/components/admin/user-management/AddAdminModal";
+import EditAdminModal from "@/components/admin/user-management/EditAdminModal";
 
 export default function UserManagement() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
 
   // Load admin data from API
   const loadAdminData = async () => {
@@ -43,10 +48,48 @@ export default function UserManagement() {
     return Array.from(deptSet);
   }, [admins]);
 
+  const handleAddAdmin = async (formData: any) => {
+    console.log("Adding new admin with data:", formData);
+
+    try {
+      const response = await AdminManagementService.createAdmin(formData);
+
+      if (response.success) {
+        toast.success(response.message || "Admin created successfully");
+        setIsAddModalOpen(false);
+        // Reload admin data to show new admin
+        loadAdminData();
+      } else {
+        toast.error(response.message || "Failed to create admin");
+      }
+    } catch (error: any) {
+      console.error("Error creating admin:", error);
+      toast.error(error.response?.data?.message || "Failed to create admin");
+    }
+  };
+
   const handleEdit = (admin: Admin) => {
-    // TODO: Implement edit functionality
-    console.log("Edit admin:", admin);
-    toast("Edit functionality coming soon", { icon: "ℹ️" });
+    setSelectedAdmin(admin);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateAdmin = async (id: number, formData: any) => {
+    try {
+      const response = await AdminManagementService.updateAdmin(id, formData);
+
+      if (response.success) {
+        toast.success(response.message || "Admin updated successfully");
+        setIsEditModalOpen(false);
+        setSelectedAdmin(null);
+        // Reload admin data to show updated information
+        loadAdminData();
+      } else {
+        toast.error(response.message || "Failed to update admin");
+      }
+    } catch (error: any) {
+      console.error("Error updating admin:", error);
+      toast.error(error.response?.data?.message || "Failed to update admin");
+    }
   };
 
   const handleDelete = async (id: number, email: string) => {
@@ -100,7 +143,10 @@ export default function UserManagement() {
                   Manage administrator accounts and permissions
                 </p>
               </div>
-              <button className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 <UserPlus className="w-4 h-4 mr-2" />
                 Add Admin
               </button>
@@ -147,6 +193,24 @@ export default function UserManagement() {
           </div>
         </div>
       </div>
+
+      {/* Add Admin Modal */}
+      <AddAdminModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleAddAdmin}
+      />
+
+      {/* Edit Admin Modal */}
+      <EditAdminModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedAdmin(null);
+        }}
+        onSubmit={handleUpdateAdmin}
+        admin={selectedAdmin}
+      />
     </div>
   );
 }
