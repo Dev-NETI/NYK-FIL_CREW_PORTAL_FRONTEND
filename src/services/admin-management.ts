@@ -63,7 +63,7 @@ export class AdminManagementService {
    * Get admin user by ID
    */
   static async getAdmin(id: number): Promise<AdminResponse> {
-    const response = await api.get<AdminResponse>(`/admin/admins/${id}`);
+    const response = await api.get<AdminResponse>(`/admins/${id}`);
     return response.data;
   }
 
@@ -71,7 +71,7 @@ export class AdminManagementService {
    * Create new admin user
    */
   static async createAdmin(data: CreateAdminRequest): Promise<AdminResponse> {
-    const response = await api.post<AdminResponse>("/admin/admins", data);
+    const response = await api.post<AdminResponse>("/admins", data);
     return response.data;
   }
 
@@ -81,8 +81,8 @@ export class AdminManagementService {
   static async updateAdmin(
     id: number,
     data: UpdateAdminRequest
-  ): Promise<AdminResponse> {
-    const response = await api.put<AdminResponse>(`/admin/admins/${id}`, data);
+  ): Promise<BaseApiResponse> {
+    const response = await api.put<BaseApiResponse>(`/admins/${id}`, data);
     return response.data;
   }
 
@@ -90,7 +90,7 @@ export class AdminManagementService {
    * Delete admin user (soft delete)
    */
   static async deleteAdmin(id: number): Promise<BaseApiResponse> {
-    const response = await api.delete<BaseApiResponse>(`/admin/admins/${id}`);
+    const response = await api.delete<BaseApiResponse>(`/admins/${id}`);
     return response.data;
   }
 }

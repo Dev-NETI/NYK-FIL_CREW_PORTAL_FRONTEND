@@ -44,17 +44,6 @@ export default function AdminListItemComponent({
           </span>
         </div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        {admin.email_verified_at ? (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            Verified
-          </span>
-        ) : (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            Pending
-          </span>
-        )}
-      </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
         {admin.last_login_at ? (
           <div className="flex items-center">
