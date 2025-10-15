@@ -50,6 +50,24 @@ const mockConversations = [
     unread: false,
     active: false,
   },
+  {
+    id: 6,
+    name: "Carlos Mendoza",
+    lastMessage: "Great work on the presentation!",
+    timestamp: "2d ago",
+    avatar: "CM",
+    unread: false,
+    active: false,
+  },
+  {
+    id: 7,
+    name: "Carlos Mendoza",
+    lastMessage: "Great work on the presentation!",
+    timestamp: "2d ago",
+    avatar: "CM",
+    unread: false,
+    active: false,
+  },
 ];
 
 const mockMessages = [
@@ -398,7 +416,7 @@ export default function InboxPage() {
                     onChange={(e) => setNewMessageRecipient(e.target.value)}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">Select a crew member...</option>
+                    <option value="">Select a department...</option>
                     {crewMembers.map((member) => (
                       <option key={member.id} value={member.id}>
                         {member.name}

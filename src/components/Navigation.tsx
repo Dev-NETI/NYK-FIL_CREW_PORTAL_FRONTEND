@@ -31,6 +31,8 @@ export default function Navigation({
   );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(user || null);
+  // Mock unread message count - replace with actual data from API later
+  const [unreadCount] = useState(3);
 
   // Get user from localStorage if not provided as prop
   useEffect(() => {
@@ -137,19 +139,27 @@ export default function Navigation({
                         : "-translate-x-full"
                     }`}
                   ></div>
-                  <i
-                    className={`bi bi-${
-                      isActive(item.href) ? item.activeIcon : item.icon
-                    } text-base lg:text-lg transition-all duration-500 ease-out z-10 ${
-                      clickedItem === item.href
-                        ? "rotate-12 scale-125"
-                        : "rotate-0 scale-100"
-                    } ${
-                      isActive(item.href)
-                        ? "animate-in zoom-in-50 duration-400 delay-100"
-                        : ""
-                    }`}
-                  ></i>
+                  <div className="relative">
+                    <i
+                      className={`bi bi-${
+                        isActive(item.href) ? item.activeIcon : item.icon
+                      } text-base lg:text-lg transition-all duration-500 ease-out z-10 ${
+                        clickedItem === item.href
+                          ? "rotate-12 scale-125"
+                          : "rotate-0 scale-100"
+                      } ${
+                        isActive(item.href)
+                          ? "animate-in zoom-in-50 duration-400 delay-100"
+                          : ""
+                      }`}
+                    ></i>
+                    {/* Unread Badge for Inbox */}
+                    {item.label === "Inbox" && unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-semibold rounded-full h-4 w-4 flex items-center justify-center z-20 animate-in zoom-in-50 duration-300">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </div>
                   <span
                     className={`hidden lg:inline transition-all duration-400 ease-out z-10 ${
                       clickedItem === item.href
@@ -299,17 +309,25 @@ export default function Navigation({
                     handleNavClick(item.href);
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 ${
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 relative ${
                     isActive(item.href)
                       ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg"
                       : "text-blue-100 hover:text-white hover:bg-blue-800"
                   }`}
                 >
-                  <i
-                    className={`bi bi-${
-                      isActive(item.href) ? item.activeIcon : item.icon
-                    } text-lg`}
-                  ></i>
+                  <div className="relative">
+                    <i
+                      className={`bi bi-${
+                        isActive(item.href) ? item.activeIcon : item.icon
+                      } text-lg`}
+                    ></i>
+                    {/* Unread Badge for Inbox */}
+                    {item.label === "Inbox" && unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-semibold rounded-full h-4 w-4 flex items-center justify-center z-20 animate-in zoom-in-50 duration-300">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </div>
                   <span>{item.label}</span>
                 </Link>
               ))}
@@ -366,19 +384,27 @@ export default function Navigation({
                       : "scale-0 opacity-0"
                   }`}
                 ></div>
-                <i
-                  className={`bi bi-${
-                    isActive(item.href) ? item.activeIcon : item.icon
-                  } text-lg sm:text-xl mb-1 transition-all duration-500 ease-out z-10 ${
-                    clickedItem === item.href
-                      ? "-rotate-6 scale-110"
-                      : "rotate-0 scale-100"
-                  } ${
-                    isActive(item.href)
-                      ? "animate-in spin-in-6 zoom-in-50 duration-400 delay-75"
-                      : ""
-                  }`}
-                ></i>
+                <div className="relative">
+                  <i
+                    className={`bi bi-${
+                      isActive(item.href) ? item.activeIcon : item.icon
+                    } text-lg sm:text-xl mb-1 transition-all duration-500 ease-out z-10 ${
+                      clickedItem === item.href
+                        ? "-rotate-6 scale-110"
+                        : "rotate-0 scale-100"
+                    } ${
+                      isActive(item.href)
+                        ? "animate-in spin-in-6 zoom-in-50 duration-400 delay-75"
+                        : ""
+                    }`}
+                  ></i>
+                  {/* Unread Badge for Inbox */}
+                  {item.label === "Inbox" && unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-semibold rounded-full h-4 w-4 flex items-center justify-center z-20 animate-in zoom-in-50 duration-300">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
                 <span
                   className={`text-xs sm:text-sm font-medium transition-all duration-400 ease-out z-10 ${
                     clickedItem === item.href
