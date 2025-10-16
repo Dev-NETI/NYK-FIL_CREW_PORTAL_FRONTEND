@@ -62,8 +62,8 @@ export class AdminManagementService {
   /**
    * Get admin user by ID
    */
-  static async getAdmin(id: number): Promise<AdminResponse> {
-    const response = await api.get<AdminResponse>(`/admins/${id}`);
+  static async getAdmin(id: number): Promise<Admin> {
+    const response = await api.get<Admin>(`/admins/${id}`);
     return response.data;
   }
 
