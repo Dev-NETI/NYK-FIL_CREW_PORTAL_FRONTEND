@@ -1,5 +1,6 @@
 import { Admin } from "@/services/admin-management";
-import { Mail, Building2, Calendar, Edit, Trash2 } from "lucide-react";
+import { Mail, Building2, Calendar, Edit, Trash2, ShieldCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface AdminListItemProps {
   admin: Admin;
@@ -12,6 +13,12 @@ export default function AdminListItemComponent({
   onEdit,
   onDelete,
 }: AdminListItemProps) {
+  const router = useRouter();
+
+  const handleAssignRoles = () => {
+    router.push(`/admin/user-management/assign-roles/${admin.id}`);
+  };
+
   return (
     <tr className="hover:bg-gray-50 transition-colors">
       <td className="px-6 py-4 whitespace-nowrap">
@@ -56,6 +63,13 @@ export default function AdminListItemComponent({
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
         <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={handleAssignRoles}
+            className="text-purple-600 hover:text-purple-900 p-2 hover:bg-purple-50 rounded-lg transition-colors"
+            title="Assign Roles"
+          >
+            <ShieldCheck className="w-4 h-4" />
+          </button>
           {onEdit && (
             <button
               onClick={() => onEdit(admin)}
