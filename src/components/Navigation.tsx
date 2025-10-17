@@ -6,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { AuthService } from "@/services/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-// import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -31,8 +31,8 @@ export default function EducationInformation({
   ) => {
     return (
       <div className="group">
-        <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-          {label} 
+        <label className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+          {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
         {isEditing ? (
@@ -46,7 +46,9 @@ export default function EducationInformation({
         ) : (
           <div className="py-4 px-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 group-hover:shadow-md transition-all duration-200">
             <p className="text-gray-900 font-medium">
-              {value || <span className="text-gray-400 italic">Not provided</span>}
+              {value || (
+                <span className="text-gray-400 italic">Not provided</span>
+              )}
             </p>
           </div>
         )}
@@ -63,9 +65,11 @@ export default function EducationInformation({
             <i className="bi bi-mortarboard text-blue-600 mr-3"></i>
             Educational Background
           </h2>
-          <p className="text-gray-600 mt-1">Academic qualifications and certifications</p>
+          <p className="text-gray-600 mt-1">
+            Academic qualifications and certifications
+          </p>
         </div>
-        
+
         {/* Edit Controls */}
         <div className="flex items-center space-x-3">
           {!isEditing ? (
@@ -133,28 +137,25 @@ export default function EducationInformation({
             {isEditing ? (
               <input
                 type="date"
-                value={
-                  editedProfile?.college_graduation_date || ""
-                }
+                value={editedProfile?.college_graduation_date || ""}
                 onChange={(e) =>
-                  onInputChange(
-                    "college_graduation_date",
-                    e.target.value
-                  )
+                  onInputChange("college_graduation_date", e.target.value)
                 }
                 className="w-full py-4 px-4 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-200 hover:border-gray-300"
               />
             ) : (
               <div className="py-4 px-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 group-hover:shadow-md transition-all duration-200">
                 <p className="text-gray-900 font-medium">
-                  {profile.college_graduation_date
-                    ? new Date(
-                        profile.college_graduation_date
-                      ).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                      })
-                    : <span className="text-gray-400 italic">Not provided</span>}
+                  {profile.college_graduation_date ? (
+                    new Date(
+                      profile.college_graduation_date
+                    ).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                    })
+                  ) : (
+                    <span className="text-gray-400 italic">Not provided</span>
+                  )}
                 </p>
               </div>
             )}
