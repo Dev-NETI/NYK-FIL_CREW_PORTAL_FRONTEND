@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import PageTransition from "@/components/PageTransition";
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -16,7 +15,7 @@ export default function Home() {
   }, []);
 
   const handleGetStarted = () => {
-    router.push("/login?direction=forward");
+    router.push("/login");
   };
 
   if (!isMounted) {
@@ -24,7 +23,6 @@ export default function Home() {
   }
 
   return (
-    <PageTransition>
     <div className="min-h-screen bg-white">
       <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="max-w-md sm:max-w-lg lg:max-w-4xl mx-auto">
@@ -77,6 +75,5 @@ export default function Home() {
         </div>
       </div>
     </div>
-    </PageTransition>
   );
 }

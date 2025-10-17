@@ -8,7 +8,6 @@ import { AxiosError } from "axios";
 import { ApiErrorResponse } from "@/types/api";
 import toast from "react-hot-toast";
 import OTPInput from "@/components/OTPInput";
-import PageTransition from "@/components/PageTransition";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -267,11 +266,10 @@ export default function LoginPage() {
   };
 
   const handleBackToHome = () => {
-    router.push("/?direction=back");
+    router.push("/");
   };
 
   return (
-    <PageTransition>
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
@@ -468,6 +466,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-    </PageTransition>
   );
 }

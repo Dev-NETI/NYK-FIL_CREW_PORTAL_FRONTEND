@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { AuthService } from "@/services";
 import { User } from "@/types/api";
 import QRCode from "qrcode";
-import PageTransition from "@/components/PageTransition";
 
 export default function Dashboard() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -64,7 +63,6 @@ export default function Dashboard() {
       {
         icon: "person-badge",
         title: "My Profile",
-        description: "View and update your crew information and certifications",
         href: currentUser?.profile?.crew_id
           ? `/crew/profile/${currentUser.profile.crew_id}`
           : "/crew/profile",
@@ -74,7 +72,6 @@ export default function Dashboard() {
       {
         icon: "file-earmark-text",
         title: "Documents",
-        description: "Access certificates, contracts, and maritime documents",
         href: "/crew/documents",
         color: "from-green-500 to-blue-500",
         delay: "delay-200",
@@ -82,7 +79,6 @@ export default function Dashboard() {
       {
         icon: "calendar-check",
         title: "Appointment Schedule",
-        description: "View upcoming medical exams and appointments",
         href: "/appointment-schedule",
         color: "from-purple-500 to-pink-500",
         delay: "delay-300",
@@ -90,7 +86,6 @@ export default function Dashboard() {
       {
         icon: "megaphone",
         title: "Debriefing / Briefing",
-        description: "Access safety briefings and voyage reports",
         href: "/crew/reports",
         color: "from-orange-500 to-red-500",
         delay: "delay-400",
@@ -98,7 +93,6 @@ export default function Dashboard() {
       {
         icon: "currency-dollar",
         title: "Finance",
-        description: "View payroll, allotments, and financial statements",
         href: "/crew/finance",
         color: "from-teal-500 to-green-500",
         delay: "delay-500",
@@ -106,7 +100,6 @@ export default function Dashboard() {
       {
         icon: "bell",
         title: "Notifications",
-        description: "Important vessel updates, alerts, and announcements",
         href: "/crew/notifications",
         color: "from-yellow-500 to-orange-500",
         delay: "delay-600",
@@ -137,7 +130,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <PageTransition>
+    <>
       <style jsx>{`
         .perspective-1000 {
           perspective: 1000px;
@@ -154,7 +147,7 @@ export default function Dashboard() {
       `}</style>
 
       <div className="min-h-screen bg-gray-50">
-        <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div
@@ -164,12 +157,12 @@ export default function Dashboard() {
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div className="text-center sm:text-left w-full">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                     Crew Dashboard
                   </h1>
-                  <p className="text-gray-600 text-sm sm:text-base">
+                  <p className="text-gray-600 text-xs sm:text-sm lg:text-base mt-1">
                     Welcome aboard! Manage your maritime career and
                     documentation.
                   </p>
@@ -179,13 +172,13 @@ export default function Dashboard() {
 
             {/* Maritime ID Card - Flippable */}
             <div
-              className={`mb-8 flex justify-center transform transition-all duration-1000 delay-300 ${
+              className={`mb-6 sm:mb-8 flex justify-center transform transition-all duration-1000 delay-300 ${
                 isLoaded
                   ? "translate-y-0 opacity-100"
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <div className="w-full max-w-md perspective-1000">
+              <div className="w-full max-w-sm sm:max-w-md perspective-1000">
                 <div
                   className={`relative w-full transform-style-preserve-3d transition-transform duration-700 cursor-pointer ${
                     isCardFlipped ? "rotate-y-180" : ""
@@ -221,13 +214,13 @@ export default function Dashboard() {
                     </div>
 
                     {/* Card Body */}
-                    <div className="p-4 bg-white">
-                      <div className="flex space-x-4">
+                    <div className="p-3 sm:p-4 bg-white">
+                      <div className="flex space-x-3 sm:space-x-4">
                         {/* Photo Section */}
                         <div className="flex-shrink-0">
-                          <div className="w-16 h-20 bg-gray-100 border-2 border-gray-300 rounded flex items-center justify-center">
-                            <div className="w-14 h-18 bg-gradient-to-b from-blue-500 to-blue-600 rounded flex items-center justify-center">
-                              <span className="text-white font-bold text-lg">
+                          <div className="w-12 h-16 sm:w-16 sm:h-20 bg-gray-100 border-2 border-gray-300 rounded flex items-center justify-center">
+                            <div className="w-10 h-14 sm:w-14 sm:h-18 bg-gradient-to-b from-blue-500 to-blue-600 rounded flex items-center justify-center">
+                              <span className="text-white font-bold text-sm sm:text-lg">
                                 {currentUser?.profile?.first_name &&
                                 currentUser?.profile?.last_name
                                   ? `${currentUser.profile.first_name[0]}${currentUser.profile?.last_name[0]}`
@@ -247,19 +240,21 @@ export default function Dashboard() {
                         </div>
 
                         {/* Information Section */}
-                        <div className="flex-1 space-y-2">
+                        <div className="flex-1 space-y-1 sm:space-y-2">
                           {/* Name */}
                           <div>
                             <div className="text-xs text-gray-500 uppercase font-semibold">
                               Full Name
                             </div>
-                            <div className="text-sm font-bold text-gray-900 leading-tight">
-                              {currentUser?.first_name && currentUser?.last_name
-                                ? `${currentUser.first_name} ${
-                                    currentUser.middle_name
-                                      ? currentUser.middle_name[0] + "."
+                            <div className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">
+                              {currentUser?.profile?.first_name &&
+                              currentUser?.profile?.last_name
+                                ? `${currentUser.profile?.first_name} ${
+                                    currentUser.profile?.middle_name
+                                      ? currentUser.profile?.middle_name[0] +
+                                        "."
                                       : ""
-                                  } ${currentUser.last_name}`.trim()
+                                  } ${currentUser.profile?.last_name}`.trim()
                                 : currentUser?.name || "NOT PROVIDED"}
                             </div>
                           </div>
@@ -270,18 +265,18 @@ export default function Dashboard() {
                               Position
                             </div>
                             <div className="text-xs font-semibold text-gray-800">
-                              {currentUser?.rank_name || "SEAFARER"}
+                              {currentUser?.employment?.rank_name || "SEAFARER"}
                             </div>
                           </div>
 
                           {/* Two Column Layout for IDs */}
-                          <div className="grid grid-cols-2 gap-2 pt-1">
+                          <div className="grid grid-cols-2 gap-1 sm:gap-2 pt-1">
                             <div>
                               <div className="text-xs text-gray-500 uppercase font-semibold">
                                 Crew ID
                               </div>
                               <div className="text-xs font-mono font-bold text-gray-900">
-                                {currentUser?.crew_id || "N/A"}
+                                {currentUser?.profile?.crew_id || "N/A"}
                               </div>
                             </div>
                             <div>
@@ -289,7 +284,7 @@ export default function Dashboard() {
                                 SRN
                               </div>
                               <div className="text-xs font-mono font-bold text-gray-900">
-                                {currentUser?.srn || "N/A"}
+                                {currentUser?.profile?.srn || "N/A"}
                               </div>
                             </div>
                           </div>
@@ -297,11 +292,11 @@ export default function Dashboard() {
                       </div>
 
                       {/* Email Section */}
-                      <div className="mt-3 pt-2 border-t border-gray-200">
+                      <div className="mt-2 sm:mt-3 pt-2 border-t border-gray-200">
                         <div className="text-xs text-gray-500 uppercase font-semibold">
                           Email Address
                         </div>
-                        <div className="text-xs font-semibold text-gray-800 truncate">
+                        <div className="text-xs font-semibold text-gray-800 truncate overflow-hidden">
                           {currentUser?.email || "NOT PROVIDED"}
                         </div>
                       </div>
@@ -374,20 +369,20 @@ export default function Dashboard() {
                     </div>
 
                     {/* QR Code Section */}
-                    <div className="p-6 bg-white flex flex-col items-center justify-center h-full mt-4">
+                    <div className="p-4 sm:p-6 bg-white flex flex-col items-center justify-center h-full mt-2 sm:mt-4">
                       {/* QR Code */}
-                      <div className="bg-white p-4 border-2 border-gray-300 rounded-lg shadow-inner mt-4">
+                      <div className="bg-white p-3 sm:p-4 border-2 border-gray-300 rounded-lg shadow-inner mt-2 sm:mt-4">
                         {qrCodeDataUrl ? (
                           <img
                             src={qrCodeDataUrl}
                             alt={`QR Code for Crew ID: ${
-                              currentUser?.crew_id || "N/A"
+                              currentUser?.profile?.crew_id || "N/A"
                             }`}
-                            className="w-32 h-32 rounded"
+                            className="w-24 h-24 sm:w-32 sm:h-32 rounded"
                           />
                         ) : (
                           <div
-                            className="w-32 h-32 bg-gray-900 rounded flex items-center justify-center"
+                            className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-900 rounded flex items-center justify-center"
                             style={{
                               backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='qr' width='10' height='10' patternUnits='userSpaceOnUse'%3e%3crect width='5' height='5' fill='%23000'/%3e%3crect x='5' y='5' width='5' height='5' fill='%23000'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100' height='100' fill='url(%23qr)'/%3e%3c/svg%3e")`,
                               backgroundSize: "10px 10px",
@@ -404,7 +399,7 @@ export default function Dashboard() {
                           Crew ID
                         </div>
                         <div className="text-lg font-mono font-bold text-gray-900 mb-2">
-                          {currentUser?.crew_id || "N/A"}
+                          {currentUser?.profile?.crew_id || "N/A"}
                         </div>
                         <div className="text-xs text-gray-600">
                           This QR code contains encrypted crew identification
@@ -467,14 +462,14 @@ export default function Dashboard() {
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
+              <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
                 Quick Links
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                 {quickLinks.map((link, index) => (
                   <button
                     key={index}
-                    onClick={() => router.push(`${link.href}?direction=forward`)}
+                    onClick={() => router.push(link.href)}
                     className={`w-full transform transition-all duration-700 ${
                       link.delay
                     } ${
@@ -483,18 +478,15 @@ export default function Dashboard() {
                         : "translate-y-10 opacity-0"
                     }`}
                   >
-                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border border-gray-100 group">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-3 sm:mb-4 transform group-hover:rotate-12 transition-transform duration-300">
+                    <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border border-gray-100 group h-full flex flex-col">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg sm:rounded-xl bg-gray-100 flex items-center justify-center mb-2 sm:mb-3 lg:mb-4 transform transition-transform duration-300 mx-auto">
                         <i
-                          className={`bi bi-${link.icon} text-xl sm:text-2xl text-gray-700`}
+                          className={`bi bi-${link.icon} text-base sm:text-lg lg:text-xl xl:text-2xl text-gray-700 text-center`}
                         ></i>
                       </div>
-                      <h3 className="text-gray-900 font-semibold text-base sm:text-lg mb-2">
+                      <h3 className="text-gray-900 text-xs sm:text-base lg:text-lg mb-1 sm:mb-2 text-center">
                         {link.title}
                       </h3>
-                      <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
-                        {link.description}
-                      </p>
                     </div>
                   </button>
                 ))}
@@ -509,30 +501,30 @@ export default function Dashboard() {
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
+              <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
                 Recent Activity
               </h2>
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
+              <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-gray-100 shadow-lg">
                 <div className="space-y-4">
                   {recentActivities.map((activity, index) => (
                     <div
                       key={index}
-                      className="flex items-center space-x-4 p-3 hover:bg-gray-50 rounded-xl transition-all duration-300"
+                      className="flex items-center space-x-3 sm:space-x-4 p-2 sm:p-3 hover:bg-gray-50 rounded-lg sm:rounded-xl transition-all duration-300"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gray-100 flex items-center justify-center">
                         <i
-                          className={`bi bi-${activity.icon} text-lg text-gray-700`}
+                          className={`bi bi-${activity.icon} text-sm sm:text-base lg:text-lg text-gray-700`}
                         ></i>
                       </div>
                       <div className="flex-1">
-                        <h4 className="text-gray-900 font-medium text-sm">
+                        <h4 className="text-gray-900 font-medium text-xs sm:text-sm">
                           {activity.title}
                         </h4>
-                        <p className="text-gray-600 text-xs">
+                        <p className="text-gray-600 text-xs leading-relaxed">
                           {activity.description}
                         </p>
                       </div>
-                      <div className="text-gray-500 text-xs">
+                      <div className="text-gray-500 text-xs shrink-0">
                         {activity.time}
                       </div>
                     </div>
@@ -551,20 +543,20 @@ export default function Dashboard() {
 
             {/* Status Cards */}
             <div
-              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8 transform transition-all duration-1000 delay-1000 ${
+              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6 lg:mb-8 transform transition-all duration-1000 delay-1000 ${
                 isLoaded
                   ? "translate-y-0 opacity-100"
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
+              <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-gray-100 shadow-lg">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h3 className="text-gray-900 font-semibold text-xs sm:text-sm lg:text-base">
                     Certificates
                   </h3>
-                  <i className="bi bi-file-earmark-check text-xl sm:text-2xl text-gray-700"></i>
+                  <i className="bi bi-file-earmark-check text-base sm:text-lg lg:text-xl xl:text-2xl text-gray-700"></i>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
                   12
                 </div>
                 <p className="text-gray-600 text-xs sm:text-sm">
@@ -572,14 +564,14 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
+              <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-gray-100 shadow-lg">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h3 className="text-gray-900 font-semibold text-xs sm:text-sm lg:text-base">
                     Sea Time
                   </h3>
-                  <i className="bi bi-water text-xl sm:text-2xl text-gray-700"></i>
+                  <i className="bi bi-water text-base sm:text-lg lg:text-xl xl:text-2xl text-gray-700"></i>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
                   847
                 </div>
                 <p className="text-gray-600 text-xs sm:text-sm">Days served</p>
@@ -594,25 +586,25 @@ export default function Dashboard() {
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-lg">
-                <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+              <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-4 sm:p-5 lg:p-6 border border-gray-100 shadow-lg">
+                <div className="flex flex-col md:flex-row items-center justify-between space-y-3 sm:space-y-4 md:space-y-0">
                   <div>
-                    <h3 className="text-gray-900 font-semibold text-lg mb-2">
+                    <h3 className="text-gray-900 font-semibold text-sm sm:text-base lg:text-lg mb-1 sm:mb-2 text-center md:text-left">
                       Need assistance with crew management?
                     </h3>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-gray-600 text-xs sm:text-sm text-center md:text-left">
                       Get help with certificates, documentation, or crew support
                       services
                     </p>
                   </div>
-                  <div className="flex space-x-3">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
                     <Link
                       href="/help"
-                      className="bg-gray-100 text-gray-800 px-6 py-3 rounded-xl text-sm font-medium hover:bg-gray-200 transition-all duration-300 hover:scale-105"
+                      className="bg-gray-100 text-gray-800 px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-200 transition-all duration-300 hover:scale-105 text-center"
                     >
                       Get Help
                     </Link>
-                    <button className="bg-gray-900 text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105">
+                    <button className="bg-gray-900 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105">
                       Contact Support
                     </button>
                   </div>
@@ -638,6 +630,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </PageTransition>
+    </>
   );
 }

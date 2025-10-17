@@ -13,7 +13,6 @@ import { UserService } from "@/services";
 import { AuthService } from "@/services";
 import { User } from "@/types/api";
 import toast from "react-hot-toast";
-import PageTransition from "@/components/PageTransition";
 
 interface ProfilePageProps {
   params: Promise<{
@@ -130,8 +129,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   }
 
   return (
-    <PageTransition>
-      <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         <div className="max-w-7xl mx-auto">
           {/* Hero Section */}
           <div
@@ -1352,6 +1350,5 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           </div>
         </div>
       </div>
-    </PageTransition>
   );
 }
