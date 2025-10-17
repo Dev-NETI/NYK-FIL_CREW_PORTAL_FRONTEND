@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import Navigation from "@/components/Navigation";
 import {
   ArrowRightFromLine,
   HelpCircle,
@@ -14,6 +13,7 @@ import { UserService } from "@/services";
 import { AuthService } from "@/services";
 import { User } from "@/types/api";
 import toast from "react-hot-toast";
+import PageTransition from "@/components/PageTransition";
 
 interface ProfilePageProps {
   params: Promise<{
@@ -130,9 +130,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   }
 
   return (
-    <div className="min-h-screen ">
-      <Navigation currentPath="/profile" />
-
+    <PageTransition>
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         <div className="max-w-7xl mx-auto">
           {/* Hero Section */}
@@ -1354,6 +1352,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           </div>
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

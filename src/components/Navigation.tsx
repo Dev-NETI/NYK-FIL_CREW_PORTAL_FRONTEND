@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AuthService } from "@/services/auth";
@@ -21,13 +22,15 @@ interface NavigationProps {
 }
 
 export default function Navigation({
-  currentPath = "/",
+  currentPath,
   user,
   hideBottomNav = false,
 }: NavigationProps) {
+  const pathname = usePathname();
+  const currentRoute = currentPath || pathname;
   const [clickedItem, setClickedItem] = useState<string | null>(null);
   const [previousActive, setPreviousActive] = useState<string | null>(
-    currentPath
+    currentRoute
   );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(user || null);
@@ -41,6 +44,11 @@ export default function Navigation({
       setCurrentUser(storedUser);
     }
   }, [user]);
+
+  // Update previousActive when the route changes
+  useEffect(() => {
+    setPreviousActive(currentRoute);
+  }, [currentRoute]);
 
   const navItems = [
     {
@@ -69,7 +77,7 @@ export default function Navigation({
     },
   ];
 
-  const isActive = (path: string) => currentPath === path;
+  const isActive = (path: string) => currentRoute === path;
 
   const handleNavClick = (href: string) => {
     if (previousActive !== href) {

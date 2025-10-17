@@ -2,16 +2,18 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
-import Navigation from "@/components/Navigation";
+import { useRouter } from "next/navigation";
 import { AuthService } from "@/services";
 import { User } from "@/types/api";
 import QRCode from "qrcode";
+import PageTransition from "@/components/PageTransition";
 
 export default function Dashboard() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+  const router = useRouter();
 
   // console.log(currentUser);
 
@@ -135,7 +137,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <>
+    <PageTransition>
       <style jsx>{`
         .perspective-1000 {
           perspective: 1000px;
@@ -150,8 +152,8 @@ export default function Dashboard() {
           transform: rotateY(180deg);
         }
       `}</style>
-      <Navigation currentPath="/crew/home" />
-      <div className="min-h-screen bg-gray-50 pt-16 pb-20 md:pb-8 ">
+
+      <div className="min-h-screen bg-gray-50">
         <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
@@ -470,10 +472,10 @@ export default function Dashboard() {
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {quickLinks.map((link, index) => (
-                  <Link
+                  <button
                     key={index}
-                    href={link.href}
-                    className={`transform transition-all duration-700 ${
+                    onClick={() => router.push(`${link.href}?direction=forward`)}
+                    className={`w-full transform transition-all duration-700 ${
                       link.delay
                     } ${
                       isLoaded
@@ -494,7 +496,7 @@ export default function Dashboard() {
                         {link.description}
                       </p>
                     </div>
-                  </Link>
+                  </button>
                 ))}
               </div>
             </div>
@@ -636,6 +638,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </>
+    </PageTransition>
   );
 }

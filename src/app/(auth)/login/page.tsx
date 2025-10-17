@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AuthService } from "@/services/auth";
 import { AxiosError } from "axios";
 import { ApiErrorResponse } from "@/types/api";
 import toast from "react-hot-toast";
 import OTPInput from "@/components/OTPInput";
+import PageTransition from "@/components/PageTransition";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -17,6 +19,7 @@ export default function LoginPage() {
   const [sessionToken, setSessionToken] = useState("");
   const [canResend, setCanResend] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
     setIsLoaded(true);
@@ -263,7 +266,12 @@ export default function LoginPage() {
     toast.dismiss();
   };
 
+  const handleBackToHome = () => {
+    router.push("/?direction=back");
+  };
+
   return (
+    <PageTransition>
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
@@ -273,6 +281,17 @@ export default function LoginPage() {
       </div>
 
       <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
+        {/* Back Button */}
+        <div className="flex justify-start mb-4">
+          <button
+            onClick={handleBackToHome}
+            className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors duration-200 group"
+          >
+            <span className="text-xl group-hover:transform group-hover:-translate-x-1 transition-transform duration-200">←</span>
+            <span className="text-sm sm:text-base">Back to Home</span>
+          </button>
+        </div>
+
         <div
           className={`text-center transform transition-all duration-1000 ${
             isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
@@ -449,5 +468,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 }
