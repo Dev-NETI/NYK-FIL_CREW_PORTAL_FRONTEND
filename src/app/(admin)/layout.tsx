@@ -213,6 +213,11 @@ export default function AdminLayout({
         </div>
 
         <nav className="mt-8">
+          <div className="px-6 py-3 bg-white">
+            <p className="text-xs font-semibold text-black uppercase tracking-wider justify-center text-center">
+              Technical Panel
+            </p>
+          </div>
           <div className="px-6 py-3">
             <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">
               Dashboard

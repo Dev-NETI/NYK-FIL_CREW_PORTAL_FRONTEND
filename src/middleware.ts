@@ -6,16 +6,22 @@ export function middleware(request: NextRequest) {
   const userCookie = request.cookies.get('user')?.value
   
   let isCrew = false
+  let user = null
+  
   if (userCookie) {
     try {
-      const user = JSON.parse(userCookie)
-      isCrew = user.is_crew
+      user = JSON.parse(userCookie)
+      isCrew = user.is_crew === 1
     } catch (e) {
       console.error('Error parsing user cookie:', e)
     }
   }
 
   const { pathname } = request.nextUrl
+
+  // Define public routes that don't require authentication
+  const publicRoutes = ['/login']
+  const isPublicRoute = publicRoutes.includes(pathname)
 
   // If user is already logged in and tries to access login page
   if (token && pathname === '/login') {
@@ -27,37 +33,39 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // If user is not logged in and tries to access protected routes
-  if (!token && (pathname.startsWith('/crew/home') || pathname.startsWith('/admin') || pathname.startsWith('/crew/profile'))) {
+  // If user is not authenticated and trying to access protected routes
+  if (!token && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // If logged in user tries to access wrong role-based route
-  if (token) {
+  // If authenticated, handle role-based access control
+  if (token && user) {
+    // Redirect to appropriate home page if accessing root
+    if (pathname === '/') {
+      if (isCrew) {
+        return NextResponse.redirect(new URL('/crew/home', request.url))
+      } else {
+        return NextResponse.redirect(new URL('/admin', request.url))
+      }
+    }
+
+    // Block crew members from accessing admin routes
     if (isCrew && pathname.startsWith('/admin')) {
-      return NextResponse.redirect(new URL('/home', request.url))
+      return NextResponse.redirect(new URL('/crew/home', request.url))
     }
-    if (!isCrew && pathname.startsWith('/crew/home')) {
-      return NextResponse.redirect(new URL('/admin', request.url))
-    }
+
     // Block admin users from accessing crew routes
-    if (!isCrew && pathname.match(/^\/(crew|home)/)) {
+    if (!isCrew && (pathname.startsWith('/crew') || pathname === '/home')) {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
     
     // Check crew profile access - crew members can only access their own profile
     const profileMatch = pathname.match(/^\/crew\/profile\/(.+)$/)
-    if (profileMatch && userCookie) {
-      try {
-        const user = JSON.parse(userCookie)
-        const requestedCrewId = profileMatch[1]
-        // Allow access if user is admin or accessing their own profile
-        if (user.is_crew === 1 && user.crew_id !== requestedCrewId) {
-          return NextResponse.redirect(new URL('/crew/home', request.url))
-        }
-      } catch (e) {
-        console.error('Error checking profile access:', e)
-        return NextResponse.redirect(new URL('/login', request.url))
+    if (profileMatch && isCrew) {
+      const requestedCrewId = profileMatch[1]
+      // Allow access only if accessing their own profile
+      if (user.profile?.crew_id !== requestedCrewId) {
+        return NextResponse.redirect(new URL('/crew/home', request.url))
       }
     }
   }

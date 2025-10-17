@@ -28,13 +28,7 @@ interface BasicInformationProps {
 
 // Field option configurations
 const GENDER_OPTIONS = ["Male", "Female"];
-const CIVIL_STATUS_OPTIONS = [
-  "Single",
-  "Married",
-  "Divorced",
-  "Widowed",
-  "Separated",
-];
+const CIVIL_STATUS_OPTIONS = ["Single", "Married", "Divorced", "Widowed"];
 const BLOOD_TYPE_OPTIONS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 export default function BasicInformation({

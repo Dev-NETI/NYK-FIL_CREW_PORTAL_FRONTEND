@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AuthService } from "@/services/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-// import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,13 +21,15 @@ interface NavigationProps {
 }
 
 export default function Navigation({
-  currentPath = "/",
+  currentPath,
   user,
   hideBottomNav = false,
 }: NavigationProps) {
+  const pathname = usePathname();
+  const currentRoute = currentPath || pathname;
   const [clickedItem, setClickedItem] = useState<string | null>(null);
   const [previousActive, setPreviousActive] = useState<string | null>(
-    currentPath
+    currentRoute
   );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(user || null);
@@ -41,6 +43,11 @@ export default function Navigation({
       setCurrentUser(storedUser);
     }
   }, [user]);
+
+  // Update previousActive when the route changes
+  useEffect(() => {
+    setPreviousActive(currentRoute);
+  }, [currentRoute]);
 
   const navItems = [
     {
@@ -69,7 +76,7 @@ export default function Navigation({
     },
   ];
 
-  const isActive = (path: string) => currentPath === path;
+  const isActive = (path: string) => currentRoute === path;
 
   const handleNavClick = (href: string) => {
     if (previousActive !== href) {
@@ -197,13 +204,14 @@ export default function Navigation({
                       <p className="text-white font-medium text-sm">
                         {currentUser?.name
                           ? `Hello, ${
-                              currentUser.first_name || currentUser.name
+                              currentUser.profile?.first_name ||
+                              currentUser.name
                             }!`
                           : "Welcome back!"}
                       </p>
                       <p className="text-blue-200 text-xs">
-                        {currentUser?.crew_id
-                          ? `Crew ID: ${currentUser.crew_id}`
+                        {currentUser?.profile?.crew_id
+                          ? `Crew ID: ${currentUser.profile?.crew_id}`
                           : currentUser?.name || "Portal User"}
                       </p>
                     </div>
@@ -227,14 +235,12 @@ export default function Navigation({
                     <div className="flex-1">
                       <p className="text-white font-medium text-sm">
                         {currentUser?.name
-                          ? `Hello, ${
-                              currentUser.first_name || currentUser.name
-                            }!`
+                          ? `Hello, ${currentUser?.name || currentUser.name}!`
                           : "Welcome back!"}
                       </p>
                       <p className="text-blue-200 text-xs">
-                        {currentUser?.crew_id
-                          ? `Crew ID: ${currentUser.crew_id}`
+                        {currentUser?.profile?.crew_id
+                          ? `Crew ID: ${currentUser.profile?.crew_id}`
                           : currentUser?.name || "Portal User"}
                       </p>
                     </div>
@@ -243,7 +249,9 @@ export default function Navigation({
                   <div className="px-2 pb-2">
                     <DropdownMenuItem asChild>
                       <Link
-                        href={`/crew/profile/${currentUser?.crew_id || ""}`}
+                        href={`/crew/profile/${
+                          currentUser?.profile?.crew_id || ""
+                        }`}
                         className="flex items-center space-x-3 px-2 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-blue-800 transition-all duration-300"
                       >
                         <i className="bi bi-person-circle text-lg"></i>
@@ -288,55 +296,20 @@ export default function Navigation({
               <div className="flex-1">
                 <p className="text-white font-medium text-sm">
                   {currentUser?.name
-                    ? `Hello, ${currentUser.first_name || currentUser.name}!`
+                    ? `Hello, ${currentUser?.name}!`
                     : "Welcome back!"}
                 </p>
                 <p className="text-blue-200 text-xs">
-                  {currentUser?.crew_id
-                    ? `Crew ID: ${currentUser.crew_id}`
+                  {currentUser?.profile?.crew_id
+                    ? `Crew ID: ${currentUser.profile?.crew_id}`
                     : currentUser?.email || "Portal User"}
                 </p>
               </div>
             </div>
-
-            {/* Navigation Items */}
-            <div className="space-y-1 mb-3">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => {
-                    handleNavClick(item.href);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 relative ${
-                    isActive(item.href)
-                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg"
-                      : "text-blue-100 hover:text-white hover:bg-blue-800"
-                  }`}
-                >
-                  <div className="relative">
-                    <i
-                      className={`bi bi-${
-                        isActive(item.href) ? item.activeIcon : item.icon
-                      } text-lg`}
-                    ></i>
-                    {/* Unread Badge for Inbox */}
-                    {item.label === "Inbox" && unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-semibold rounded-full h-4 w-4 flex items-center justify-center z-20 animate-in zoom-in-50 duration-300">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </div>
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </div>
-
             {/* User Actions */}
             <div className="space-y-1 pt-3 border-t border-blue-700/50">
               <Link
-                href={`/crew/profile/${currentUser?.crew_id || ""}`}
+                href={`/crew/profile/${currentUser?.profile?.crew_id || ""}`}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg text-blue-100 hover:text-white hover:bg-blue-800 transition-all duration-300"
               >
@@ -368,7 +341,9 @@ export default function Navigation({
                 href={item.href}
                 onClick={() => handleNavClick(item.href)}
                 className={`flex flex-col items-center py-2 sm:py-3 px-1 sm:px-2 transition-all duration-600 ease-out rounded-lg mx-1 transform relative overflow-hidden ${
-                  clickedItem === item.href ? "scale-105 -rotate-1" : "scale-100"
+                  clickedItem === item.href
+                    ? "scale-105 -rotate-1"
+                    : "scale-100"
                 } ${
                   isActive(item.href)
                     ? "bg-gradient-to-t from-blue-500 to-blue-400 text-white shadow-lg shadow-blue-300/30 animate-in zoom-in-75 slide-in-from-bottom-3 duration-500"

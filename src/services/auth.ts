@@ -137,8 +137,7 @@ export class AuthService {
     this.storeAuthData(token, user);
     
     // Show success toast with role-specific message
-    const role = user.is_crew === 1 ? 'Crew' : 'Administrator';
-    toast.success(`Welcome back, ${user.name || user.email}! (${role})`, {
+    toast.success(`Welcome back, ${user.name || user.email}!`, {
       icon: user.is_crew === 1 ? '⚓' : '👨‍💼',
     });
     
