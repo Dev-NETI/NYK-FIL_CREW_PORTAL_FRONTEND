@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
-import Link from "next/link";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AuthService } from "@/services";
 import { User } from "@/types/api";
@@ -14,7 +13,16 @@ export default function Dashboard() {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
   const router = useRouter();
 
-  // console.log(currentUser);
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
+  const userName = currentUser?.profile?.first_name
+    ? currentUser.profile.first_name
+    : currentUser?.name?.split(" ")[0] || "Crew Member";
 
   useEffect(() => {
     const user = AuthService.getStoredUser();
@@ -78,14 +86,14 @@ export default function Dashboard() {
       },
       {
         icon: "calendar-check",
-        title: "Appointment Schedule",
+        title: "Appointments",
         href: "/appointment-schedule",
         color: "from-purple-500 to-pink-500",
         delay: "delay-300",
       },
       {
         icon: "megaphone",
-        title: "Debriefing / Briefing",
+        title: "Reports",
         href: "/crew/reports",
         color: "from-orange-500 to-red-500",
         delay: "delay-400",
@@ -160,12 +168,16 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div className="text-center sm:text-left w-full">
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                    Crew Dashboard
+                    {getTimeBasedGreeting()}, {userName}! ⚓
                   </h1>
                   <p className="text-gray-600 text-xs sm:text-sm lg:text-base mt-1">
-                    Welcome aboard! Manage your maritime career and
-                    documentation.
+                    Welcome to your crew portal. Stay updated with your maritime
+                    career and documentation.
                   </p>
+                  <div className="flex items-center justify-center sm:justify-start mt-2 text-xs text-blue-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                    <span>System Status: Online</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -302,24 +314,6 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {/* Card Footer */}
-                    <div className="bg-gray-50 px-4 py-2 border-t border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className="text-xs text-gray-600 font-medium">
-                            ACTIVE
-                          </span>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Valid: {new Date().getFullYear()}
-                        </div>
-                        <div className="text-xs text-gray-400 font-mono">
-                          ★ AUTHORIZED ★
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Security Stripe */}
                     <div className="h-1 bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600"></div>
 
@@ -368,57 +362,36 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {/* QR Code Section */}
-                    <div className="p-4 sm:p-6 bg-white flex flex-col items-center justify-center h-full mt-2 sm:mt-4">
-                      {/* QR Code */}
-                      <div className="bg-white p-3 sm:p-4 border-2 border-gray-300 rounded-lg shadow-inner mt-2 sm:mt-4">
-                        {qrCodeDataUrl ? (
-                          <img
-                            src={qrCodeDataUrl}
-                            alt={`QR Code for Crew ID: ${
-                              currentUser?.profile?.crew_id || "N/A"
-                            }`}
-                            className="w-24 h-24 sm:w-32 sm:h-32 rounded"
-                          />
-                        ) : (
-                          <div
-                            className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-900 rounded flex items-center justify-center"
-                            style={{
-                              backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='qr' width='10' height='10' patternUnits='userSpaceOnUse'%3e%3crect width='5' height='5' fill='%23000'/%3e%3crect x='5' y='5' width='5' height='5' fill='%23000'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100' height='100' fill='url(%23qr)'/%3e%3c/svg%3e")`,
-                              backgroundSize: "10px 10px",
-                            }}
-                          >
-                            <div className="text-white text-xs">Loading...</div>
+                    {/* Card Body */}
+                    <div className="p-3 sm:p-4 bg-white flex-1 flex flex-col">
+                      <div className="flex-1 flex flex-col items-center justify-center">
+                        {/* QR Code */}
+                        <div className="bg-white p-2 sm:p-3 border-2 border-gray-300 rounded-lg shadow-inner">
+                          {qrCodeDataUrl ? (
+                            <img
+                              src={qrCodeDataUrl}
+                              alt={`QR Code for Crew ID: ${
+                                currentUser?.profile?.crew_id || "N/A"
+                              }`}
+                              className="w-20 h-20 sm:w-24 sm:h-24 rounded"
+                            />
+                          ) : (
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-900 rounded flex items-center justify-center">
+                              <div className="text-white text-xs">
+                                Loading...
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Crew ID Info */}
+                        <div className="mt-3 text-center px-2">
+                          <div className="text-xs sm:text-sm font-semibold text-gray-800 mb-1">
+                            Crew ID: {currentUser?.profile?.crew_id || "N/A"}
                           </div>
-                        )}
-                      </div>
-
-                      {/* Crew ID Info */}
-                      <div className="mt-4 text-center">
-                        <div className="text-xs text-gray-500 uppercase font-semibold mb-1">
-                          Crew ID
-                        </div>
-                        <div className="text-lg font-mono font-bold text-gray-900 mb-2">
-                          {currentUser?.profile?.crew_id || "N/A"}
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          This QR code contains encrypted crew identification
-                          data for security verification purposes.
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Back Footer */}
-                    <div className="bg-gray-50 px-4 py-2 border-t border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-gray-600">
-                          📱 Scan to verify
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Security Level: HIGH
-                        </div>
-                        <div className="text-xs text-gray-400 font-mono">
-                          🔒 ENCRYPTED
+                          <div className="text-xs text-gray-600">
+                            Scan for secure verification
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -454,18 +427,107 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Quick Actions */}
+            {/* Dashboard Stats Cards */}
             <div
-              className={`mb-8 transform transition-all duration-1000 delay-200 ${
+              className={`mb-6 sm:mb-8 transform transition-all duration-1000 delay-500 ${
                 isLoaded
                   ? "translate-y-0 opacity-100"
                   : "translate-y-10 opacity-0"
               }`}
             >
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-3 sm:px-6 lg:px-8">
+                {/* Active Documents */}
+                <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="flex items-center">
+                    <div className="bg-green-100 rounded-lg p-1.5 sm:p-2 mr-2 sm:mr-3 flex-shrink-0">
+                      <i className="bi bi-file-earmark-check text-green-600 text-sm sm:text-lg"></i>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                        8
+                      </p>
+                      <p className="text-xs text-gray-600">Active Docs</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pending Items */}
+                <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="flex items-center">
+                    <div className="bg-yellow-100 rounded-lg p-1.5 sm:p-2 mr-2 sm:mr-3 flex-shrink-0">
+                      <i className="bi bi-clock text-yellow-600 text-sm sm:text-lg"></i>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                        3
+                      </p>
+                      <p className="text-xs text-gray-600">Pending</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expiring Soon */}
+                <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="flex items-center">
+                    <div className="bg-orange-100 rounded-lg p-1.5 sm:p-2 mr-2 sm:mr-3 flex-shrink-0">
+                      <i className="bi bi-exclamation-triangle text-orange-600 text-sm sm:text-lg"></i>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                        2
+                      </p>
+                      <p className="text-xs text-gray-600">Expiring</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Complete */}
+                <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="flex items-center">
+                    <div className="bg-blue-100 rounded-lg p-1.5 sm:p-2 mr-2 sm:mr-3 flex-shrink-0">
+                      <i className="bi bi-person-badge text-blue-600 text-sm sm:text-lg"></i>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                        85%
+                      </p>
+                      <p className="text-xs text-gray-600">Complete</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="">
+          {/* Quick Actions */}
+          <div
+            className={`mb-8 transform transition-all duration-1000 delay-200 ${
+              isLoaded
+                ? "translate-y-0 opacity-100"
+                : "translate-y-10 opacity-0"
+            }`}
+          >
+            {/* Wave Decoration */}
+            <div className="relative">
+              <svg
+                className="w-full h-16 sm:h-20"
+                viewBox="0 0 1200 120"
+                preserveAspectRatio="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M0,0 C150,100 350,0 600,50 C850,100 1050,0 1200,50 L1200,120 L0,120 Z"
+                  fill="white"
+                  className="drop-shadow-lg"
+                />
+              </svg>
+            </div>
+            <div className="bg-white px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8">
               <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
-                Quick Links
+                Quick Access
               </h2>
-              <div className="grid grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                 {quickLinks.map((link, index) => (
                   <button
                     key={index}
@@ -478,154 +540,97 @@ export default function Dashboard() {
                         : "translate-y-10 opacity-0"
                     }`}
                   >
-                    <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border border-gray-100 group h-full flex flex-col">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg sm:rounded-xl bg-gray-100 flex items-center justify-center mb-2 sm:mb-3 lg:mb-4 transform transition-transform duration-300 mx-auto">
+                    <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-4 sm:p-5 lg:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border border-gray-100 group h-full flex flex-col">
+                      <div
+                        className={`w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl bg-gradient-to-br ${link.color} flex items-center justify-center mb-3 sm:mb-4 transform transition-transform duration-300 mx-auto group-hover:scale-110`}
+                      >
                         <i
-                          className={`bi bi-${link.icon} text-base sm:text-lg lg:text-xl xl:text-2xl text-gray-700 text-center`}
+                          className={`bi bi-${link.icon} text-lg sm:text-xl lg:text-2xl text-white`}
                         ></i>
                       </div>
-                      <h3 className="text-gray-900 text-xs sm:text-base lg:text-lg mb-1 sm:mb-2 text-center">
+                      <h3 className="text-gray-900 text-sm sm:text-base lg:text-lg font-semibold mb-1 sm:mb-2 text-center">
                         {link.title}
                       </h3>
+                      <p className="text-xs text-gray-500 text-center flex-1">
+                        {link.description}
+                      </p>
                     </div>
                   </button>
                 ))}
               </div>
-            </div>
 
-            {/* Recent Activity */}
-            <div
-              className={`mb-8 transform transition-all duration-1000 delay-800 ${
-                isLoaded
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-10 opacity-0"
-              }`}
-            >
-              <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
-                Recent Activity
-              </h2>
-              <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-gray-100 shadow-lg">
-                <div className="space-y-4">
+              {/* Recent Activities */}
+              <div
+                className={`mt-8 transform transition-all duration-1000 delay-700 ${
+                  isLoaded
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-10 opacity-0"
+                }`}
+              >
+                <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
+                  Recent Activities
+                </h2>
+                <div className="space-y-3">
                   {recentActivities.map((activity, index) => (
                     <div
                       key={index}
-                      className="flex items-center space-x-3 sm:space-x-4 p-2 sm:p-3 hover:bg-gray-50 rounded-lg sm:rounded-xl transition-all duration-300"
+                      className="bg-white rounded-lg p-3 sm:p-4 border border-gray-100 hover:shadow-md transition-shadow"
                     >
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gray-100 flex items-center justify-center">
-                        <i
-                          className={`bi bi-${activity.icon} text-sm sm:text-base lg:text-lg text-gray-700`}
-                        ></i>
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-gray-900 font-medium text-xs sm:text-sm">
-                          {activity.title}
-                        </h4>
-                        <p className="text-gray-600 text-xs leading-relaxed">
-                          {activity.description}
-                        </p>
-                      </div>
-                      <div className="text-gray-500 text-xs shrink-0">
-                        {activity.time}
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-blue-100 rounded-lg p-2 flex-shrink-0">
+                          <i
+                            className={`bi bi-${activity.icon} text-blue-600 text-sm`}
+                          ></i>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold text-gray-900">
+                            {activity.title}
+                          </h4>
+                          <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                            {activity.description}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            {activity.time}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <Link
-                    href="/activity"
-                    className="text-gray-600 text-sm hover:text-gray-900 transition-colors duration-300"
-                  >
-                    View all activity →
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Status Cards */}
-            <div
-              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6 lg:mb-8 transform transition-all duration-1000 delay-1000 ${
-                isLoaded
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-10 opacity-0"
-              }`}
-            >
-              <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-gray-100 shadow-lg">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <h3 className="text-gray-900 font-semibold text-xs sm:text-sm lg:text-base">
-                    Certificates
-                  </h3>
-                  <i className="bi bi-file-earmark-check text-base sm:text-lg lg:text-xl xl:text-2xl text-gray-700"></i>
-                </div>
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                  12
-                </div>
-                <p className="text-gray-600 text-xs sm:text-sm">
-                  Valid certificates
-                </p>
               </div>
 
-              <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-gray-100 shadow-lg">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <h3 className="text-gray-900 font-semibold text-xs sm:text-sm lg:text-base">
-                    Sea Time
-                  </h3>
-                  <i className="bi bi-water text-base sm:text-lg lg:text-xl xl:text-2xl text-gray-700"></i>
-                </div>
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                  847
-                </div>
-                <p className="text-gray-600 text-xs sm:text-sm">Days served</p>
-              </div>
-            </div>
-
-            {/* Quick Actions Bar */}
-            <div
-              className={`transform transition-all duration-1000 delay-1200 ${
-                isLoaded
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-10 opacity-0"
-              }`}
-            >
-              <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-4 sm:p-5 lg:p-6 border border-gray-100 shadow-lg">
-                <div className="flex flex-col md:flex-row items-center justify-between space-y-3 sm:space-y-4 md:space-y-0">
-                  <div>
-                    <h3 className="text-gray-900 font-semibold text-sm sm:text-base lg:text-lg mb-1 sm:mb-2 text-center md:text-left">
-                      Need assistance with crew management?
-                    </h3>
-                    <p className="text-gray-600 text-xs sm:text-sm text-center md:text-left">
-                      Get help with certificates, documentation, or crew support
-                      services
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
-                    <Link
-                      href="/help"
-                      className="bg-gray-100 text-gray-800 px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-200 transition-all duration-300 hover:scale-105 text-center"
-                    >
-                      Get Help
-                    </Link>
-                    <button className="bg-gray-900 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105">
-                      Contact Support
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Logout */}
-            <div
-              className={`mt-8 text-center transform transition-all duration-1000 delay-1400 ${
-                isLoaded
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-10 opacity-0"
-              }`}
-            >
-              <Link
-                href="/"
-                className="text-gray-500 text-sm hover:text-gray-700 transition-colors duration-300"
+              {/* Helpful Tips */}
+              <div
+                className={`mt-6 sm:mt-8 transform transition-all duration-1000 delay-800 ${
+                  isLoaded
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-10 opacity-0"
+                }`}
               >
-                ← Back to Home
-              </Link>
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-blue-100">
+                  <div className="flex items-start space-x-3 sm:space-x-4">
+                    <div className="bg-blue-500 rounded-lg p-2 sm:p-3 flex-shrink-0">
+                      <i className="bi bi-lightbulb text-white text-sm sm:text-lg"></i>
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+                        💡 Helpful Tip
+                      </h3>
+                      <p className="text-gray-700 text-xs sm:text-sm mb-3">
+                        Keep your documents up to date to ensure smooth
+                        operations. Check expiration dates regularly and upload
+                        renewals promptly.
+                      </p>
+                      <div className="flex items-center text-xs sm:text-sm text-blue-600">
+                        <i className="bi bi-info-circle mr-2 flex-shrink-0"></i>
+                        <span>
+                          Click on your ID card above to view the QR code
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
