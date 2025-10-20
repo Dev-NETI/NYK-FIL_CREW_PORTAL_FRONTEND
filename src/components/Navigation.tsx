@@ -85,9 +85,9 @@ export default function Navigation({
 
   return (
     <>
-      <nav className="bg-blue-900/95 backdrop-blur-md border-b border-blue-800 fixed top-0 left-0 right-0 z-50 shadow-sm">
+      <nav className="bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 backdrop-blur-md border-b border-blue-400/20 fixed top-0 left-0 right-0 z-50 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-14">
             {/* Logo */}
             <div className="flex items-center">
               <Link href="/crew/home" className="flex items-center group">
@@ -268,7 +268,7 @@ export default function Navigation({
 
         {/* Mobile Dropdown Menu */}
         <div
-          className={`md:hidden bg-blue-900/98 backdrop-blur-md border-b border-blue-800 transition-all duration-300 ease-in-out ${
+          className={`md:hidden bg-gradient-to-b from-blue-600 to-blue-700 backdrop-blur-md border-b border-blue-400/20 transition-all duration-300 ease-in-out ${
             isMobileMenuOpen
               ? "max-h-96 opacity-100"
               : "max-h-0 opacity-0 overflow-hidden"
@@ -360,60 +360,47 @@ export default function Navigation({
 
       {/* Mobile Bottom Navigation - Hidden when chat is open */}
       {!hideBottomNav && (
-        <div className="fixed bottom-0 left-0 right-0 bg-blue-900/95 backdrop-blur-md border-t border-blue-800 z-40 md:hidden">
-          <div className="grid grid-cols-4 py-2 sm:py-3">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/98 backdrop-blur-lg border-t border-gray-200 shadow-[0_-2px_10px_-2px_rgba(0,0,0,0.06)] z-40 md:hidden">
+          <div className="grid grid-cols-4 px-2">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => handleNavClick(item.href)}
-                className={`flex flex-col items-center py-2 sm:py-3 px-1 sm:px-2 transition-all duration-600 ease-out rounded-lg mx-1 transform relative overflow-hidden ${
-                  clickedItem === item.href ? "scale-105 -rotate-1" : "scale-100"
+                className={`flex flex-col items-center justify-center py-2.5 transition-all duration-300 ease-out relative ${
+                  clickedItem === item.href ? "scale-105" : "scale-100"
                 } ${
                   isActive(item.href)
-                    ? "bg-gradient-to-t from-blue-500 to-blue-400 text-white shadow-lg shadow-blue-300/30 animate-in zoom-in-75 slide-in-from-bottom-3 duration-500"
-                    : previousActive === item.href && !isActive(item.href)
-                    ? "bg-gradient-to-t from-blue-700 to-blue-800 text-blue-200 animate-out zoom-out-95 slide-out-to-top-3 duration-350"
-                    : "text-blue-100 hover:text-white hover:bg-gradient-to-t hover:from-blue-800 hover:to-blue-700"
+                    ? "text-blue-600"
+                    : "text-gray-500 hover:text-blue-500"
                 }`}
               >
-                <div
-                  className={`absolute inset-0 bg-white/10 rounded-lg transform transition-all duration-300 ${
-                    clickedItem === item.href
-                      ? "scale-100 opacity-100"
-                      : "scale-0 opacity-0"
-                  }`}
-                ></div>
-                <div className="relative">
+                <div className="relative mb-1">
                   <i
                     className={`bi bi-${
                       isActive(item.href) ? item.activeIcon : item.icon
-                    } text-lg sm:text-xl mb-1 transition-all duration-500 ease-out z-10 ${
+                    } text-[22px] transition-all duration-300 ${
                       clickedItem === item.href
-                        ? "-rotate-6 scale-110"
-                        : "rotate-0 scale-100"
-                    } ${
-                      isActive(item.href)
-                        ? "animate-in spin-in-6 zoom-in-50 duration-400 delay-75"
-                        : ""
+                        ? "scale-110"
+                        : "scale-100"
                     }`}
                   ></i>
                   {/* Unread Badge for Inbox */}
                   {item.label === "Inbox" && unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-semibold rounded-full h-4 w-4 flex items-center justify-center z-20 animate-in zoom-in-50 duration-300">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center shadow-sm ring-2 ring-white">
                       {unreadCount}
                     </span>
                   )}
+                  {/* Active Indicator Dot */}
+                  {isActive(item.href) && (
+                    <div className="absolute -bottom-1.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
+                  )}
                 </div>
                 <span
-                  className={`text-xs sm:text-sm font-medium transition-all duration-400 ease-out z-10 ${
-                    clickedItem === item.href
-                      ? "translate-y-0.5 font-semibold"
-                      : "translate-y-0 font-medium"
-                  } ${
+                  className={`text-[11px] leading-tight transition-all duration-300 ${
                     isActive(item.href)
-                      ? "animate-in slide-in-from-bottom-1 duration-400 delay-100"
-                      : ""
+                      ? "font-semibold text-blue-600"
+                      : "font-medium text-gray-600"
                   }`}
                 >
                   {item.label}
@@ -425,7 +412,7 @@ export default function Navigation({
       )}
 
       {/* Spacer for mobile bottom nav - Only show when nav is visible */}
-      {!hideBottomNav && <div className="h-16 sm:h-20 md:h-0 lg:h-18"></div>}
+      {!hideBottomNav && <div className="h-14 md:h-0"></div>}
     </>
   );
 }

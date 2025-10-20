@@ -151,23 +151,23 @@ export default function Dashboard() {
         }
       `}</style>
       <Navigation currentPath="/crew/home" />
-      <div className="min-h-screen bg-gray-50 pt-16 pb-20 md:pb-8 ">
-        <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 pt-14 pb-16 md:pb-8">
+        <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-6">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div
-              className={`text-center mb-8 transform transition-all duration-1000 ${
+              className={`text-center mb-6 transform transition-all duration-1000 ${
                 isLoaded
                   ? "translate-y-0 opacity-100"
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <div className="text-center sm:text-left w-full">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
                     Crew Dashboard
                   </h1>
-                  <p className="text-gray-600 text-sm sm:text-base">
+                  <p className="text-sm text-gray-600 leading-relaxed mt-1">
                     Welcome aboard! Manage your maritime career and
                     documentation.
                   </p>
@@ -177,7 +177,7 @@ export default function Dashboard() {
 
             {/* Maritime ID Card - Flippable */}
             <div
-              className={`mb-8 flex justify-center transform transition-all duration-1000 delay-300 ${
+              className={`mb-6 flex justify-center transform transition-all duration-1000 delay-300 ${
                 isLoaded
                   ? "translate-y-0 opacity-100"
                   : "translate-y-10 opacity-0"
@@ -459,15 +459,18 @@ export default function Dashboard() {
 
             {/* Quick Actions */}
             <div
-              className={`mb-8 transform transition-all duration-1000 delay-200 ${
+              className={`mb-6 transform transition-all duration-1000 delay-200 ${
                 isLoaded
                   ? "translate-y-0 opacity-100"
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
-                Quick Links
-              </h2>
+              <div className="mb-4">
+                <h2 className="text-lg font-bold text-gray-900 leading-tight">
+                  Quick Links
+                </h2>
+                <div className="h-0.5 w-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mt-1.5"></div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {quickLinks.map((link, index) => (
                   <Link
@@ -481,16 +484,16 @@ export default function Dashboard() {
                         : "translate-y-10 opacity-0"
                     }`}
                   >
-                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border border-gray-100 group">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-3 sm:mb-4 transform group-hover:rotate-12 transition-transform duration-300">
+                    <div className="bg-white rounded-xl p-4 hover:shadow-md transition-all duration-300 hover:scale-[1.02] border border-gray-200 shadow-sm group">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center mb-3 transform group-hover:scale-110 transition-transform duration-300">
                         <i
-                          className={`bi bi-${link.icon} text-xl sm:text-2xl text-gray-700`}
+                          className={`bi bi-${link.icon} text-lg text-blue-600`}
                         ></i>
                       </div>
-                      <h3 className="text-gray-900 font-semibold text-base sm:text-lg mb-2">
+                      <h3 className="text-gray-900 font-semibold text-base leading-tight mb-1.5">
                         {link.title}
                       </h3>
-                      <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
+                      <p className="text-gray-600 text-xs leading-relaxed font-normal">
                         {link.description}
                       </p>
                     </div>
@@ -501,47 +504,51 @@ export default function Dashboard() {
 
             {/* Recent Activity */}
             <div
-              className={`mb-8 transform transition-all duration-1000 delay-800 ${
+              className={`mb-6 transform transition-all duration-1000 delay-800 ${
                 isLoaded
                   ? "translate-y-0 opacity-100"
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
-                Recent Activity
-              </h2>
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
+              <div className="mb-4">
+                <h2 className="text-lg font-bold text-gray-900 leading-tight">
+                  Recent Activity
+                </h2>
+                <div className="h-0.5 w-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mt-1.5"></div>
+              </div>
+              <div className="bg-gradient-to-br from-white to-slate-50/50 rounded-xl p-4 border border-gray-200 shadow-sm">
                 <div className="space-y-4">
                   {recentActivities.map((activity, index) => (
                     <div
                       key={index}
-                      className="flex items-center space-x-4 p-3 hover:bg-gray-50 rounded-xl transition-all duration-300"
+                      className="flex items-center space-x-3 p-3 hover:bg-white/80 rounded-lg transition-all duration-300"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center flex-shrink-0">
                         <i
-                          className={`bi bi-${activity.icon} text-lg text-gray-700`}
+                          className={`bi bi-${activity.icon} text-base text-blue-600`}
                         ></i>
                       </div>
-                      <div className="flex-1">
-                        <h4 className="text-gray-900 font-medium text-sm">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-gray-900 font-semibold text-sm leading-snug">
                           {activity.title}
                         </h4>
-                        <p className="text-gray-600 text-xs">
+                        <p className="text-gray-600 text-xs leading-relaxed truncate font-normal">
                           {activity.description}
                         </p>
                       </div>
-                      <div className="text-gray-500 text-xs">
+                      <div className="text-gray-500 text-[10px] flex-shrink-0 font-medium">
                         {activity.time}
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="mt-3 pt-3 border-t border-gray-200">
                   <Link
                     href="/activity"
-                    className="text-gray-600 text-sm hover:text-gray-900 transition-colors duration-300"
+                    className="text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors duration-300 inline-flex items-center"
                   >
-                    View all activity →
+                    View all activity
+                    <i className="bi bi-arrow-right ml-1 text-xs"></i>
                   </Link>
                 </div>
               </div>
@@ -549,38 +556,38 @@ export default function Dashboard() {
 
             {/* Status Cards */}
             <div
-              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8 transform transition-all duration-1000 delay-1000 ${
+              className={`grid grid-cols-2 gap-3 mb-6 transform transition-all duration-1000 delay-1000 ${
                 isLoaded
                   ? "translate-y-0 opacity-100"
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-xl p-4 border border-blue-100 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-gray-900 font-semibold text-sm leading-tight">
                     Certificates
                   </h3>
-                  <i className="bi bi-file-earmark-check text-xl sm:text-2xl text-gray-700"></i>
+                  <i className="bi bi-file-earmark-check text-xl text-blue-600"></i>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                <div className="text-2xl font-bold text-gray-900 leading-none mb-1">
                   12
                 </div>
-                <p className="text-gray-600 text-xs sm:text-sm">
+                <p className="text-gray-600 text-xs leading-relaxed font-medium">
                   Valid certificates
                 </p>
               </div>
 
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
+              <div className="bg-gradient-to-br from-cyan-50 to-blue-50/50 rounded-xl p-4 border border-cyan-100 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-gray-900 font-semibold text-sm leading-tight">
                     Sea Time
                   </h3>
-                  <i className="bi bi-water text-xl sm:text-2xl text-gray-700"></i>
+                  <i className="bi bi-water text-xl text-cyan-600"></i>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                <div className="text-2xl font-bold text-gray-900 leading-none mb-1">
                   847
                 </div>
-                <p className="text-gray-600 text-xs sm:text-sm">Days served</p>
+                <p className="text-gray-600 text-xs leading-relaxed font-medium">Days served</p>
               </div>
             </div>
 
@@ -592,25 +599,25 @@ export default function Dashboard() {
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-lg">
-                <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+              <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl p-4 border border-gray-200 shadow-sm">
+                <div className="flex flex-col space-y-3">
                   <div>
-                    <h3 className="text-gray-900 font-semibold text-lg mb-2">
+                    <h3 className="text-gray-900 font-semibold text-base leading-tight mb-1">
                       Need assistance with crew management?
                     </h3>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-gray-600 text-xs leading-relaxed font-normal">
                       Get help with certificates, documentation, or crew support
                       services
                     </p>
                   </div>
-                  <div className="flex space-x-3">
+                  <div className="flex space-x-2">
                     <Link
                       href="/help"
-                      className="bg-gray-100 text-gray-800 px-6 py-3 rounded-xl text-sm font-medium hover:bg-gray-200 transition-all duration-300 hover:scale-105"
+                      className="flex-1 bg-white text-gray-800 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all duration-300 border border-gray-200 text-center shadow-sm leading-none"
                     >
                       Get Help
                     </Link>
-                    <button className="bg-gray-900 text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105">
+                    <button className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-sm leading-none">
                       Contact Support
                     </button>
                   </div>
@@ -620,7 +627,7 @@ export default function Dashboard() {
 
             {/* Logout */}
             <div
-              className={`mt-8 text-center transform transition-all duration-1000 delay-1400 ${
+              className={`mt-6 text-center transform transition-all duration-1000 delay-1400 ${
                 isLoaded
                   ? "translate-y-0 opacity-100"
                   : "translate-y-10 opacity-0"
@@ -628,9 +635,10 @@ export default function Dashboard() {
             >
               <Link
                 href="/"
-                className="text-gray-500 text-sm hover:text-gray-700 transition-colors duration-300"
+                className="text-gray-500 text-xs hover:text-blue-600 transition-colors duration-300 inline-flex items-center"
               >
-                ← Back to Home
+                <i className="bi bi-arrow-left mr-1 text-xs"></i>
+                Back to Home
               </Link>
             </div>
           </div>
