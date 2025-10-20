@@ -58,6 +58,12 @@ export default function AdminLayout({
       isActive: pathname.startsWith("/admin/documents"),
     },
     {
+      href: "/admin/chat",
+      icon: "bi-chat-dots",
+      label: "Chat",
+      isActive: pathname.startsWith("/admin/chat"),
+    },
+    {
       href: "/admin/reports",
       icon: "bi-graph-up",
       label: "Reports",
