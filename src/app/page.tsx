@@ -2,15 +2,21 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
     setIsLoaded(true);
   }, []);
+
+  const handleGetStarted = () => {
+    router.push("/login");
+  };
 
   if (!isMounted) {
     return null;
@@ -48,15 +54,15 @@ export default function Home() {
                 : "translate-y-10 opacity-0"
             }`}
           >
-            <Link
-              href="/login"
+            <button
+              onClick={handleGetStarted}
               className="w-full sm:max-w-sm lg:max-w-md mx-auto block bg-gray-900 text-white py-4 sm:py-5 lg:py-6 rounded-xl font-semibold text-center shadow-lg hover:bg-gray-800 transform hover:scale-105 transition-all duration-300"
             >
               <div className="flex items-center justify-center space-x-2">
                 <span className="text-base sm:text-lg">Get Started</span>
                 <span className="text-sm sm:text-base">→</span>
               </div>
-            </Link>
+            </button>
           </div>
 
           <div

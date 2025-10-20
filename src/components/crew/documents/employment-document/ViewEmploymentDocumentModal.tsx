@@ -7,6 +7,9 @@ interface ViewEmploymentDocumentModalProps {
   documentType: string;
   documentId: number;
   fileExt?: string;
+  documentNumber?: string;
+  createdAt?: string;
+  modifiedBy?: string;
 }
 
 export default function ViewEmploymentDocumentModal({
@@ -15,6 +18,9 @@ export default function ViewEmploymentDocumentModal({
   documentType,
   documentId,
   fileExt,
+  documentNumber,
+  createdAt,
+  modifiedBy,
 }: ViewEmploymentDocumentModalProps) {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const fileUrl = `${backendUrl}/api/employment-documents/${documentId}/view-file`;
@@ -23,6 +29,15 @@ export default function ViewEmploymentDocumentModal({
   const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(
     fileExt?.toLowerCase() || ""
   );
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -53,22 +68,50 @@ export default function ViewEmploymentDocumentModal({
               <Dialog.Panel className="w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-semibold text-gray-900"
-                  >
-                    {documentType} Document
-                  </Dialog.Title>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center gap-1.5"
+                  <div className="flex-1">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg font-semibold text-gray-900 mb-3"
                     >
-                      <i className="bi bi-box-arrow-up-right"></i>
-                      <span>Open in New Tab</span>
-                    </a>
+                      {documentType} Document
+                    </Dialog.Title>
+                    {/* Document Details */}
+                    <div className="space-y-2 text-sm">
+                      {documentNumber && (
+                        <div className="flex items-center gap-2">
+                          <i className="bi bi-hash text-gray-500"></i>
+                          <span className="text-gray-600">Document Number:</span>
+                          <span className="font-semibold text-gray-900">{documentNumber}</span>
+                        </div>
+                      )}
+                      {createdAt && (
+                        <div className="flex items-center gap-2">
+                          <i className="bi bi-calendar-check text-gray-500"></i>
+                          <span className="text-gray-600">Created At:</span>
+                          <span className="text-gray-900">{formatDate(createdAt)}</span>
+                        </div>
+                      )}
+                      {modifiedBy && (
+                        <div className="flex items-center gap-2">
+                          <i className="bi bi-person-badge text-gray-500"></i>
+                          <span className="text-gray-600">Modified By:</span>
+                          <span className="text-gray-900">{modifiedBy}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 ml-4">
+                    {fileExt && (
+                      <a
+                        href={fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center gap-1.5"
+                      >
+                        <i className="bi bi-box-arrow-up-right"></i>
+                        <span>Open in New Tab</span>
+                      </a>
+                    )}
                     <button
                       onClick={onClose}
                       className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -80,13 +123,13 @@ export default function ViewEmploymentDocumentModal({
 
                 {/* Content */}
                 <div className="bg-gray-100">
-                  {isPDF ? (
+                  {fileExt && isPDF ? (
                     <iframe
                       src={fileUrl}
                       className="w-full h-[70vh] border-0"
                       title={`${documentType} Document`}
                     />
-                  ) : isImage ? (
+                  ) : fileExt && isImage ? (
                     <div className="flex items-center justify-center p-6 min-h-[70vh]">
                       <img
                         src={fileUrl}
@@ -94,7 +137,7 @@ export default function ViewEmploymentDocumentModal({
                         className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
                       />
                     </div>
-                  ) : (
+                  ) : fileExt ? (
                     <div className="flex flex-col items-center justify-center p-12 min-h-[70vh]">
                       <i className="bi bi-file-earmark text-6xl text-gray-400 mb-4"></i>
                       <p className="text-gray-600 mb-4">
@@ -109,6 +152,13 @@ export default function ViewEmploymentDocumentModal({
                         <i className="bi bi-download"></i>
                         <span>Download File</span>
                       </a>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-12 min-h-[70vh]">
+                      <i className="bi bi-file-earmark-x text-6xl text-gray-400 mb-4"></i>
+                      <p className="text-gray-600">
+                        No document file attached
+                      </p>
                     </div>
                   )}
                 </div>
