@@ -137,12 +137,13 @@ export class AuthService {
     this.storeAuthData(token, user);
     
     // Show success toast with role-specific message
+    const isCrewMember = Boolean(user.is_crew);
     toast.success(`Welcome back, ${user.name || user.email}!`, {
-      icon: user.is_crew === 1 ? '⚓' : '👨‍💼',
+      icon: isCrewMember ? '⚓' : '👨‍💼',
     });
     
     // Redirect based on user role or provided redirect path
-    const destination = redirectTo || (user.is_crew === 1 ? '/home' : '/admin');
+    const destination = redirectTo || (isCrewMember ? '/crew/home' : '/admin');
     
     // Immediate redirect without delay to prevent middleware conflicts
     if (typeof window !== 'undefined') {

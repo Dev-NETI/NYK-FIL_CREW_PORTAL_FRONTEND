@@ -281,6 +281,7 @@ export default function ContactInformation({
     if (contRegion && contProvince && contCity && contBarangay) {
       const contactAddressPromise = AddressService.createOrUpdateFromGeography(
         {
+          user_id: profile.id,
           street_address:
             editedProfile?.contact_street || profile.contact_street || "",
           region_code: contRegion,
