@@ -161,6 +161,55 @@ export interface ResendOtpRequest {
   session_token: string;
 }
 
+// Geography interfaces
+export interface Region {
+  reg_code: string;
+  reg_desc: string;
+}
+
+export interface Province {
+  prov_code: string;
+  prov_desc: string;
+  reg_code: string;
+}
+
+export interface City {
+  citymun_code: string;
+  citymun_desc: string;
+  prov_code: string;
+  reg_code: string;
+}
+
+export interface Barangay {
+  brgy_code: string;
+  brgy_desc: string;
+  citymun_code: string;
+  prov_code: string;
+  reg_code: string;
+}
+
+export interface GeographyResponse<T> extends BaseApiResponse {
+  data: T;
+}
+
+// Address interfaces
+export interface Address {
+  id: number;
+  user_id: number;
+  street_address: string | null;
+  brgy_id: string;
+  city_id: string;
+  province_id: string;
+  region_id: string;
+  zip_code: string | null;
+  region?: Region;
+  province?: Province;
+  city?: City;
+  barangay?: Barangay;
+  created_at: string;
+  updated_at: string;
+}
+
 // Error response interface
 export interface ApiErrorResponse {
   success: false;
