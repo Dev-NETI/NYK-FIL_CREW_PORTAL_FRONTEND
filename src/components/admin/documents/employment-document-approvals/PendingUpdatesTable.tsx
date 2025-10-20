@@ -39,10 +39,10 @@ export default function PendingUpdatesTable({
   };
 
   const getCrewName = (update: EmploymentDocumentUpdate) => {
-    const profile = update.employment_document?.crew?.crew_profile;
+    const profile = update.employment_document?.user_profile;
     if (!profile) return "Unknown Crew";
-    return `${profile.firstname} ${profile.middlename || ""} ${
-      profile.lastname
+    return `${profile.first_name} ${profile.middle_name || ""} ${
+      profile.last_name
     }`.trim();
   };
 
@@ -94,7 +94,7 @@ export default function PendingUpdatesTable({
                     {getCrewName(update)}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {update.employment_document?.crew?.email}
+                    {update.employment_document?.user_profile?.crew_id || "N/A"}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

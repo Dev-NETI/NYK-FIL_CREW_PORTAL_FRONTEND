@@ -22,10 +22,10 @@ export default function ApprovalModal({
   const [processing, setProcessing] = useState(false);
 
   const getCrewName = () => {
-    const profile = update.employment_document?.crew?.crew_profile;
+    const profile = update.employment_document?.user_profile;
     if (!profile) return "Unknown Crew";
-    return `${profile.firstname} ${profile.middlename || ""} ${
-      profile.lastname
+    return `${profile.first_name} ${profile.middle_name || ""} ${
+      profile.last_name
     }`.trim();
   };
 
@@ -141,9 +141,9 @@ export default function ApprovalModal({
                   <div className="font-medium">{getCrewName()}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">Email</div>
+                  <div className="text-sm text-gray-600">Crew ID</div>
                   <div className="font-medium">
-                    {update.employment_document?.crew?.email}
+                    {update.employment_document?.user_profile?.crew_id || "N/A"}
                   </div>
                 </div>
                 <div>
@@ -181,12 +181,9 @@ export default function ApprovalModal({
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="text-sm text-gray-600 mb-1">Reason</div>
                 <div className="text-gray-900">{update.rejection_reason}</div>
-                {update.reviewer && (
+                {update.reviewed_by && (
                   <div className="mt-2 text-sm text-gray-600">
-                    Rejected by:{" "}
-                    {update.reviewer.admin_profile
-                      ? `${update.reviewer.admin_profile.firstname} ${update.reviewer.admin_profile.lastname}`
-                      : update.reviewer.email}
+                    Rejected by: {update.reviewed_by}
                   </div>
                 )}
               </div>

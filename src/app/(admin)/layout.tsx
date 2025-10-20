@@ -46,12 +46,6 @@ export default function AdminLayout({
       isActive: pathname.startsWith("/admin/applications"),
     },
     {
-      href: "/admin/job-descriptions",
-      icon: "bi-file-earmark-check",
-      label: "Job Descriptions",
-      isActive: pathname.startsWith("/admin/job-descriptions"),
-    },
-    {
       href: "/admin/documents",
       icon: "bi-folder",
       label: "Documents",
