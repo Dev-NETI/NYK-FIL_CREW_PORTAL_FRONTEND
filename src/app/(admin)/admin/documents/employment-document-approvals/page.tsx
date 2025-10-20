@@ -7,8 +7,8 @@ import {
 } from "@/services/employment-document-approval";
 import toast from "react-hot-toast";
 import { FileCheck, AlertCircle } from "lucide-react";
-import PendingUpdatesTable from "@/components/admin/employment-document-approvals/PendingUpdatesTable";
-import ApprovalModal from "@/components/admin/employment-document-approvals/ApprovalModal";
+import PendingUpdatesTable from "@/components/admin/documents/employment-document-approvals/PendingUpdatesTable";
+import ApprovalModal from "@/components/admin/documents/employment-document-approvals/ApprovalModal";
 
 export default function EmploymentDocumentApprovalsPage() {
   const [updates, setUpdates] = useState<EmploymentDocumentUpdate[]>([]);
