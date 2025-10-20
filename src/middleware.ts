@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
   if (userCookie) {
     try {
       user = JSON.parse(userCookie)
-      isCrew = user.is_crew === 1
+      isCrew = Boolean(user.is_crew)
     } catch (e) {
       console.error('Error parsing user cookie:', e)
     }
