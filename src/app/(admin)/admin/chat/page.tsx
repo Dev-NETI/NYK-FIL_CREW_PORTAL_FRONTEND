@@ -146,6 +146,12 @@ export default function ChatPage() {
 
   const currentMessages = mockMessages[selectedConversation.id as keyof typeof mockMessages] || [];
 
+  // Calculate ticket statistics
+  const totalTickets = conversations.length;
+  const openTickets = conversations.filter((conv) => conv.status === "open").length;
+  const pendingTickets = conversations.filter((conv) => conv.status === "pending").length;
+  const closedTickets = conversations.filter((conv) => conv.status === "closed").length;
+
   // Handle status change
   const handleStatusChange = (ticketId: number, newStatus: TicketStatus) => {
     setConversations((prev) =>
@@ -162,7 +168,82 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="flex h-screen max-h-screen overflow-hidden">
+      {/* Dashboard Stats */}
+      <div className="bg-white border-b border-gray-200 px-6 py-5">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Ticket Dashboard</h1>
+        <div className="grid grid-cols-4 gap-4">
+          {/* Total Tickets Card */}
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-100 text-sm font-medium mb-1">Total Tickets</p>
+                <p className="text-white text-3xl font-bold">{totalTickets}</p>
+              </div>
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <i className="bi bi-ticket-perforated text-white text-2xl"></i>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center text-blue-100 text-xs">
+              <i className="bi bi-info-circle mr-1"></i>
+              <span>All support tickets</span>
+            </div>
+          </div>
+
+          {/* Open Tickets Card */}
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-100 text-sm font-medium mb-1">Open Tickets</p>
+                <p className="text-white text-3xl font-bold">{openTickets}</p>
+              </div>
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <i className="bi bi-check-circle text-white text-2xl"></i>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center text-green-100 text-xs">
+              <i className="bi bi-arrow-up-right mr-1"></i>
+              <span>Active tickets</span>
+            </div>
+          </div>
+
+          {/* Pending Tickets Card */}
+          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-yellow-100 text-sm font-medium mb-1">Pending Tickets</p>
+                <p className="text-white text-3xl font-bold">{pendingTickets}</p>
+              </div>
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <i className="bi bi-clock-history text-white text-2xl"></i>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center text-yellow-100 text-xs">
+              <i className="bi bi-hourglass-split mr-1"></i>
+              <span>Awaiting response</span>
+            </div>
+          </div>
+
+          {/* Closed Tickets Card */}
+          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-red-100 text-sm font-medium mb-1">Closed Tickets</p>
+                <p className="text-white text-3xl font-bold">{closedTickets}</p>
+              </div>
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <i className="bi bi-x-circle text-white text-2xl"></i>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center text-red-100 text-xs">
+              <i className="bi bi-check-all mr-1"></i>
+              <span>Resolved tickets</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Helpdesk Ticket UI */}
+      <div className="flex h-[calc(100vh-185px)] max-h-[calc(100vh-185px)] overflow-hidden">
         {/* Left Sidebar - Ticket List */}
         <ConversationList
           conversations={filteredConversations}
