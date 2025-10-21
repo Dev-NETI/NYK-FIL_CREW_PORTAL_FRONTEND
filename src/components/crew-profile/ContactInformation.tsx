@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Region, Province, City, Barangay, Address } from "@/types/api";
+import { User, Region, Province, City, Barangay } from "@/types/api";
 import { GeographyService, AddressService } from "@/services";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
@@ -25,7 +25,7 @@ interface ContactInformationProps {
   onAddressSave?: (
     permanentAddressId?: number,
     contactAddressId?: number
-  ) => void;
+  ) => Promise<void> | void;
 }
 
 export default function ContactInformation({
@@ -140,7 +140,7 @@ export default function ContactInformation({
     loadPermanentBarangays();
   }, [editedProfile?.permanent_city, profile.permanent_city]);
 
-  // Load provinces when contact region changes
+  // Load contact provinces when contact region changes
   useEffect(() => {
     const loadContactProvinces = async () => {
       const regionCode =
@@ -166,7 +166,7 @@ export default function ContactInformation({
     loadContactProvinces();
   }, [editedProfile?.contact_region, profile.contact_region]);
 
-  // Load cities when contact province changes
+  // Load contact cities when contact province changes
   useEffect(() => {
     const loadContactCities = async () => {
       const provinceCode =
@@ -191,7 +191,7 @@ export default function ContactInformation({
     loadContactCities();
   }, [editedProfile?.contact_province, profile.contact_province]);
 
-  // Load barangays when contact city changes
+  // Load contact barangays when contact city changes
   useEffect(() => {
     const loadContactBarangays = async () => {
       const cityCode = editedProfile?.contact_city || profile.contact_city;
@@ -222,11 +222,62 @@ export default function ContactInformation({
     return item ? item.desc : code;
   };
 
+  // Helper function to build full address string
+  const buildFullAddress = (
+    street: string | undefined,
+    region: string | undefined,
+    province: string | undefined,
+    city: string | undefined,
+    barangay: string | undefined,
+    postalCode: string | undefined,
+    regionOptions: { code: string; desc: string }[],
+    provinceOptions: { code: string; desc: string }[],
+    cityOptions: { code: string; desc: string }[],
+    barangayOptions: { code: string; desc: string }[]
+  ) => {
+    const addressParts = [];
+
+    if (street) {
+      addressParts.push(street);
+    }
+
+    if (barangay) {
+      const barangayText = getGeographyDisplayText(barangay, barangayOptions);
+      if (barangayText !== "Not provided") {
+        addressParts.push(barangayText);
+      }
+    }
+
+    if (city) {
+      const cityText = getGeographyDisplayText(city, cityOptions);
+      if (cityText !== "Not provided") {
+        addressParts.push(cityText);
+      }
+    }
+
+    if (province) {
+      const provinceText = getGeographyDisplayText(province, provinceOptions);
+      if (provinceText !== "Not provided") {
+        addressParts.push(provinceText);
+      }
+    }
+
+    if (region) {
+      const regionText = getGeographyDisplayText(region, regionOptions);
+      if (regionText !== "Not provided") {
+        addressParts.push(regionText);
+      }
+    }
+
+    if (postalCode) {
+      addressParts.push(postalCode);
+    }
+
+    return addressParts.length > 0 ? addressParts.join(", ") : "Not provided";
+  };
+
   // Function to save addresses and update user contacts
-  const handleSaveAddresses = async (): Promise<{
-    permanentAddressId?: number;
-    contactAddressId?: number;
-  }> => {
+  const handleSaveAddresses = async () => {
     const promises: Promise<any>[] = [];
     let permanentAddressId: number | undefined;
     let contactAddressId: number | undefined;
@@ -305,19 +356,17 @@ export default function ContactInformation({
       promises.push(contactAddressPromise);
     }
 
-    try {
+    // Wait for all address creation/update promises to complete
+    if (promises.length > 0) {
       await Promise.all(promises);
 
+      // Call the onAddressSave callback if it exists
       if (onAddressSave) {
-        onAddressSave(permanentAddressId, contactAddressId);
+        await onAddressSave(permanentAddressId, contactAddressId);
       }
-
-      return { permanentAddressId, contactAddressId };
-    } catch (error: any) {
-      console.error("Error saving addresses:", error);
-      toast.error(error.message || "Failed to save addresses");
-      throw error;
     }
+
+    return { permanentAddressId, contactAddressId };
   };
 
   // Render geography select field with Material UI
@@ -501,13 +550,15 @@ export default function ContactInformation({
               <button
                 onClick={async () => {
                   try {
-                    // First save addresses
+                    // First save addresses and get the IDs
                     await handleSaveAddresses();
-                    // Then call the regular save function
-                    onSave();
+                    await onSave();
+                    // Address IDs are now saved directly via handleAddressSave
+                    toast.success("Contact information saved successfully!");
                   } catch (error) {
-                    // Address saving failed, don't proceed with regular save
+                    // Address saving failed
                     console.error("Address saving failed:", error);
+                    toast.error("Failed to save address information");
                   }
                 }}
                 disabled={saving}
@@ -636,7 +687,8 @@ export default function ContactInformation({
                         : "text.secondary"
                     }
                   >
-                    {profile.permanent_street || "Not provided"}
+                    {profile.permanent_address?.street_address ||
+                      "Not provided"}
                   </Typography>
                 </Box>
               </Box>
@@ -646,129 +698,8 @@ export default function ContactInformation({
           <Grid size={12}>
             {renderField(
               "Postal Code",
-              profile.permanent_postal_code || "Not provided",
+              profile.permanent_address?.zip_code || "Not provided",
               "permanent_postal_code"
-            )}
-          </Grid>
-        </Grid>
-      </div>
-
-      {/* Contact Address Section */}
-      <div className="bg-green-50 rounded-xl p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Contact Address
-        </h3>
-        <Grid container spacing={3}>
-          <Grid size={12}>
-            {renderGeographyField(
-              "Region",
-              "contact_region",
-              regions.map((r) => ({ code: r.reg_code, desc: r.reg_desc })),
-              editedProfile?.contact_region || profile.contact_region,
-              "Select region",
-              false,
-              loadingGeography
-            )}
-          </Grid>
-
-          <Grid size={12}>
-            {renderGeographyField(
-              "Province",
-              "contact_province",
-              contactProvinces.map((p) => ({
-                code: p.prov_code,
-                desc: p.prov_desc,
-              })),
-              editedProfile?.contact_province || profile.contact_province,
-              "Select province",
-              false,
-              false
-            )}
-          </Grid>
-
-          <Grid size={12}>
-            {renderGeographyField(
-              "City/Municipality",
-              "contact_city",
-              contactCities.map((c) => ({
-                code: c.citymun_code,
-                desc: c.citymun_desc,
-              })),
-              editedProfile?.contact_city || profile.contact_city,
-              "Select city/municipality",
-              false,
-              false
-            )}
-          </Grid>
-
-          <Grid size={12}>
-            {renderGeographyField(
-              "Subdivision/Barangay",
-              "contact_barangay",
-              contactBarangays.map((b) => ({
-                code: b.brgy_code,
-                desc: b.brgy_desc,
-              })),
-              editedProfile?.contact_barangay || profile.contact_barangay,
-              "Select barangay",
-              false,
-              false
-            )}
-          </Grid>
-
-          <Grid size={12}>
-            {isEditing ? (
-              <TextField
-                label="Building Name, Floor, Unit Number, Street Name"
-                value={editedProfile?.contact_street || ""}
-                onChange={(e) =>
-                  onInputChange("contact_street", e.target.value)
-                }
-                variant="outlined"
-                fullWidth
-                multiline
-                rows={3}
-                placeholder="Enter complete address"
-              />
-            ) : (
-              <Box sx={{ mb: 2 }}>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 1, fontWeight: 600 }}
-                >
-                  Building Name, Floor, Unit Number, Street Name
-                </Typography>
-                <Box
-                  sx={{
-                    p: 2,
-                    bgcolor: "grey.50",
-                    borderRadius: 2,
-                    border: "1px solid",
-                    borderColor: "grey.200",
-                    minHeight: "80px",
-                    display: "flex",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <Typography
-                    variant="body1"
-                    color={
-                      profile.contact_street ? "text.primary" : "text.secondary"
-                    }
-                  >
-                    {profile.contact_street || "Not provided"}
-                  </Typography>
-                </Box>
-              </Box>
-            )}
-          </Grid>
-
-          <Grid size={12}>
-            {renderField(
-              "Postal Code",
-              profile.contact_postal_code || "Not provided",
-              "contact_postal_code"
             )}
           </Grid>
         </Grid>

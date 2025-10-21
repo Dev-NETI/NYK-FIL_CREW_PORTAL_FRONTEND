@@ -49,7 +49,7 @@ export class AddressService {
    * Get all addresses for the authenticated user
    */
   static async getAddresses(): Promise<AddressListResponse> {
-    const response = await api.get<AddressListResponse>('/admin/addresses');
+    const response = await api.get<AddressListResponse>('/crew/addresses');
     return response.data;
   }
 
@@ -57,7 +57,7 @@ export class AddressService {
    * Get a specific address by ID
    */
   static async getAddress(id: number): Promise<AddressResponse> {
-    const response = await api.get<AddressResponse>(`/admin/addresses/${id}`);
+    const response = await api.get<AddressResponse>(`/crew/addresses/${id}`);
     return response.data;
   }
 

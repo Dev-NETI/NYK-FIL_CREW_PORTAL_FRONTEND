@@ -237,6 +237,63 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     }
   };
 
+  const handleSavePermanentAddressId = async (permanentAddressId?: number, contactAddressId?: number) => {
+    if (!editedProfile) return;
+
+    try {
+      // Prepare the contacts update object
+      const contactsUpdate: any = {
+        ...editedProfile.contacts,
+      };
+
+      // Update permanent address ID if provided
+      if (permanentAddressId) {
+        contactsUpdate.permanent_address_id = permanentAddressId;
+      }
+
+      // Update contact address ID if provided
+      if (contactAddressId) {
+        contactsUpdate.current_address_id = contactAddressId;
+      }
+
+      // Update the edited profile with the new address IDs
+      const updatedProfile = {
+        ...editedProfile,
+        contacts: contactsUpdate,
+      };
+
+      setEditedProfile(updatedProfile);
+
+      // Call the API to update the profile with the new address IDs
+      const updateResponse = await UserService.updateCrewProfile(id, {
+        contacts: contactsUpdate,
+      });
+
+      if (updateResponse.success && updateResponse.user) {
+        const initializedUpdatedProfile = {
+          ...updateResponse.user,
+          profile: updateResponse.user.profile || {},
+          physicalTraits: updateResponse.user.physical_traits || {},
+          contacts: updateResponse.user.contacts || {},
+          employment: updateResponse.user.employment || {},
+          education: updateResponse.user.education || {},
+        };
+        setProfile(initializedUpdatedProfile);
+        setEditedProfile(initializedUpdatedProfile);
+      } else {
+        throw new Error(updateResponse.message || "Update failed");
+      }
+    } catch (error: any) {
+      console.error("Error saving address IDs:", error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to save address IDs";
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
     if (!editedProfile) return;
 
@@ -690,6 +747,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onSave={handleSave}
                     onCancel={handleCancel}
                     onInputChange={handleInputChange}
+                    onAddressSave={handleSavePermanentAddressId}
                   />
                 )}
 

@@ -116,6 +116,8 @@ export interface User {
   employment?: UserEmployment;
   education?: UserEducation;
   physical_traits?: UserPhysicalTraits;
+  permanent_address?: PermanentAddress;
+  current_address?: CurrentAddress;
 
 
   // Address fields (temporary backward compatibility)
@@ -147,6 +149,26 @@ export interface User {
   higher_education_graduation_date?: string;
 }
 
+
+export interface PermanentAddress {
+  full_address?: string,
+  brgy_id?: string,
+  city_id?: string,
+  province_id?: string,
+  region_id?: string,
+  street_address?: string,
+  zip_code?: string,
+}
+
+export interface CurrentAddress {
+  full_address?: string,
+  brgy_id?: string,
+  city_id?: string,
+  province_id?: string,
+  region_id?: string,
+  street_address?: string,
+  zip_code?: string,
+}
 // Request interfaces
 export interface LoginInitiateRequest {
   email: string;
