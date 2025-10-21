@@ -237,7 +237,10 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     }
   };
 
-  const handleSavePermanentAddressId = async (permanentAddressId?: number, contactAddressId?: number) => {
+  const handleSavePermanentAddressId = async (
+    permanentAddressId?: any,
+    contactAddressId?: any
+  ) => {
     if (!editedProfile) return;
 
     try {
