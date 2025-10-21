@@ -78,21 +78,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     }
   };
 
-  const [recentActivity] = useState([
-    {
-      action: "Profile accessed",
-      time: "Now",
-      icon: "person-circle",
-    },
-    {
-      action: profile?.last_login_at ? "Last login" : "Account created",
-      time: profile?.last_login_at
-        ? new Date(profile.last_login_at).toLocaleDateString()
-        : "Unknown",
-      icon: "calendar-check",
-    },
-  ]);
-
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -300,10 +285,30 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   const handleInputChange = (field: string, value: string) => {
     if (!editedProfile) return;
 
-    setEditedProfile({
-      ...editedProfile,
-      [field]: value,
-    });
+    // Handle nested contact fields
+    const contactFields = [
+      "mobile_number",
+      "alternate_phone",
+      "emergency_contact_name",
+      "emergency_contact_phone",
+      "emergency_contact_relationship",
+      "email_personal",
+    ];
+
+    if (contactFields.includes(field)) {
+      setEditedProfile({
+        ...editedProfile,
+        contacts: {
+          ...editedProfile.contacts,
+          [field]: value,
+        },
+      });
+    } else {
+      setEditedProfile({
+        ...editedProfile,
+        [field]: value,
+      });
+    }
   };
 
   const handleNestedInputChange = (

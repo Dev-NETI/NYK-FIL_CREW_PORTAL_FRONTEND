@@ -348,7 +348,9 @@ export default function ContactInformation({
       editedProfile.contacts = {
         ...editedProfile.contacts,
         permanent_address_id: permanentAddressId,
-        current_address_id: sameAsPermanent ? permanentAddressId : currentAddressId,
+        current_address_id: sameAsPermanent
+          ? permanentAddressId
+          : currentAddressId,
       };
     }
 
@@ -465,13 +467,34 @@ export default function ContactInformation({
     type: string = "text",
     disabled: boolean = false
   ) => {
+    // Handle contact fields that are nested in the contacts object
+    const contactFields = [
+      "mobile_number",
+      "alternate_phone",
+      "emergency_contact_name",
+      "emergency_contact_phone",
+      "emergency_contact_relationship",
+      "email_personal",
+    ];
+
+    const getFieldValue = () => {
+      if (contactFields.includes(field)) {
+        return (
+          (editedProfile?.contacts?.[
+            field as keyof typeof editedProfile.contacts
+          ] as string) || ""
+        );
+      }
+      return (editedProfile?.[field as keyof User] as string) || "";
+    };
+
     return (
       <Box>
         {isEditing ? (
           <TextField
             label={label}
             type={type}
-            value={(editedProfile?.[field as keyof User] as string) || ""}
+            value={getFieldValue()}
             onChange={(e) => onInputChange(field, e.target.value)}
             required={required}
             variant="outlined"
@@ -868,23 +891,66 @@ export default function ContactInformation({
         </Grid>
       </div>
 
-      {/* Contact Information Section */}
+      {/* My Contact Section */}
       <div className="bg-orange-50 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Contact Information
+          My Contact Information
+        </h3>
+        <Grid container spacing={3}>
+          <Grid size={6}>
+            {renderField(
+              "Emergency Contact Number No.",
+              profile.contacts?.mobile_number ||
+                (profile as any).mobile_number ||
+                "Not provided",
+              "mobile_number",
+              false,
+              "tel"
+            )}
+          </Grid>
+          <Grid size={6}>
+            {renderField(
+              "Alternate Mobile No.",
+              profile.contacts?.alternate_phone ||
+                (profile as any).alternate_phone ||
+                "Not provided",
+              "alternate_phone",
+              false,
+              "tel"
+            )}
+          </Grid>
+
+          <Grid size={12}>
+            {renderField(
+              "Personal Email Address",
+              profile.contacts?.email_personal ||
+                (profile as any).email_personal ||
+                "Not provided",
+              "email_personal"
+            )}
+          </Grid>
+        </Grid>
+      </div>
+
+      {/* Contact Information Section */}
+      <div className="bg-red-50 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Contact Emergency
         </h3>
         <Grid container spacing={3}>
           <Grid size={12}>
             <Box>
               {isEditing ? (
                 <TextField
-                  label="Email Address"
-                  type="email"
-                  value={editedProfile?.email || ""}
-                  onChange={(e) => onInputChange("email", e.target.value)}
+                  label="Emergency Contact Name"
+                  type="text"
+                  value={editedProfile?.contacts?.emergency_contact_name || ""}
+                  onChange={(e) =>
+                    onInputChange("emergency_contact_name", e.target.value)
+                  }
                   variant="outlined"
                   fullWidth
-                  placeholder="Enter email address"
+                  placeholder="Enter emergency contact name"
                 />
               ) : (
                 <Box sx={{ mb: 2 }}>
@@ -893,7 +959,7 @@ export default function ContactInformation({
                     color="text.secondary"
                     sx={{ mb: 1, fontWeight: 600 }}
                   >
-                    Email Address
+                    Emergency Contact Name
                   </Typography>
                   <Box
                     sx={{
@@ -908,15 +974,7 @@ export default function ContactInformation({
                     }}
                   >
                     <Typography variant="body1" color="text.primary">
-                      {profile.email}
-                      {profile.email_verified_at && (
-                        <Typography
-                          component="span"
-                          sx={{ ml: 1, color: "green", fontSize: "0.875rem" }}
-                        >
-                          ✓ Verified
-                        </Typography>
-                      )}
+                      {profile.contacts?.emergency_contact_name}
                     </Typography>
                   </Box>
                 </Box>
@@ -926,21 +984,11 @@ export default function ContactInformation({
 
           <Grid size={12}>
             {renderField(
-              "Mobile No.",
-              profile.contacts?.mobile_number ||
-                (profile as any).mobile_number ||
+              "Emergency Contact Number No.",
+              profile.contacts?.emergency_contact_phone ||
+                (profile as any).emergency_contact_phone ||
                 "Not provided",
-              "mobile_number",
-              false,
-              "tel"
-            )}
-          </Grid>
-
-          <Grid size={12}>
-            {renderField(
-              "Emergency Contact Number",
-              profile.emergency_contact_number || "Not provided",
-              "emergency_contact_number",
+              "emergency_contact_phone",
               false,
               "tel"
             )}
@@ -949,8 +997,9 @@ export default function ContactInformation({
           <Grid size={12}>
             {renderField(
               "Emergency Contact Relation",
-              profile.emergency_contact_relation || "Not provided",
-              "emergency_contact_relation"
+              profile.contacts?.emergency_contact_relationship ||
+                "Not provided",
+              "emergency_contact_relationship"
             )}
           </Grid>
         </Grid>
