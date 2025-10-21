@@ -846,34 +846,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
               </div>
             </div>
 
-            {/* Recent Activity */}
-            <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                <i className="bi bi-clock-history text-blue-600 mr-2"></i>
-                Recent Activity
-              </h3>
-              <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-xl transition-all duration-200"
-                  >
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                      <i
-                        className={`bi bi-${activity.icon} text-blue-600 text-sm`}
-                      ></i>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {activity.action}
-                      </p>
-                      <p className="text-xs text-gray-500">{activity.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Danger Zone */}
             <div className="bg-red-50/70 backdrop-blur-md rounded-2xl shadow-lg border border-red-200/20 p-6">
               <h3 className="text-lg font-bold text-red-900 mb-4 flex items-center">

@@ -192,7 +192,11 @@ export default function ContactInformation({
     };
 
     loadCurrentCities();
-  }, [editedProfile?.current_province, profile.current_province, sameAsPermanent]);
+  }, [
+    editedProfile?.current_province,
+    profile.current_province,
+    sameAsPermanent,
+  ]);
 
   // Load barangays when current city changes
   useEffect(() => {
@@ -228,7 +232,7 @@ export default function ContactInformation({
   // Handle "same as permanent address" checkbox
   const handleSameAsPermanentChange = (checked: boolean) => {
     setSameAsPermanent(checked);
-    
+
     if (checked && editedProfile) {
       // Copy permanent address to current address
       onInputChange("current_region", editedProfile.permanent_region || "");
@@ -236,7 +240,10 @@ export default function ContactInformation({
       onInputChange("current_city", editedProfile.permanent_city || "");
       onInputChange("current_barangay", editedProfile.permanent_barangay || "");
       onInputChange("current_street", editedProfile.permanent_street || "");
-      onInputChange("current_postal_code", editedProfile.permanent_postal_code || "");
+      onInputChange(
+        "current_postal_code",
+        editedProfile.permanent_postal_code || ""
+      );
     } else if (!checked && editedProfile) {
       // Clear current address fields
       onInputChange("current_region", "");
@@ -321,10 +328,11 @@ export default function ContactInformation({
               "",
           };
 
-          const currentResponse = await AddressService.createOrUpdateFromGeography(
-            currentAddressData,
-            profile.contacts?.current_address_id
-          );
+          const currentResponse =
+            await AddressService.createOrUpdateFromGeography(
+              currentAddressData,
+              profile.contacts?.current_address_id
+            );
 
           if (currentResponse.success) {
             currentAddressId = currentResponse.data.id;
@@ -340,14 +348,17 @@ export default function ContactInformation({
       editedProfile.contacts = {
         ...editedProfile.contacts,
         permanent_address_id: permanentAddressId,
-        current_address_id: currentAddressId || permanentAddressId,
+        current_address_id: sameAsPermanent ? permanentAddressId : currentAddressId,
       };
     }
 
     // Also call the onAddressSave callback if it exists (for additional processing)
     if (onAddressSave && (permanentAddressId || currentAddressId)) {
       try {
-        await onAddressSave(permanentAddressId, currentAddressId || permanentAddressId);
+        await onAddressSave(
+          permanentAddressId,
+          sameAsPermanent ? permanentAddressId : currentAddressId
+        );
       } catch (error) {}
     }
 
@@ -547,6 +558,7 @@ export default function ContactInformation({
                     // Log success with address ID for debugging
                     console.log("Address saved successfully:", {
                       permanentAddressId: addressResult.permanentAddressId,
+                      currentAddressId: addressResult.currentAddressId,
                     });
 
                     toast.success("Contact information saved successfully!");
@@ -709,14 +721,16 @@ export default function ContactInformation({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Current Address
         </h3>
-        
+
         {isEditing && (
           <div className="mb-4">
             <FormControlLabel
               control={
                 <Checkbox
                   checked={sameAsPermanent}
-                  onChange={(e) => handleSameAsPermanentChange(e.target.checked)}
+                  onChange={(e) =>
+                    handleSameAsPermanentChange(e.target.checked)
+                  }
                   color="primary"
                 />
               }
@@ -748,8 +762,7 @@ export default function ContactInformation({
                     code: p.prov_code,
                     desc: p.prov_desc,
                   })),
-                  editedProfile?.current_province ||
-                    profile.current_province,
+                  editedProfile?.current_province || profile.current_province,
                   "Select province",
                   false,
                   false,
@@ -781,8 +794,7 @@ export default function ContactInformation({
                     code: b.brgy_code,
                     desc: b.brgy_desc,
                   })),
-                  editedProfile?.current_barangay ||
-                    profile.current_barangay,
+                  editedProfile?.current_barangay || profile.current_barangay,
                   "Select barangay",
                   false,
                   false,
