@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { EmploymentDocumentApprovalService } from "@/services/employment-document-approval";
+import { TravelDocumentApprovalService } from "@/services/travel-document-approval";
 
 export default function DocumentsPage() {
   const router = useRouter();
@@ -30,7 +31,9 @@ export default function DocumentsPage() {
         await EmploymentDocumentApprovalService.getPendingUpdates();
       setPendingEmploymentCount(employmentUpdates.length);
 
-      setPendingTravelCount(0);
+      const travelUpdates =
+        await TravelDocumentApprovalService.getPendingUpdates();
+      setPendingTravelCount(travelUpdates.length);
     } catch (error) {
       console.error("Error loading pending counts:", error);
     } finally {
@@ -120,7 +123,6 @@ export default function DocumentsPage() {
       hoverGradient: "from-purple-100 to-pink-100",
       route: "/admin/documents/travel-document-approvals",
       pendingCount: pendingTravelCount,
-      comingSoon: true,
     },
   ];
 

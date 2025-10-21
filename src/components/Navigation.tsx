@@ -68,12 +68,6 @@ export default function Navigation({
       icon: "chat",
       activeIcon: "chat-fill",
     },
-    {
-      href: "/crew/job-description",
-      label: "Job Description",
-      icon: "file-earmark-text",
-      activeIcon: "file-earmark-text-fill",
-    },
   ];
 
   const isActive = (path: string) => currentRoute === path;
@@ -355,9 +349,7 @@ export default function Navigation({
                     className={`bi bi-${
                       isActive(item.href) ? item.activeIcon : item.icon
                     } text-[22px] transition-all duration-300 ${
-                      clickedItem === item.href
-                        ? "scale-110"
-                        : "scale-100"
+                      clickedItem === item.href ? "scale-110" : "scale-100"
                     }`}
                   ></i>
                   {/* Unread Badge for Inbox */}
