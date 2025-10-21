@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 import * as Yup from "yup";
 import { EmploymentDocumentService } from "@/services/employment-document";
+import { EmploymentDocumentApprovalService, EmploymentDocumentUpdate } from "@/services/employment-document-approval";
 import ViewEmploymentDocumentModal from "./ViewEmploymentDocumentModal";
 
 interface EmploymentDocument {
@@ -44,6 +45,8 @@ export default function EmploymentDocumentListItemComponent({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [pendingUpdates, setPendingUpdates] = useState<EmploymentDocumentUpdate[]>([]);
+  const [loadingPending, setLoadingPending] = useState(true);
 
   // Swipe state
   const [swipeOffset, setSwipeOffset] = useState(0);
@@ -59,6 +62,25 @@ export default function EmploymentDocumentListItemComponent({
       day: "numeric",
     });
   };
+
+  // Fetch pending updates for this document
+  useEffect(() => {
+    const fetchPendingUpdates = async () => {
+      try {
+        setLoadingPending(true);
+        const history = await EmploymentDocumentApprovalService.getHistory(document.id);
+        // Filter for pending updates only
+        const pending = history.filter(update => update.status === 'pending');
+        setPendingUpdates(pending);
+      } catch (error) {
+        console.error('Error fetching pending updates:', error);
+      } finally {
+        setLoadingPending(false);
+      }
+    };
+
+    fetchPendingUpdates();
+  }, [document.id]);
 
   // Swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -451,13 +473,27 @@ export default function EmploymentDocumentListItemComponent({
 
             {/* Document name */}
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
-                {document.documentType}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                  {document.documentType}
+                </h3>
+                {!loadingPending && pendingUpdates.length > 0 && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
+                    <i className="bi bi-clock-history mr-1"></i>
+                    Pending Approval
+                  </span>
+                )}
+              </div>
               {document.file_path && (
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">
                   <i className="bi bi-paperclip mr-1"></i>
                   Document attached
+                </p>
+              )}
+              {!loadingPending && pendingUpdates.length > 0 && (
+                <p className="text-xs sm:text-sm text-yellow-700 mt-1 font-medium">
+                  <i className="bi bi-info-circle mr-1"></i>
+                  You have changes awaiting admin approval
                 </p>
               )}
             </div>
@@ -637,6 +673,7 @@ export default function EmploymentDocumentListItemComponent({
         documentNumber={document.documentNumber}
         createdAt={document.createdAt}
         modifiedBy={document.modifiedBy}
+        pendingUpdates={pendingUpdates}
       />
 
       {/* Delete Confirmation Modal */}
