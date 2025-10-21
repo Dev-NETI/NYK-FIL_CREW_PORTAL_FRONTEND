@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import { EmploymentDocumentUpdate } from "@/services/employment-document-approval";
 
 interface ViewEmploymentDocumentModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface ViewEmploymentDocumentModalProps {
   documentNumber?: string;
   createdAt?: string;
   modifiedBy?: string;
+  pendingUpdates?: EmploymentDocumentUpdate[];
 }
 
 export default function ViewEmploymentDocumentModal({
@@ -21,6 +23,7 @@ export default function ViewEmploymentDocumentModal({
   documentNumber,
   createdAt,
   modifiedBy,
+  pendingUpdates = [],
 }: ViewEmploymentDocumentModalProps) {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const fileUrl = `${backendUrl}/api/employment-documents/${documentId}/view-file`;
@@ -80,15 +83,21 @@ export default function ViewEmploymentDocumentModal({
                       {documentNumber && (
                         <div className="flex items-center gap-2">
                           <i className="bi bi-hash text-gray-500"></i>
-                          <span className="text-gray-600">Document Number:</span>
-                          <span className="font-semibold text-gray-900">{documentNumber}</span>
+                          <span className="text-gray-600">
+                            Document Number:
+                          </span>
+                          <span className="font-semibold text-gray-900">
+                            {documentNumber}
+                          </span>
                         </div>
                       )}
                       {createdAt && (
                         <div className="flex items-center gap-2">
                           <i className="bi bi-calendar-check text-gray-500"></i>
                           <span className="text-gray-600">Created At:</span>
-                          <span className="text-gray-900">{formatDate(createdAt)}</span>
+                          <span className="text-gray-900">
+                            {formatDate(createdAt)}
+                          </span>
                         </div>
                       )}
                       {modifiedBy && (
@@ -99,6 +108,62 @@ export default function ViewEmploymentDocumentModal({
                         </div>
                       )}
                     </div>
+
+                    {/* Pending Updates Alert */}
+                    {pendingUpdates.length > 0 && (
+                      <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                        <div className="flex items-start gap-2">
+                          <i className="bi bi-clock-history text-yellow-600 text-lg mt-0.5"></i>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold text-yellow-800 mb-1">
+                              Pending Changes
+                            </h4>
+                            <p className="text-xs text-yellow-700 mb-2">
+                              You have {pendingUpdates.length} update
+                              {pendingUpdates.length > 1 ? "s" : ""} awaiting
+                              admin approval
+                            </p>
+                            {pendingUpdates.map((update) => (
+                              <div
+                                key={update.id}
+                                className="bg-white rounded p-2 mb-2 last:mb-0 border border-yellow-100"
+                              >
+                                <div className="text-xs space-y-1">
+                                  <div className="flex items-center gap-2 text-gray-600">
+                                    <i className="bi bi-calendar3"></i>
+                                    <span>
+                                      Submitted:{" "}
+                                      {new Date(
+                                        update.created_at
+                                      ).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  {update.updated_data.document_number && (
+                                    <div className="flex items-center gap-2">
+                                      <i className="bi bi-arrow-right text-blue-600"></i>
+                                      <span className="text-gray-600">
+                                        New Document Number:
+                                      </span>
+                                      <span className="font-semibold text-gray-900">
+                                        {update.updated_data.document_number}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {update.updated_data.file_path && (
+                                    <div className="flex items-center gap-2">
+                                      <i className="bi bi-paperclip text-blue-600"></i>
+                                      <span className="text-gray-600">
+                                        File update included
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-start gap-2 ml-4">
                     {fileExt && (
@@ -156,9 +221,7 @@ export default function ViewEmploymentDocumentModal({
                   ) : (
                     <div className="flex flex-col items-center justify-center p-12 min-h-[70vh]">
                       <i className="bi bi-file-earmark-x text-6xl text-gray-400 mb-4"></i>
-                      <p className="text-gray-600">
-                        No document file attached
-                      </p>
+                      <p className="text-gray-600">No document file attached</p>
                     </div>
                   )}
                 </div>
