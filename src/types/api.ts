@@ -127,12 +127,12 @@ export interface User {
   permanent_barangay?: string;
   permanent_street?: string;
   permanent_postal_code?: string;
-  contact_region?: string;
-  contact_province?: string;
-  contact_city?: string;
-  contact_barangay?: string;
-  contact_street?: string;
-  contact_postal_code?: string;
+  current_region?: string;
+  current_province?: string;
+  current_city?: string;
+  current_barangay?: string;
+  current_street?: string;
+  current_postal_code?: string;
 
   // Contact fields
   emergency_contact_number?: string;
