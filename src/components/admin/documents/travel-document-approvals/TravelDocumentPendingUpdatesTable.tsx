@@ -1,16 +1,16 @@
-import { EmploymentDocumentUpdate } from "@/services/employment-document-approval";
+import { TravelDocumentUpdate } from "@/services/travel-document-approval";
 import { Clock } from "lucide-react";
-import PendingUpdatesTableListItemComponent from "./PendingUpdatesTableListItemComponent";
+import TravelDocumentPendingUpdatesTableListItemComponent from "./TravelDocumentPendingUpdatesTableListItemComponent";
 
-interface PendingUpdatesTableProps {
-  updates: EmploymentDocumentUpdate[];
-  onViewUpdate: (update: EmploymentDocumentUpdate) => void;
+interface TravelDocumentPendingUpdatesTableProps {
+  updates: TravelDocumentUpdate[];
+  onViewUpdate: (update: TravelDocumentUpdate) => void;
 }
 
-export default function PendingUpdatesTable({
+export default function TravelDocumentPendingUpdatesTable({
   updates,
   onViewUpdate,
-}: PendingUpdatesTableProps) {
+}: TravelDocumentPendingUpdatesTableProps) {
   if (updates.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-8 text-center">
@@ -19,7 +19,7 @@ export default function PendingUpdatesTable({
           No update requests found
         </h3>
         <p className="text-gray-500">
-          There are no employment document update requests at this time.
+          There are no travel document update requests at this time.
         </p>
       </div>
     );
@@ -38,7 +38,7 @@ export default function PendingUpdatesTable({
                 Document Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Document Number
+                ID Number
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
@@ -56,7 +56,7 @@ export default function PendingUpdatesTable({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {updates.map((update) => (
-              <PendingUpdatesTableListItemComponent
+              <TravelDocumentPendingUpdatesTableListItemComponent
                 key={update.id}
                 update={update}
                 onViewUpdate={onViewUpdate}

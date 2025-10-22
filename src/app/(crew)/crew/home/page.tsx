@@ -159,7 +159,7 @@ export default function Dashboard() {
           <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div
-              className={`text-center mb-8 transform transition-all duration-1000 ${
+              className={`text-center mb-6 transform transition-all duration-1000 ${
                 isLoaded
                   ? "translate-y-0 opacity-100"
                   : "translate-y-10 opacity-0"

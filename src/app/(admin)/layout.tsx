@@ -40,16 +40,16 @@ export default function AdminLayout({
       isActive: pathname.startsWith("/admin/crew"),
     },
     {
-      href: "/admin/applications",
-      icon: "bi-file-earmark-text",
-      label: "Applications",
-      isActive: pathname.startsWith("/admin/applications"),
-    },
-    {
       href: "/admin/documents",
       icon: "bi-folder",
       label: "Documents",
       isActive: pathname.startsWith("/admin/documents"),
+    },
+    {
+      href: "/admin/chat",
+      icon: "bi-chat-dots",
+      label: "Chat",
+      isActive: pathname.startsWith("/admin/chat"),
     },
     {
       href: "/admin/reports",
