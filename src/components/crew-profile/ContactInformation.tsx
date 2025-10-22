@@ -76,13 +76,24 @@ export default function ContactInformation({
     const loadPermanentProvinces = async () => {
       const regionCode =
         editedProfile?.permanent_region || profile.permanent_region;
+
       if (regionCode) {
         try {
           const response = await GeographyService.getProvincesByRegion(
             regionCode
           );
+
           if (response.success) {
             setPermanentProvinces(response.data);
+            // Reset dependent dropdowns when region changes
+            setPermanentCities([]);
+            setPermanentBarangays([]);
+            // Clear dependent fields in editedProfile
+            if (editedProfile) {
+              onInputChange("permanent_province", "");
+              onInputChange("permanent_city", "");
+              onInputChange("permanent_barangay", "");
+            }
           }
         } catch (error) {
           console.error("Error loading permanent provinces:", error);
@@ -102,13 +113,22 @@ export default function ContactInformation({
     const loadPermanentCities = async () => {
       const provinceCode =
         editedProfile?.permanent_province || profile.permanent_province;
+
       if (provinceCode) {
         try {
           const response = await GeographyService.getCitiesByProvince(
             provinceCode
           );
+
           if (response.success) {
             setPermanentCities(response.data);
+            // Reset dependent dropdowns when province changes
+            setPermanentBarangays([]);
+            // Clear dependent fields in editedProfile
+            if (editedProfile) {
+              onInputChange("permanent_city", "");
+              onInputChange("permanent_barangay", "");
+            }
           }
         } catch (error) {
           console.error("Error loading permanent cities:", error);
@@ -126,11 +146,17 @@ export default function ContactInformation({
   useEffect(() => {
     const loadPermanentBarangays = async () => {
       const cityCode = editedProfile?.permanent_city || profile.permanent_city;
+
       if (cityCode) {
         try {
           const response = await GeographyService.getBarangaysByCity(cityCode);
+
           if (response.success) {
             setPermanentBarangays(response.data);
+            // Clear dependent fields in editedProfile
+            if (editedProfile) {
+              onInputChange("permanent_barangay", "");
+            }
           }
         } catch (error) {
           console.error("Error loading permanent barangays:", error);
@@ -298,69 +324,80 @@ export default function ContactInformation({
       }
     }
 
-    // Save current address
+    // Save current address - always create separate record
+    let currRegion,
+      currProvince,
+      currCity,
+      currBarangay,
+      currStreet,
+      currPostalCode;
+
     if (sameAsPermanent) {
-      // Use the same address as permanent
-      currentAddressId = permanentAddressId;
+      // Use permanent address data but create a separate record
+      currRegion = permRegion;
+      currProvince = permProvince;
+      currCity = permCity;
+      currBarangay = permBarangay;
+      currStreet =
+        editedProfile?.permanent_street || profile.permanent_street || "";
+      currPostalCode =
+        editedProfile?.permanent_postal_code ||
+        profile.permanent_postal_code ||
+        "";
     } else {
-      // Save separate current address if we have the required data
-      const currRegion =
-        editedProfile?.current_region || profile.current_region;
-      const currProvince =
+      // Use current address data
+      currRegion = editedProfile?.current_region || profile.current_region;
+      currProvince =
         editedProfile?.current_province || profile.current_province;
-      const currCity = editedProfile?.current_city || profile.current_city;
-      const currBarangay =
+      currCity = editedProfile?.current_city || profile.current_city;
+      currBarangay =
         editedProfile?.current_barangay || profile.current_barangay;
+      currStreet =
+        editedProfile?.current_street || profile.current_street || "";
+      currPostalCode =
+        editedProfile?.current_postal_code || profile.current_postal_code || "";
+    }
 
-      if (currRegion && currProvince && currCity && currBarangay) {
-        try {
-          const currentAddressData = {
-            user_id: profile.id,
-            street_address:
-              editedProfile?.current_street || profile.current_street || "",
-            region_code: currRegion,
-            province_code: currProvince,
-            city_code: currCity,
-            barangay_code: currBarangay,
-            zip_code:
-              editedProfile?.current_postal_code ||
-              profile.current_postal_code ||
-              "",
-          };
+    // Always create/update a separate current address record
+    if (currRegion && currProvince && currCity && currBarangay) {
+      try {
+        const currentAddressData = {
+          user_id: profile.id,
+          street_address: currStreet,
+          region_code: currRegion,
+          province_code: currProvince,
+          city_code: currCity,
+          barangay_code: currBarangay,
+          zip_code: currPostalCode,
+        };
 
-          const currentResponse =
-            await AddressService.createOrUpdateFromGeography(
-              currentAddressData,
-              profile.contacts?.current_address_id
-            );
+        const currentResponse =
+          await AddressService.createOrUpdateFromGeography(
+            currentAddressData,
+            sameAsPermanent ? undefined : profile.contacts?.current_address_id
+          );
 
-          if (currentResponse.success) {
-            currentAddressId = currentResponse.data.id;
-          }
-        } catch (error) {
-          throw error;
+        if (currentResponse.success) {
+          currentAddressId = currentResponse.data.id;
         }
+      } catch (error) {
+        throw error;
       }
     }
 
-    // Update the profile with address IDs
+    // Update the profile with address IDs - always use separate IDs
     if (editedProfile) {
       editedProfile.contacts = {
         ...editedProfile.contacts,
         permanent_address_id: permanentAddressId,
-        current_address_id: sameAsPermanent
-          ? permanentAddressId
-          : currentAddressId,
+        current_address_id: currentAddressId,
       };
     }
 
     // Also call the onAddressSave callback if it exists (for additional processing)
     if (onAddressSave && (permanentAddressId || currentAddressId)) {
       try {
-        await onAddressSave(
-          permanentAddressId,
-          sameAsPermanent ? permanentAddressId : currentAddressId
-        );
+        await onAddressSave(permanentAddressId, currentAddressId);
       } catch (error) {}
     }
 
