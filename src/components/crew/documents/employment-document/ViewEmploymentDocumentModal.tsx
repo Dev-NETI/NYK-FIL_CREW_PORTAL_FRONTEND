@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import Image from "next/image";
 import { Dialog, Transition } from "@headlessui/react";
 import { EmploymentDocumentUpdate } from "@/services/employment-document-approval";
 
@@ -195,10 +196,12 @@ export default function ViewEmploymentDocumentModal({
                       title={`${documentType} Document`}
                     />
                   ) : fileExt && isImage ? (
-                    <div className="flex items-center justify-center p-6 min-h-[70vh]">
-                      <img
+                    <div className="flex items-center justify-center p-6 min-h-[70vh] relative">
+                      <Image
                         src={fileUrl}
                         alt={`${documentType} Document`}
+                        width={1200}
+                        height={800}
                         className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
                       />
                     </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { AuthService } from "@/services";
 import { User } from "@/types/api";
 import QRCode from "qrcode";
@@ -368,11 +369,13 @@ export default function Dashboard() {
                         {/* QR Code */}
                         <div className="bg-white p-2 sm:p-3 border-2 border-gray-300 rounded-lg shadow-inner">
                           {qrCodeDataUrl ? (
-                            <img
+                            <Image
                               src={qrCodeDataUrl}
                               alt={`QR Code for Crew ID: ${
                                 currentUser?.profile?.crew_id || "N/A"
                               }`}
+                              width={96}
+                              height={96}
                               className="w-20 h-20 sm:w-24 sm:h-24 rounded"
                             />
                           ) : (
