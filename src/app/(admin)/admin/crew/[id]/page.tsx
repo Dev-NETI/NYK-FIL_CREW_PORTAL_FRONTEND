@@ -610,70 +610,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <i className="bi bi-check-circle text-green-600 text-xl"></i>
-              </div>
-              <span className="text-2xl">
-                {profile.email_verified_at ? "✅" : "⏳"}
-              </span>
-            </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {profile.email_verified_at ? "Verified" : "Pending"}
-            </div>
-            <p className="text-gray-600 text-sm">Account Status</p>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <i className="bi bi-calendar-date text-blue-600 text-xl"></i>
-              </div>
-              <span className="text-2xl">📅</span>
-            </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {profile.employment?.hire_date
-                ? new Date(profile.employment?.hire_date).getFullYear()
-                : "N/A"}
-            </div>
-            <p className="text-gray-600 text-sm">Hire Year</p>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <i className="bi bi-ship text-purple-600 text-xl"></i>
-              </div>
-              <span className="text-2xl">🚢</span>
-            </div>
-            <div className="text-lg font-bold text-gray-900 mb-1 truncate">
-              {profile.employment?.fleet_name || "Unassigned"}
-            </div>
-            <p className="text-gray-600 text-sm">Fleet Assignment</p>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <i className="bi bi-clock-history text-orange-600 text-xl"></i>
-              </div>
-              <span className="text-2xl">🕒</span>
-            </div>
-            <div className="text-lg font-bold text-gray-900 mb-1">
-              {profile.last_login_at
-                ? new Date(profile.last_login_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })
-                : "Never"}
-            </div>
-            <p className="text-gray-600 text-sm">Last Login</p>
-          </div>
-        </div>
-
         {/* Main Content */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           {/* Profile Tabs - Takes up 3 columns */}
@@ -761,18 +697,12 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
                 {activeTab === "employment" && (
                   <EmploymentInformation
-                    profile={profile}
-                    isEditing={isEditing}
-                    saving={saving}
                     programs={programs}
                     employmentRecords={employmentRecords}
                     editingEmploymentId={editingEmploymentId}
                     showProgramSelection={showProgramSelection}
                     selectedProgramId={selectedProgramId}
                     batchInput={batchInput}
-                    onEdit={handleEdit}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
                     onAddEmploymentRecord={addEmploymentRecord}
                     onProgramSelect={handleProgramSelect}
                     onBatchSave={handleBatchSave}
