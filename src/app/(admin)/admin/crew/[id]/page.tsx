@@ -78,21 +78,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     }
   };
 
-  const [recentActivity] = useState([
-    {
-      action: "Profile accessed",
-      time: "Now",
-      icon: "person-circle",
-    },
-    {
-      action: profile?.last_login_at ? "Last login" : "Account created",
-      time: profile?.last_login_at
-        ? new Date(profile.last_login_at).toLocaleDateString()
-        : "Unknown",
-      icon: "calendar-check",
-    },
-  ]);
-
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -237,13 +222,93 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     }
   };
 
+  const handleSavePermanentAddressId = async (
+    permanentAddressId?: any,
+    contactAddressId?: any
+  ) => {
+    if (!editedProfile) return;
+
+    try {
+      // Prepare the contacts update object
+      const contactsUpdate: any = {
+        ...editedProfile.contacts,
+      };
+
+      // Update permanent address ID if provided
+      if (permanentAddressId) {
+        contactsUpdate.permanent_address_id = permanentAddressId;
+      }
+
+      // Update contact address ID if provided
+      if (contactAddressId) {
+        contactsUpdate.current_address_id = contactAddressId;
+      }
+
+      // Update the edited profile with the new address IDs
+      const updatedProfile = {
+        ...editedProfile,
+        contacts: contactsUpdate,
+      };
+
+      setEditedProfile(updatedProfile);
+
+      // Call the API to update the profile with the new address IDs
+      const updateResponse = await UserService.updateCrewProfile(id, {
+        contacts: contactsUpdate,
+      });
+
+      if (updateResponse.success && updateResponse.user) {
+        const initializedUpdatedProfile = {
+          ...updateResponse.user,
+          profile: updateResponse.user.profile || {},
+          physicalTraits: updateResponse.user.physical_traits || {},
+          contacts: updateResponse.user.contacts || {},
+          employment: updateResponse.user.employment || {},
+          education: updateResponse.user.education || {},
+        };
+        setProfile(initializedUpdatedProfile);
+        setEditedProfile(initializedUpdatedProfile);
+      } else {
+        throw new Error(updateResponse.message || "Update failed");
+      }
+    } catch (error: any) {
+      console.error("Error saving address IDs:", error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to save address IDs";
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
     if (!editedProfile) return;
 
-    setEditedProfile({
-      ...editedProfile,
-      [field]: value,
-    });
+    // Handle nested contact fields
+    const contactFields = [
+      "mobile_number",
+      "alternate_phone",
+      "emergency_contact_name",
+      "emergency_contact_phone",
+      "emergency_contact_relationship",
+      "email_personal",
+    ];
+
+    if (contactFields.includes(field)) {
+      setEditedProfile({
+        ...editedProfile,
+        contacts: {
+          ...editedProfile.contacts,
+          [field]: value,
+        },
+      });
+    } else {
+      setEditedProfile({
+        ...editedProfile,
+        [field]: value,
+      });
+    }
   };
 
   const handleNestedInputChange = (
@@ -690,6 +755,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onSave={handleSave}
                     onCancel={handleCancel}
                     onInputChange={handleInputChange}
+                    onAddressSave={handleSavePermanentAddressId}
                   />
                 )}
 
@@ -781,34 +847,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                       {action.label}
                     </span>
                   </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                <i className="bi bi-clock-history text-blue-600 mr-2"></i>
-                Recent Activity
-              </h3>
-              <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-xl transition-all duration-200"
-                  >
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                      <i
-                        className={`bi bi-${activity.icon} text-blue-600 text-sm`}
-                      ></i>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {activity.action}
-                      </p>
-                      <p className="text-xs text-gray-500">{activity.time}</p>
-                    </div>
-                  </div>
                 ))}
               </div>
             </div>
