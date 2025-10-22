@@ -39,10 +39,29 @@ export class UserService {
   }
 
   /**
-   * Get all crew members (admin only)
+   * Get all crew members with pagination and filters (admin only)
    */
-  static async getAllCrew(): Promise<CrewListResponse> {
-    const response = await api.get<CrewListResponse>("/admin/crew");
+  static async getAllCrew(params?: {
+    page?: number;
+    per_page?: number;
+    search?: string;
+    status?: string;
+    sort_by?: string;
+    sort_order?: string;
+  }): Promise<CrewListResponse> {
+    const searchParams = new URLSearchParams();
+    
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.per_page) searchParams.append('per_page', params.per_page.toString());
+    if (params?.search !== undefined) searchParams.append('search', params.search);
+    if (params?.status && params.status !== 'all') searchParams.append('status', params.status);
+    if (params?.sort_by) searchParams.append('sort_by', params.sort_by);
+    if (params?.sort_order) searchParams.append('sort_order', params.sort_order);
+
+    const queryString = searchParams.toString();
+    const url = queryString ? `/admin/crew?${queryString}` : '/admin/crew';
+    
+    const response = await api.get<CrewListResponse>(url);
     return response.data;
   }
 

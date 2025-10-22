@@ -32,9 +32,28 @@ export interface UserResponse extends BaseApiResponse {
   user?: User;
 }
 
+export interface PaginationInfo {
+  current_page: number;
+  per_page: number;
+  total: number;
+  last_page: number;
+  from: number | null;
+  to: number | null;
+  has_more_pages: boolean;
+}
+
+export interface CrewFilters {
+  search: string;
+  status: string;
+  sort_by: string;
+  sort_order: string;
+}
+
 export interface CrewListResponse extends BaseApiResponse {
   crew?: User[];
-  total?: number;
+  pagination?: PaginationInfo;
+  filters?: CrewFilters;
+  total?: number; // Keep for backward compatibility
 }
 
 // User Profile interfaces
