@@ -5,6 +5,10 @@ import { Program } from "@/services/program";
 import { EmploymentRecord } from "@/services/employment";
 
 interface EmploymentInformationProps {
+  profile: User;
+  isEditing: boolean;
+  saving: boolean;
+  canEdit?: boolean;
   programs: Program[];
   employmentRecords: EmploymentRecord[];
   editingEmploymentId: number | null;
@@ -29,6 +33,9 @@ interface EmploymentInformationProps {
 }
 
 export default function EmploymentInformation({
+  isEditing,
+  saving,
+  canEdit = true,
   programs,
   employmentRecords,
   editingEmploymentId,
@@ -60,6 +67,52 @@ export default function EmploymentInformation({
             Work history and employment records
           </p>
         </div>
+
+        {/* Edit Controls */}
+        <div className="flex items-center space-x-3">
+          {!isEditing ? (
+            <button
+              onClick={onEdit}
+              disabled={!canEdit}
+              className={`bg-gradient-to-r from-orange-600 to-orange-700 text-white px-5 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg flex items-center space-x-2 ${
+                canEdit
+                  ? "hover:from-orange-700 hover:to-orange-800 hover:shadow-xl"
+                  : "opacity-50 cursor-not-allowed"
+              }`}
+              title={!canEdit ? "You don't have permission to edit this section" : ""}
+            >
+              <i className="bi bi-pencil text-sm"></i>
+              <span>Edit</span>
+            </button>
+          ) : (
+            <div className="flex space-x-2">
+              <button
+                onClick={onCancel}
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2.5 rounded-xl transition-colors duration-200 text-sm font-medium shadow-lg flex items-center space-x-2"
+              >
+                <i className="bi bi-x text-sm"></i>
+                <span>Cancel</span>
+              </button>
+              <button
+                onClick={onSave}
+                disabled={saving}
+                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl flex items-center space-x-2"
+              >
+                {saving ? (
+                  <>
+                    <i className="bi bi-arrow-clockwise animate-spin text-sm"></i>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-check text-sm"></i>
+                    <span>Save</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="bg-purple-50 rounded-xl p-6">
@@ -69,7 +122,13 @@ export default function EmploymentInformation({
           </h3>
           <button
             onClick={onAddEmploymentRecord}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm"
+            disabled={!canEdit}
+            className={`text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm ${
+              canEdit
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+            title={!canEdit ? "You don't have permission to add employment records" : ""}
           >
             <i className="bi bi-plus mr-2"></i>
             Add Employment
@@ -168,7 +227,13 @@ export default function EmploymentInformation({
             <p className="text-gray-500 mb-4">No employment records found</p>
             <button
               onClick={onAddEmploymentRecord}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              disabled={!canEdit}
+              className={`text-white px-4 py-2 rounded-lg transition-colors duration-200 ${
+                canEdit
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+              title={!canEdit ? "You don't have permission to add employment records" : ""}
             >
               Add First Employment Record
             </button>

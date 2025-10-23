@@ -4,10 +4,7 @@ import TravelDocumentListSkeleton from "./TravelDocumentListSkeleton";
 import MissingTravelDocumentCardComponent from "./MissingTravelDocumentCardComponent";
 import AddTravelDocumentModal from "./AddTravelDocumentModal";
 import { useUser } from "@/hooks/useUser";
-import {
-  TravelDocumentService,
-  TravelDocument as APITravelDocument,
-} from "@/services/travel-document";
+import { TravelDocumentService } from "@/services/travel-document";
 import {
   TravelDocumentTypeService,
   TravelDocumentType as APITravelDocumentType,

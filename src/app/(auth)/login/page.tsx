@@ -285,7 +285,9 @@ export default function LoginPage() {
             onClick={handleBackToHome}
             className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors duration-200 group"
           >
-            <span className="text-xl group-hover:transform group-hover:-translate-x-1 transition-transform duration-200">←</span>
+            <span className="text-xl group-hover:transform group-hover:-translate-x-1 transition-transform duration-200">
+              ←
+            </span>
             <span className="text-sm sm:text-base">Back to Home</span>
           </button>
         </div>

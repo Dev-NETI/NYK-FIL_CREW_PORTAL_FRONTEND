@@ -13,6 +13,8 @@ import ContactInformation from "@/components/crew-profile/ContactInformation";
 import EmploymentInformation from "@/components/crew-profile/EmploymentInformation";
 import EducationInformation from "@/components/crew-profile/EducationInformation";
 import { Nationality, NationalityService } from "@/services/nationality";
+import { AdminRoleService, AdminRole } from "@/services/admin-role";
+import { AuthService } from "@/services/auth";
 
 interface CrewDetailsPageProps {
   params: Promise<{
@@ -21,7 +23,6 @@ interface CrewDetailsPageProps {
 }
 
 export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<User | null>(null);
   const [nationalities, setNationalities] = useState<Nationality[]>([]);
@@ -42,9 +43,15 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   );
   const [batchInput, setBatchInput] = useState("");
   const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
+  const [userRoles, setUserRoles] = useState<AdminRole[]>([]);
   const router = useRouter();
   const resolvedParams = use(params);
   const id = resolvedParams.id;
+
+  // Helper function to check if user has a specific role
+  const hasRole = (roleName: string): boolean => {
+    return userRoles.some((adminRole) => adminRole.role.name === roleName);
+  };
 
   // Program options will be loaded from API
 
@@ -56,6 +63,23 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
     loadNationality();
   }, [profile]);
+
+  // Load current user's roles on mount
+  useEffect(() => {
+    const loadUserRoles = async () => {
+      try {
+        const currentUser = AuthService.getStoredUser();
+        if (currentUser?.id) {
+          const roles = await AdminRoleService.getByUserId(currentUser.id);
+          setUserRoles(roles);
+        }
+      } catch (error) {
+        console.error("Error loading user roles:", error);
+      }
+    };
+
+    loadUserRoles();
+  }, []);
 
   const loadEmploymentRecords = async () => {
     try {
@@ -125,7 +149,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         toast.error("Failed to load profile data");
       } finally {
         setLoading(false);
-        setIsLoaded(true);
       }
     };
 
@@ -681,6 +704,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     editedProfile={editedProfile}
                     isEditing={isEditing}
                     saving={saving}
+                    canEdit={hasRole("Manage Crew Basic Info")}
                     onEdit={handleEdit}
                     onSave={handleSave}
                     onCancel={handleCancel}
@@ -696,6 +720,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     editedProfile={editedProfile}
                     isEditing={isEditing}
                     saving={saving}
+                    canEdit={hasRole("Manage Crew Physical Info")}
                     onEdit={handleEdit}
                     onSave={handleSave}
                     onCancel={handleCancel}
@@ -710,6 +735,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     editedProfile={editedProfile}
                     isEditing={isEditing}
                     saving={saving}
+                    canEdit={hasRole("Manage Crew Contact Info")}
                     onEdit={handleEdit}
                     onSave={handleSave}
                     onCancel={handleCancel}
@@ -721,6 +747,10 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
                 {activeTab === "employment" && (
                   <EmploymentInformation
+                    profile={profile}
+                    isEditing={isEditing}
+                    saving={saving}
+                    canEdit={hasRole("Manage Crew Employment Info")}
                     programs={programs}
                     employmentRecords={employmentRecords}
                     editingEmploymentId={editingEmploymentId}
@@ -748,6 +778,14 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                       setProfile(updatedProfile);
                       setEditedProfile(updatedProfile);
                     }}
+                    editedProfile={editedProfile}
+                    isEditing={isEditing}
+                    saving={saving}
+                    canEdit={hasRole("Manage Crew Education")}
+                    onEdit={handleEdit}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    onInputChange={handleInputChange}
                   />
                 )}
               </div>
