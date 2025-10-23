@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function AdminDashboard() {
   return (
     <div className="space-y-6 p-4 lg:p-6">
@@ -162,7 +164,7 @@ export default function AdminDashboard() {
           </div>
           <div className="p-6">
             <div className="grid grid-cols-2 gap-4">
-              <a
+              <Link
                 href="/admin/crew/add"
                 className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors group"
               >
@@ -172,7 +174,7 @@ export default function AdminDashboard() {
                     Add New Crew
                   </p>
                 </div>
-              </a>
+              </Link>
 
               <a
                 href="/admin/applications/review"

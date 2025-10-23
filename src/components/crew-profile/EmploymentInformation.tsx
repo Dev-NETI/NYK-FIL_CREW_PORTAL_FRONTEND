@@ -5,6 +5,10 @@ import { Program } from "@/services/program";
 import { EmploymentRecord } from "@/services/employment";
 
 interface EmploymentInformationProps {
+  profile: User;
+  isEditing: boolean;
+  saving: boolean;
+  canEdit?: boolean;
   programs: Program[];
   employmentRecords: EmploymentRecord[];
   editingEmploymentId: number | null;
@@ -29,6 +33,9 @@ interface EmploymentInformationProps {
 }
 
 export default function EmploymentInformation({
+  isEditing,
+  saving,
+  canEdit = true,
   programs,
   employmentRecords,
   editingEmploymentId,
@@ -69,7 +76,17 @@ export default function EmploymentInformation({
           </h3>
           <button
             onClick={onAddEmploymentRecord}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm"
+            disabled={!canEdit}
+            className={`text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm ${
+              canEdit
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+            title={
+              !canEdit
+                ? "You don't have permission to add employment records"
+                : ""
+            }
           >
             <i className="bi bi-plus mr-2"></i>
             Add Employment
@@ -168,7 +185,17 @@ export default function EmploymentInformation({
             <p className="text-gray-500 mb-4">No employment records found</p>
             <button
               onClick={onAddEmploymentRecord}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              disabled={!canEdit}
+              className={`text-white px-4 py-2 rounded-lg transition-colors duration-200 ${
+                canEdit
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+              title={
+                !canEdit
+                  ? "You don't have permission to add employment records"
+                  : ""
+              }
             >
               Add First Employment Record
             </button>
