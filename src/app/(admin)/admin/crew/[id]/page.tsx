@@ -21,7 +21,6 @@ interface CrewDetailsPageProps {
 }
 
 export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<User | null>(null);
   const [nationalities, setNationalities] = useState<Nationality[]>([]);
@@ -124,7 +123,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         toast.error("Failed to load profile data");
       } finally {
         setLoading(false);
-        setIsLoaded(true);
       }
     };
 
