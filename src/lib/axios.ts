@@ -75,6 +75,12 @@ api.interceptors.response.use(
       }
     }
 
+    // Don't modify 422 validation errors - let them pass through as-is
+    // so the component can handle them properly
+    // if (error.response?.status === 422) {
+    //   return Promise.reject(error);
+    // }
+
     // Handle network errors
     if (!error.response) {
       console.error("❌ Network Error: Unable to connect to the server");

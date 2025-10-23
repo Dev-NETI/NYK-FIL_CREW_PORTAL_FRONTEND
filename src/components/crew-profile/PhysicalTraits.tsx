@@ -2,6 +2,8 @@
 
 import { User } from "@/types/api";
 import { TextField } from "@mui/material";
+import ValidationError from "@/components/ui/ValidationError";
+import { useValidation } from "@/hooks/useValidation";
 
 interface PhysicalTraitsProps {
   profile: User;
@@ -12,6 +14,7 @@ interface PhysicalTraitsProps {
   onSave: () => void;
   onCancel: () => void;
   onNestedInputChange: (parent: string, field: string, value: string) => void;
+  validationErrors?: Record<string, string[]>;
 }
 
 export default function PhysicalTraits({
@@ -23,7 +26,11 @@ export default function PhysicalTraits({
   onSave,
   onCancel,
   onNestedInputChange,
+  validationErrors = {},
 }: PhysicalTraitsProps) {
+  // Use validation hook for cleaner validation logic
+  const { getValidationError, hasValidationError } = useValidation({ validationErrors });
+
   // Utility function to get edited nested field value
   const getEditedNestedFieldValue = (parent: string, field: string): string => {
     return (
@@ -33,37 +40,24 @@ export default function PhysicalTraits({
     );
   };
 
-  const renderField = (
-    label: string,
-    value: string,
-    field: string,
-    required: boolean = false
-  ) => {
-    return (
-      <div>
-        {isEditing ? (
-          <TextField
-            label={label}
-            value={getEditedNestedFieldValue("physicalTraits", field)}
-            onChange={(e) => onNestedInputChange("physicalTraits", field, e.target.value)}
-            fullWidth
-            variant="outlined"
-            required={required}
-            placeholder={`Enter ${label.toLowerCase()}`}
-          />
-        ) : (
-          <TextField
-            label={label}
-            value={value || "Not provided"}
-            fullWidth
-            variant="outlined"
-            disabled
-            required={required}
-          />
-        )}
-      </div>
-    );
-  };
+  // Component for displaying field with label and value (copied from BasicInformation)
+  const DisplayField = ({
+    label,
+    value,
+    className = "",
+  }: {
+    label: string;
+    value: string | null | undefined;
+    className?: string;
+  }) => (
+    <div className={`space-y-1 ${className}`}>
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border">
+        {value || "Not specified"}
+      </p>
+    </div>
+  );
+
 
   return (
     <div className="space-y-8">
@@ -124,79 +118,113 @@ export default function PhysicalTraits({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           {isEditing ? (
-            <TextField
-              label="Height (cm)"
-              type="number"
-              value={getEditedNestedFieldValue("physicalTraits", "height")}
-              onChange={(e) => onNestedInputChange("physicalTraits", "height", e.target.value)}
-              fullWidth
-              variant="outlined"
-              placeholder="Enter height in cm"
-              slotProps={{
-                htmlInput: {
-                  min: 0,
-                  max: 300,
-                },
-              }}
-            />
+            <div>
+              <TextField
+                label="Height (cm)"
+                type="number"
+                value={getEditedNestedFieldValue("physicalTraits", "height")}
+                onChange={(e) => onNestedInputChange("physicalTraits", "height", e.target.value)}
+                fullWidth
+                variant="outlined"
+                placeholder="Enter height in cm"
+                error={hasValidationError("physicalTraits.height")}
+                slotProps={{
+                  htmlInput: {
+                    min: 0,
+                    max: 300,
+                  },
+                }}
+              />
+              <ValidationError errors={getValidationError("physicalTraits.height")} />
+            </div>
           ) : (
-            <TextField
+            <DisplayField
               label="Height (cm)"
               value={
                 profile.physical_traits?.height
                   ? `${profile.physical_traits?.height} cm`
-                  : "Not provided"
+                  : undefined
               }
-              fullWidth
-              variant="outlined"
-              disabled
             />
           )}
         </div>
 
         <div>
           {isEditing ? (
-            <TextField
-              label="Weight (kg)"
-              type="number"
-              value={getEditedNestedFieldValue("physicalTraits", "weight")}
-              onChange={(e) => onNestedInputChange("physicalTraits", "weight", e.target.value)}
-              fullWidth
-              variant="outlined"
-              placeholder="Enter weight in kg"
-              slotProps={{
-                htmlInput: {
-                  min: 0,
-                  max: 500,
-                },
-              }}
-            />
+            <div>
+              <TextField
+                label="Weight (kg)"
+                type="number"
+                value={getEditedNestedFieldValue("physicalTraits", "weight")}
+                onChange={(e) => onNestedInputChange("physicalTraits", "weight", e.target.value)}
+                fullWidth
+                variant="outlined"
+                placeholder="Enter weight in kg"
+                error={hasValidationError("physicalTraits.weight")}
+                slotProps={{
+                  htmlInput: {
+                    min: 0,
+                    max: 500,
+                  },
+                }}
+              />
+              <ValidationError errors={getValidationError("physicalTraits.weight")} />
+            </div>
           ) : (
-            <TextField
+            <DisplayField
               label="Weight (kg)"
               value={
                 profile.physical_traits?.weight
                   ? `${profile.physical_traits?.weight} kg`
-                  : "Not provided"
+                  : undefined
               }
-              fullWidth
-              variant="outlined"
-              disabled
             />
           )}
         </div>
 
-        {renderField(
-          "Eye Color",
-          profile.physical_traits?.eye_color || "Not provided",
-          "eye_color"
-        )}
+        <div>
+          {isEditing ? (
+            <div>
+              <TextField
+                label="Eye Color"
+                value={getEditedNestedFieldValue("physicalTraits", "eye_color")}
+                onChange={(e) => onNestedInputChange("physicalTraits", "eye_color", e.target.value)}
+                fullWidth
+                variant="outlined"
+                placeholder="Enter eye color"
+                error={hasValidationError("physicalTraits.eye_color")}
+              />
+              <ValidationError errors={getValidationError("physicalTraits.eye_color")} />
+            </div>
+          ) : (
+            <DisplayField
+              label="Eye Color"
+              value={profile.physical_traits?.eye_color}
+            />
+          )}
+        </div>
 
-        {renderField(
-          "Hair Color",
-          profile.physical_traits?.hair_color || "Not provided",
-          "hair_color"
-        )}
+        <div>
+          {isEditing ? (
+            <div>
+              <TextField
+                label="Hair Color"
+                value={getEditedNestedFieldValue("physicalTraits", "hair_color")}
+                onChange={(e) => onNestedInputChange("physicalTraits", "hair_color", e.target.value)}
+                fullWidth
+                variant="outlined"
+                placeholder="Enter hair color"
+                error={hasValidationError("physicalTraits.hair_color")}
+              />
+              <ValidationError errors={getValidationError("physicalTraits.hair_color")} />
+            </div>
+          ) : (
+            <DisplayField
+              label="Hair Color"
+              value={profile.physical_traits?.hair_color}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

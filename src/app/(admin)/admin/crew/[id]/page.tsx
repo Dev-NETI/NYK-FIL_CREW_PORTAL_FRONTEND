@@ -41,6 +41,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     null
   );
   const [batchInput, setBatchInput] = useState("");
+  const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
   const router = useRouter();
   const resolvedParams = use(params);
   const id = resolvedParams.id;
@@ -133,6 +134,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
   const handleEdit = () => {
     setIsEditing(true);
+    setValidationErrors({}); // Clear validation errors when starting edit
     if (profile) {
       // Ensure all nested objects are properly initialized
       const editableProfile = {
@@ -151,6 +153,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
   const handleCancel = () => {
     setIsEditing(false);
+    setValidationErrors({}); // Clear validation errors when canceling edit
     if (profile) {
       // Ensure all nested objects are properly initialized when canceling
       const editableProfile = {
@@ -177,12 +180,28 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
     try {
       setSaving(true);
+      setValidationErrors({}); // Clear previous validation errors
 
-      // Call the API to update the profile
-      const updateResponse = await UserService.updateCrewProfile(
-        id,
-        editedProfile
-      );
+      // Call the API to update the profile with specific 422 error handling
+      let updateResponse;
+      try {
+        updateResponse = await UserService.updateCrewProfile(
+          id,
+          editedProfile
+        );
+      } catch (apiError: any) {
+        // Handle 422 validation errors specifically
+        if (apiError?.response?.status === 422) {
+          if (apiError?.response?.data?.errors) {
+            const apiValidationErrors = apiError.response.data.errors;
+            setValidationErrors(apiValidationErrors); // Store validation errors for display
+          }
+          // Don't show any toast for validation errors - field-level errors are enough
+          return;
+        }
+        // Re-throw non-422 errors
+        throw apiError;
+      }
 
       if (updateResponse.success && updateResponse.user) {
         const updatedProfile = updateResponse.user;
@@ -198,6 +217,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         setProfile(initializedUpdatedProfile);
         setEditedProfile(initializedUpdatedProfile);
         setIsEditing(false);
+        setValidationErrors({}); // Clear validation errors on success
         toast.success("Profile updated successfully!");
       } else {
         throw new Error(updateResponse.message || "Update failed");
@@ -205,18 +225,19 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     } catch (error: any) {
       console.error("Error updating profile:", error);
 
-      // Handle specific validation errors
-      if (error?.response?.status === 422 && error?.response?.data?.errors) {
-        const validationErrors = error.response.data.errors;
-        const errorMessages = Object.values(validationErrors).flat();
-        toast.error(`Validation Error: ${errorMessages.join(", ")}`);
-      } else {
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to update profile";
-        toast.error(errorMessage);
+      // Only show toast error for non-validation errors
+      let errorMessage = "Failed to update profile";
+      
+      // Check for specific error message from backend
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message && !error.message.includes("Request failed with status code")) {
+        // Only use the error message if it's not the generic axios error
+        errorMessage = error.message;
       }
+      
+      toast.error(errorMessage);
+      setValidationErrors({}); // Clear validation errors for non-validation errors
     } finally {
       setSaving(false);
     }
@@ -665,6 +686,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onCancel={handleCancel}
                     onNestedInputChange={handleNestedInputChange}
                     nationalities={nationalities}
+                    validationErrors={validationErrors}
                   />
                 )}
 
@@ -678,6 +700,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onSave={handleSave}
                     onCancel={handleCancel}
                     onNestedInputChange={handleNestedInputChange}
+                    validationErrors={validationErrors}
                   />
                 )}
 
@@ -692,6 +715,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onCancel={handleCancel}
                     onInputChange={handleInputChange}
                     onAddressSave={handleSavePermanentAddressId}
+                    validationErrors={validationErrors}
                   />
                 )}
 
