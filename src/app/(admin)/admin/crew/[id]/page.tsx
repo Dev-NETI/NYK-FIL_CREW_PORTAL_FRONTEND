@@ -780,14 +780,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                       setProfile(updatedProfile);
                       setEditedProfile(updatedProfile);
                     }}
-                    editedProfile={editedProfile}
-                    isEditing={isEditing}
-                    saving={saving}
                     canEdit={hasRole("Manage Crew Education")}
-                    onEdit={handleEdit}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    onInputChange={handleInputChange}
                   />
                 )}
               </div>

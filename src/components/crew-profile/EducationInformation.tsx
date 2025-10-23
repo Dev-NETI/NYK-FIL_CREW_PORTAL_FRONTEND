@@ -23,25 +23,13 @@ import dayjs, { Dayjs } from "dayjs";
 interface EducationInformationProps {
   profile: User;
   onProfileUpdate: (updatedProfile: User) => void;
-  editedProfile: User | null;
-  isEditing: boolean;
-  saving: boolean;
   canEdit?: boolean;
-  onEdit: () => void;
-  onSave: () => void;
-  onCancel: () => void;
-  onInputChange: (field: string, value: string) => void;
 }
 
 export default function EducationInformation({
   profile,
   onProfileUpdate,
-  editedProfile,
   canEdit = true,
-  onEdit,
-  onSave,
-  onCancel,
-  onInputChange,
 }: EducationInformationProps) {
   const theme = useTheme();
   const [isEditing, setIsEditing] = useState(false);
@@ -408,18 +396,6 @@ export default function EducationInformation({
               variant="caption"
               color="text.secondary"
               sx={{ fontWeight: 500, display: "block", mb: 0.5 }}
-        {/* Edit Controls */}
-        <div className="flex items-center space-x-3">
-          {!isEditing ? (
-            <button
-              onClick={onEdit}
-              disabled={!canEdit}
-              className={`bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-5 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg flex items-center space-x-2 ${
-                canEdit
-                  ? "hover:from-indigo-700 hover:to-indigo-800 hover:shadow-xl"
-                  : "opacity-50 cursor-not-allowed"
-              }`}
-              title={!canEdit ? "You don't have permission to edit this section" : ""}
             >
               {label}
             </Typography>

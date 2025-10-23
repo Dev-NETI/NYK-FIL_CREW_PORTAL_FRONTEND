@@ -15,6 +15,9 @@ interface EmploymentInformationProps {
   showProgramSelection: boolean;
   selectedProgramId: number | null;
   batchInput: string;
+  onEdit: () => void;
+  onCancel: () => void;
+  onSave: () => void;
   onAddEmploymentRecord: () => void;
   onProgramSelect: (programId: number) => void;
   onBatchSave: () => void;
@@ -42,6 +45,9 @@ export default function EmploymentInformation({
   showProgramSelection,
   selectedProgramId,
   batchInput,
+  onEdit,
+  onCancel,
+  onSave,
   onAddEmploymentRecord,
   onProgramSelect,
   onBatchSave,
@@ -66,54 +72,6 @@ export default function EmploymentInformation({
           <p className="text-gray-600 mt-1">
             Work history and employment records
           </p>
-        </div>
-
-        {/* Edit Controls */}
-        <div className="flex items-center space-x-3">
-          {!isEditing ? (
-            <button
-              onClick={onEdit}
-              disabled={!canEdit}
-              className={`bg-gradient-to-r from-orange-600 to-orange-700 text-white px-5 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg flex items-center space-x-2 ${
-                canEdit
-                  ? "hover:from-orange-700 hover:to-orange-800 hover:shadow-xl"
-                  : "opacity-50 cursor-not-allowed"
-              }`}
-              title={
-                !canEdit ? "You don't have permission to edit this section" : ""
-              }
-            >
-              <i className="bi bi-pencil text-sm"></i>
-              <span>Edit</span>
-            </button>
-          ) : (
-            <div className="flex space-x-2">
-              <button
-                onClick={onCancel}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2.5 rounded-xl transition-colors duration-200 text-sm font-medium shadow-lg flex items-center space-x-2"
-              >
-                <i className="bi bi-x text-sm"></i>
-                <span>Cancel</span>
-              </button>
-              <button
-                onClick={onSave}
-                disabled={saving}
-                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl flex items-center space-x-2"
-              >
-                {saving ? (
-                  <>
-                    <i className="bi bi-arrow-clockwise animate-spin text-sm"></i>
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-check text-sm"></i>
-                    <span>Save</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
