@@ -42,7 +42,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     null
   );
   const [batchInput, setBatchInput] = useState("");
-  const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string[]>
+  >({});
   const [userRoles, setUserRoles] = useState<AdminRole[]>([]);
   const router = useRouter();
   const resolvedParams = use(params);
@@ -208,10 +210,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
       // Call the API to update the profile with specific 422 error handling
       let updateResponse;
       try {
-        updateResponse = await UserService.updateCrewProfile(
-          id,
-          editedProfile
-        );
+        updateResponse = await UserService.updateCrewProfile(id, editedProfile);
       } catch (apiError: any) {
         // Handle 422 validation errors specifically
         if (apiError?.response?.status === 422) {
@@ -250,15 +249,18 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
       // Only show toast error for non-validation errors
       let errorMessage = "Failed to update profile";
-      
+
       // Check for specific error message from backend
       if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
-      } else if (error?.message && !error.message.includes("Request failed with status code")) {
+      } else if (
+        error?.message &&
+        !error.message.includes("Request failed with status code")
+      ) {
         // Only use the error message if it's not the generic axios error
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
       setValidationErrors({}); // Clear validation errors for non-validation errors
     } finally {
@@ -778,14 +780,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                       setProfile(updatedProfile);
                       setEditedProfile(updatedProfile);
                     }}
-                    editedProfile={editedProfile}
-                    isEditing={isEditing}
-                    saving={saving}
                     canEdit={hasRole("Manage Crew Education")}
-                    onEdit={handleEdit}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    onInputChange={handleInputChange}
                   />
                 )}
               </div>

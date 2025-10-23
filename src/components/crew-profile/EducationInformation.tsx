@@ -23,27 +23,13 @@ import dayjs, { Dayjs } from "dayjs";
 interface EducationInformationProps {
   profile: User;
   onProfileUpdate: (updatedProfile: User) => void;
-  editedProfile: User | null;
-  isEditing: boolean;
-  saving: boolean;
   canEdit?: boolean;
-  onEdit: () => void;
-  onSave: () => void;
-  onCancel: () => void;
-  onInputChange: (field: string, value: string) => void;
 }
 
 export default function EducationInformation({
   profile,
   onProfileUpdate,
-  editedProfile,
-  isEditing,
-  saving,
   canEdit = true,
-  onEdit,
-  onSave,
-  onCancel,
-  onInputChange,
 }: EducationInformationProps) {
   const theme = useTheme();
   const [isEditing, setIsEditing] = useState(false);
@@ -444,7 +430,12 @@ export default function EducationInformation({
             {!isEditing ? (
               <button
                 onClick={handleEdit}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm flex items-center"
+                disabled={!canEdit}
+                className={`text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm ${
+                  canEdit
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-gray-400 cursor-not-allowed"
+                }`}
               >
                 <i className="bi bi-pencil-fill mr-2"></i>
                 Edit Information
