@@ -1,83 +1,92 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import CrewTable from "@/components/CrewTable";
 import { UserService } from "@/services";
-import { User } from "@/types/api";
+import { User, PaginationInfo } from "@/types/api";
 import toast from "react-hot-toast";
 
-interface Crew {
-  id: string;
-  name: string;
-  position: string;
-  department: string;
-  status: string;
-  joinDate: string;
-  email: string;
-  phone: string;
-}
-
 export default function CrewManagement() {
-  const [crews, setCrews] = useState<Crew[]>([]);
+  const [crews, setCrews] = useState<User[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("first_name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-  // Convert User data to Crew format for compatibility with existing components
-  const convertUserToCrew = (user: User): Crew => ({
-    id: user.id.toString(),
-    name:
-      user.name ||
-      user.profile?.full_name ||
-      `${user.profile?.first_name || ""} ${user.profile?.middle_name || ""} ${
-        user.profile?.last_name || ""
-      }`.trim() ||
-      user.profile?.first_name ||
-      user.email,
-    position:
-      user.employment?.rank_name ||
-      user.employment?.rank_name ||
-      "Not assigned",
-    department:
-      user.employment?.fleet_name ||
-      user.employment?.fleet_name ||
-      "Not assigned",
-    status:
-      user.employment?.crew_status || user.employment?.crew_status || "active",
-    joinDate:
-      user.employment?.hire_date || user.employment?.hire_date || "Unknown",
-    email: user.email,
-    phone:
-      user.contacts?.mobile_number ||
-      user.contacts?.mobile_number ||
-      "Not provided",
-  });
+  // Load crew data from API with current filters and pagination
+  const loadCrewData = useCallback(
+    async (resetPage = false) => {
+      try {
+        setLoading(true);
+        const pageToLoad = resetPage ? 1 : currentPage;
 
-  // Load crew data from API
-  const loadCrewData = async () => {
-    try {
-      setLoading(true);
-      const response = await UserService.getAllCrew();
+        const response = await UserService.getAllCrew({
+          page: pageToLoad,
+          per_page: itemsPerPage,
+          search: searchTerm,
+          status: statusFilter,
+          sort_by: sortBy,
+          sort_order: sortOrder,
+        });
 
-      if (response.success && response.crew) {
-        const convertedCrew = response.crew.map(convertUserToCrew);
-        setCrews(convertedCrew);
-        toast.success("Crew data loaded successfully");
-      } else {
-        toast.error(response.message || "Failed to load crew data");
+        if (response.success && response.crew) {
+          setCrews(response.crew);
+          setPagination(response.pagination || null);
+
+          if (resetPage && pageToLoad !== currentPage) {
+            setCurrentPage(pageToLoad);
+          }
+
+          // Only show success toast on initial load
+          if (!isLoaded) {
+            toast.success("Crew data loaded successfully");
+          }
+        } else {
+          toast.error(response.message || "Failed to load crew data");
+        }
+      } catch (error) {
+        console.error("Error loading crew data:", error);
+        toast.error("Failed to load crew data");
+      } finally {
+        setLoading(false);
+        setIsLoaded(true);
       }
-    } catch (error) {
-      console.error("Error loading crew data:", error);
-      toast.error("Failed to load crew data");
-    } finally {
-      setLoading(false);
-      setIsLoaded(true);
-    }
-  };
+    },
+    [currentPage, itemsPerPage, searchTerm, statusFilter, sortBy, sortOrder]
+  );
 
+  // Load data when dependencies change
   useEffect(() => {
     loadCrewData();
+  }, [loadCrewData]);
+
+  // Handle filter changes (reset to page 1)
+  const handleSearchChange = useCallback((newSearchTerm: string) => {
+    setSearchTerm(newSearchTerm);
+    setCurrentPage(1);
+  }, []);
+
+  const handleStatusFilterChange = useCallback((newStatus: string) => {
+    setStatusFilter(newStatus);
+    setCurrentPage(1);
+  }, []);
+
+  const handleSortChange = useCallback(
+    (newSortBy: string, newSortOrder: "asc" | "desc") => {
+      setSortBy(newSortBy);
+      setSortOrder(newSortOrder);
+      setCurrentPage(1);
+    },
+    []
+  );
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
   }, []);
 
   if (loading) {
@@ -116,71 +125,6 @@ export default function CrewManagement() {
               </div>
             </div>
 
-            {/* Statistics Cards */}
-            <div
-              className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8 transform transition-all duration-1000 delay-200 ${
-                isLoaded
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-10 opacity-0"
-              }`}
-            >
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-                <div className="flex items-center justify-between mb-2 sm:mb-4">
-                  <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
-                    Total Crew
-                  </h3>
-                  <span className="text-xl sm:text-2xl">👥</span>
-                </div>
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                  {crews.length}
-                </div>
-                <p className="text-gray-600 text-xs sm:text-sm">
-                  All crew members
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-                <div className="flex items-center justify-between mb-2 sm:mb-4">
-                  <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
-                    Active
-                  </h3>
-                  <span className="text-xl sm:text-2xl">✅</span>
-                </div>
-                <div className="text-xl sm:text-2xl font-bold text-green-600 mb-1">
-                  {crews.filter((crew) => crew.status === "active").length}
-                </div>
-                <p className="text-gray-600 text-xs sm:text-sm">
-                  Currently working
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-                <div className="flex items-center justify-between mb-2 sm:mb-4">
-                  <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
-                    On Vacation
-                  </h3>
-                  <span className="text-xl sm:text-2xl">🏖️</span>
-                </div>
-                <div className="text-xl sm:text-2xl font-bold text-yellow-600 mb-1">
-                  {crews.filter((crew) => crew.status === "on_leave").length}
-                </div>
-                <p className="text-gray-600 text-xs sm:text-sm">Taking leave</p>
-              </div>
-
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-lg">
-                <div className="flex items-center justify-between mb-2 sm:mb-4">
-                  <h3 className="text-gray-900 font-semibold text-sm sm:text-base">
-                    Inactive
-                  </h3>
-                  <span className="text-xl sm:text-2xl">❌</span>
-                </div>
-                <div className="text-xl sm:text-2xl font-bold text-red-600 mb-1">
-                  {crews.filter((crew) => crew.status === "inactive").length}
-                </div>
-                <p className="text-gray-600 text-xs sm:text-sm">Not working</p>
-              </div>
-            </div>
-
             {/* Crew Table */}
             <div
               className={`transform transition-all duration-1000 delay-400 ${
@@ -193,7 +137,16 @@ export default function CrewManagement() {
                 crews={crews}
                 currentPage={currentPage}
                 itemsPerPage={itemsPerPage}
-                onPageChange={setCurrentPage}
+                pagination={pagination}
+                searchTerm={searchTerm}
+                statusFilter={statusFilter}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onPageChange={handlePageChange}
+                onSearchChange={handleSearchChange}
+                onStatusFilterChange={handleStatusFilterChange}
+                onSortChange={handleSortChange}
+                loading={loading}
               />
             </div>
           </div>

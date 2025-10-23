@@ -39,10 +39,29 @@ export class UserService {
   }
 
   /**
-   * Get all crew members (admin only)
+   * Get all crew members with pagination and filters (admin only)
    */
-  static async getAllCrew(): Promise<CrewListResponse> {
-    const response = await api.get<CrewListResponse>("/admin/crew");
+  static async getAllCrew(params?: {
+    page?: number;
+    per_page?: number;
+    search?: string;
+    status?: string;
+    sort_by?: string;
+    sort_order?: string;
+  }): Promise<CrewListResponse> {
+    const searchParams = new URLSearchParams();
+    
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.per_page) searchParams.append('per_page', params.per_page.toString());
+    if (params?.search !== undefined) searchParams.append('search', params.search);
+    if (params?.status && params.status !== 'all') searchParams.append('status', params.status);
+    if (params?.sort_by) searchParams.append('sort_by', params.sort_by);
+    if (params?.sort_order) searchParams.append('sort_order', params.sort_order);
+
+    const queryString = searchParams.toString();
+    const url = queryString ? `/admin/crew?${queryString}` : '/admin/crew';
+    
+    const response = await api.get<CrewListResponse>(url);
     return response.data;
   }
 
@@ -66,6 +85,66 @@ export class UserService {
     const response = await api.put<UserProfileResponse>(
       `/admin/crew/${id}`,
       profileData
+    );
+    return response.data;
+  }
+
+  /**
+   * Store education information for crew member (admin only)
+   */
+  static async storeEducationInformation(
+    id: string,
+    educationData: {
+      high_school?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+      college?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+      higher_education?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+    }
+  ): Promise<BaseApiResponse> {
+    const response = await api.post<BaseApiResponse>(
+      `/admin/crew/${id}/education-info`,
+      educationData
+    );
+    return response.data;
+  }
+
+  /**
+   * Update education information for crew member (admin only)
+   */
+  static async updateEducationInformation(
+    id: string,
+    educationData: {
+      high_school?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+      college?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+      higher_education?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+    }
+  ): Promise<BaseApiResponse> {
+    const response = await api.put<BaseApiResponse>(
+      `/admin/crew/${id}/education-info`,
+      educationData
     );
     return response.data;
   }

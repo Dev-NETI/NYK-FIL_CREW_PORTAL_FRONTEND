@@ -14,6 +14,8 @@ import {
   Checkbox,
   FormControlLabel,
 } from "@mui/material";
+import ValidationError from "@/components/ui/ValidationError";
+import { useValidation } from "@/hooks/useValidation";
 
 interface ContactInformationProps {
   profile: User;
@@ -29,6 +31,7 @@ interface ContactInformationProps {
     permanentAddressId?: number,
     contactAddressId?: number
   ) => Promise<void> | void;
+  validationErrors?: Record<string, string[]>;
 }
 
 export default function ContactInformation({
@@ -42,7 +45,10 @@ export default function ContactInformation({
   onCancel,
   onInputChange,
   onAddressSave,
+  validationErrors = {},
 }: ContactInformationProps) {
+  // Use validation hook for cleaner validation logic
+  const { getValidationError, hasValidationError } = useValidation({ validationErrors });
   // Geography data state
   const [regions, setRegions] = useState<Region[]>([]);
   const [permanentProvinces, setPermanentProvinces] = useState<Province[]>([]);
@@ -78,13 +84,24 @@ export default function ContactInformation({
     const loadPermanentProvinces = async () => {
       const regionCode =
         editedProfile?.permanent_region || profile.permanent_region;
+
       if (regionCode) {
         try {
           const response = await GeographyService.getProvincesByRegion(
             regionCode
           );
+
           if (response.success) {
             setPermanentProvinces(response.data);
+            // Reset dependent dropdowns when region changes
+            setPermanentCities([]);
+            setPermanentBarangays([]);
+            // Clear dependent fields in editedProfile
+            if (editedProfile) {
+              onInputChange("permanent_province", "");
+              onInputChange("permanent_city", "");
+              onInputChange("permanent_barangay", "");
+            }
           }
         } catch (error) {
           console.error("Error loading permanent provinces:", error);
@@ -104,13 +121,22 @@ export default function ContactInformation({
     const loadPermanentCities = async () => {
       const provinceCode =
         editedProfile?.permanent_province || profile.permanent_province;
+
       if (provinceCode) {
         try {
           const response = await GeographyService.getCitiesByProvince(
             provinceCode
           );
+
           if (response.success) {
             setPermanentCities(response.data);
+            // Reset dependent dropdowns when province changes
+            setPermanentBarangays([]);
+            // Clear dependent fields in editedProfile
+            if (editedProfile) {
+              onInputChange("permanent_city", "");
+              onInputChange("permanent_barangay", "");
+            }
           }
         } catch (error) {
           console.error("Error loading permanent cities:", error);
@@ -128,11 +154,17 @@ export default function ContactInformation({
   useEffect(() => {
     const loadPermanentBarangays = async () => {
       const cityCode = editedProfile?.permanent_city || profile.permanent_city;
+
       if (cityCode) {
         try {
           const response = await GeographyService.getBarangaysByCity(cityCode);
+
           if (response.success) {
             setPermanentBarangays(response.data);
+            // Clear dependent fields in editedProfile
+            if (editedProfile) {
+              onInputChange("permanent_barangay", "");
+            }
           }
         } catch (error) {
           console.error("Error loading permanent barangays:", error);
@@ -231,6 +263,24 @@ export default function ContactInformation({
     return item ? item.desc : code;
   };
 
+  // Component for displaying field with label and value (copied from BasicInformation)
+  const DisplayField = ({
+    label,
+    value,
+    className = "",
+  }: {
+    label: string;
+    value: string | null | undefined;
+    className?: string;
+  }) => (
+    <div className={`space-y-1 ${className}`}>
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border">
+        {value || "Not specified"}
+      </p>
+    </div>
+  );
+
   // Handle "same as permanent address" checkbox
   const handleSameAsPermanentChange = (checked: boolean) => {
     setSameAsPermanent(checked);
@@ -300,69 +350,80 @@ export default function ContactInformation({
       }
     }
 
-    // Save current address
+    // Save current address - always create separate record
+    let currRegion,
+      currProvince,
+      currCity,
+      currBarangay,
+      currStreet,
+      currPostalCode;
+
     if (sameAsPermanent) {
-      // Use the same address as permanent
-      currentAddressId = permanentAddressId;
+      // Use permanent address data but create a separate record
+      currRegion = permRegion;
+      currProvince = permProvince;
+      currCity = permCity;
+      currBarangay = permBarangay;
+      currStreet =
+        editedProfile?.permanent_street || profile.permanent_street || "";
+      currPostalCode =
+        editedProfile?.permanent_postal_code ||
+        profile.permanent_postal_code ||
+        "";
     } else {
-      // Save separate current address if we have the required data
-      const currRegion =
-        editedProfile?.current_region || profile.current_region;
-      const currProvince =
+      // Use current address data
+      currRegion = editedProfile?.current_region || profile.current_region;
+      currProvince =
         editedProfile?.current_province || profile.current_province;
-      const currCity = editedProfile?.current_city || profile.current_city;
-      const currBarangay =
+      currCity = editedProfile?.current_city || profile.current_city;
+      currBarangay =
         editedProfile?.current_barangay || profile.current_barangay;
+      currStreet =
+        editedProfile?.current_street || profile.current_street || "";
+      currPostalCode =
+        editedProfile?.current_postal_code || profile.current_postal_code || "";
+    }
 
-      if (currRegion && currProvince && currCity && currBarangay) {
-        try {
-          const currentAddressData = {
-            user_id: profile.id,
-            street_address:
-              editedProfile?.current_street || profile.current_street || "",
-            region_code: currRegion,
-            province_code: currProvince,
-            city_code: currCity,
-            barangay_code: currBarangay,
-            zip_code:
-              editedProfile?.current_postal_code ||
-              profile.current_postal_code ||
-              "",
-          };
+    // Always create/update a separate current address record
+    if (currRegion && currProvince && currCity && currBarangay) {
+      try {
+        const currentAddressData = {
+          user_id: profile.id,
+          street_address: currStreet,
+          region_code: currRegion,
+          province_code: currProvince,
+          city_code: currCity,
+          barangay_code: currBarangay,
+          zip_code: currPostalCode,
+        };
 
-          const currentResponse =
-            await AddressService.createOrUpdateFromGeography(
-              currentAddressData,
-              profile.contacts?.current_address_id
-            );
+        const currentResponse =
+          await AddressService.createOrUpdateFromGeography(
+            currentAddressData,
+            sameAsPermanent ? undefined : profile.contacts?.current_address_id
+          );
 
-          if (currentResponse.success) {
-            currentAddressId = currentResponse.data.id;
-          }
-        } catch (error) {
-          throw error;
+        if (currentResponse.success) {
+          currentAddressId = currentResponse.data.id;
         }
+      } catch (error) {
+        throw error;
       }
     }
 
-    // Update the profile with address IDs
+    // Update the profile with address IDs - always use separate IDs
     if (editedProfile) {
       editedProfile.contacts = {
         ...editedProfile.contacts,
         permanent_address_id: permanentAddressId,
-        current_address_id: sameAsPermanent
-          ? permanentAddressId
-          : currentAddressId,
+        current_address_id: currentAddressId,
       };
     }
 
     // Also call the onAddressSave callback if it exists (for additional processing)
     if (onAddressSave && (permanentAddressId || currentAddressId)) {
       try {
-        await onAddressSave(
-          permanentAddressId,
-          sameAsPermanent ? permanentAddressId : currentAddressId
-        );
+        await onAddressSave(permanentAddressId, currentAddressId);
       } catch (error) {}
     }
 
@@ -490,49 +551,32 @@ export default function ContactInformation({
       return (editedProfile?.[field as keyof User] as string) || "";
     };
 
+    // Get validation error path - contact fields have contacts. prefix
+    const validationField = contactFields.includes(field) ? `contacts.${field}` : field;
+
     return (
       <Box>
         {isEditing ? (
-          <TextField
-            label={label}
-            type={type}
-            value={getFieldValue()}
-            onChange={(e) => onInputChange(field, e.target.value)}
-            required={required}
-            variant="outlined"
-            fullWidth
-            placeholder={`Enter ${label.toLowerCase()}`}
-            disabled={disabled}
-          />
+          <div>
+            <TextField
+              label={label}
+              type={type}
+              value={getFieldValue()}
+              onChange={(e) => onInputChange(field, e.target.value)}
+              required={required}
+              variant="outlined"
+              fullWidth
+              placeholder={`Enter ${label.toLowerCase()}`}
+              disabled={disabled}
+              error={hasValidationError(validationField)}
+            />
+            <ValidationError errors={getValidationError(validationField)} />
+          </div>
         ) : (
-          <Box sx={{ mb: 2 }}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 1, fontWeight: 600 }}
-            >
-              {label} {required && <span style={{ color: "red" }}>*</span>}
-            </Typography>
-            <Box
-              sx={{
-                p: 2,
-                bgcolor: "grey.50",
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: "grey.200",
-                minHeight: "56px",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <Typography
-                variant="body1"
-                color={value ? "text.primary" : "text.secondary"}
-              >
-                {value || "Not provided"}
-              </Typography>
-            </Box>
-          </Box>
+          <DisplayField
+            label={label + (required ? " *" : "")}
+            value={value !== "Not provided" ? value : undefined}
+          />
         )}
       </Box>
     );
@@ -686,18 +730,22 @@ export default function ContactInformation({
               </Grid>
 
               <Grid size={12}>
-                <TextField
-                  label="Building Name, Floor, Unit Number, Street Name"
-                  value={editedProfile?.permanent_street || ""}
-                  onChange={(e) =>
-                    onInputChange("permanent_street", e.target.value)
-                  }
-                  variant="outlined"
-                  fullWidth
-                  multiline
-                  rows={3}
-                  placeholder="Enter complete address"
-                />
+                <div>
+                  <TextField
+                    label="Building Name, Floor, Unit Number, Street Name"
+                    value={editedProfile?.permanent_street || ""}
+                    onChange={(e) =>
+                      onInputChange("permanent_street", e.target.value)
+                    }
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={3}
+                    placeholder="Enter complete address"
+                    error={hasValidationError("permanent_street")}
+                  />
+                  <ValidationError errors={getValidationError("permanent_street")} />
+                </div>
               </Grid>
 
               <Grid size={12}>
@@ -834,19 +882,23 @@ export default function ContactInformation({
               </Grid>
 
               <Grid size={12}>
-                <TextField
-                  label="Building Name, Floor, Unit Number, Street Name"
-                  value={editedProfile?.current_street || ""}
-                  onChange={(e) =>
-                    onInputChange("current_street", e.target.value)
-                  }
-                  variant="outlined"
-                  fullWidth
-                  multiline
-                  rows={3}
-                  placeholder="Enter complete address"
-                  disabled={sameAsPermanent}
-                />
+                <div>
+                  <TextField
+                    label="Building Name, Floor, Unit Number, Street Name"
+                    value={editedProfile?.current_street || ""}
+                    onChange={(e) =>
+                      onInputChange("current_street", e.target.value)
+                    }
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={3}
+                    placeholder="Enter complete address"
+                    disabled={sameAsPermanent}
+                    error={hasValidationError("current_street")}
+                  />
+                  <ValidationError errors={getValidationError("current_street")} />
+                </div>
               </Grid>
 
               <Grid size={12}>
@@ -949,43 +1001,26 @@ export default function ContactInformation({
           <Grid size={12}>
             <Box>
               {isEditing ? (
-                <TextField
-                  label="Emergency Contact Name"
-                  type="text"
-                  value={editedProfile?.contacts?.emergency_contact_name || ""}
-                  onChange={(e) =>
-                    onInputChange("emergency_contact_name", e.target.value)
-                  }
-                  variant="outlined"
-                  fullWidth
-                  placeholder="Enter emergency contact name"
-                />
+                <div>
+                  <TextField
+                    label="Emergency Contact Name"
+                    type="text"
+                    value={editedProfile?.contacts?.emergency_contact_name || ""}
+                    onChange={(e) =>
+                      onInputChange("emergency_contact_name", e.target.value)
+                    }
+                    variant="outlined"
+                    fullWidth
+                    placeholder="Enter emergency contact name"
+                    error={hasValidationError("contacts.emergency_contact_name")}
+                  />
+                  <ValidationError errors={getValidationError("contacts.emergency_contact_name")} />
+                </div>
               ) : (
-                <Box sx={{ mb: 2 }}>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 1, fontWeight: 600 }}
-                  >
-                    Emergency Contact Name
-                  </Typography>
-                  <Box
-                    sx={{
-                      p: 2,
-                      bgcolor: "grey.50",
-                      borderRadius: 2,
-                      border: "1px solid",
-                      borderColor: "grey.200",
-                      minHeight: "56px",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Typography variant="body1" color="text.primary">
-                      {profile.contacts?.emergency_contact_name}
-                    </Typography>
-                  </Box>
-                </Box>
+                <DisplayField
+                  label="Emergency Contact Name"
+                  value={profile.contacts?.emergency_contact_name}
+                />
               )}
             </Box>
           </Grid>

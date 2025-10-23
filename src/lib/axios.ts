@@ -28,12 +28,6 @@ api.interceptors.request.use(
       delete config.headers["Content-Type"];
     }
 
-    // Log request for debugging
-    // console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-    //   data: config.data,
-    //   headers: config.headers,
-    // });
-
     return config;
   },
   (error) => {
@@ -54,14 +48,6 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Log error response
-    // console.error('❌ API Error Response:', {
-    //   status: error.response?.status,
-    //   statusText: error.response?.statusText,
-    //   url: error.config?.url,
-    //   data: error.response?.data,
-    // });
-
     // Handle specific error cases
     if (error.response?.status === 401) {
       // Unauthorized - clear token and redirect to login

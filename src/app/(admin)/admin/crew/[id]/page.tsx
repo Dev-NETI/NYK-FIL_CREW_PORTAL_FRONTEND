@@ -42,6 +42,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     null
   );
   const [batchInput, setBatchInput] = useState("");
+  const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
   const [userRoles, setUserRoles] = useState<AdminRole[]>([]);
   const router = useRouter();
   const resolvedParams = use(params);
@@ -129,7 +130,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
               physicalTraits: loadedProfile.physical_traits || {},
               contacts: loadedProfile.contacts || {},
               employment: loadedProfile.employment || {},
-              education: loadedProfile.education || {},
+              education: loadedProfile.education || [],
             };
             setProfile(initializedProfile);
             setEditedProfile(initializedProfile);
@@ -156,6 +157,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
   const handleEdit = () => {
     setIsEditing(true);
+    setValidationErrors({}); // Clear validation errors when starting edit
     if (profile) {
       // Ensure all nested objects are properly initialized
       const editableProfile = {
@@ -164,7 +166,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         physicalTraits: profile.physical_traits || {},
         contacts: profile.contacts || {},
         employment: profile.employment || {},
-        education: profile.education || {},
+        education: profile.education || [],
       };
       setEditedProfile(editableProfile);
     } else {
@@ -174,6 +176,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
   const handleCancel = () => {
     setIsEditing(false);
+    setValidationErrors({}); // Clear validation errors when canceling edit
     if (profile) {
       // Ensure all nested objects are properly initialized when canceling
       const editableProfile = {
@@ -182,7 +185,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         physicalTraits: profile.physical_traits || {},
         contacts: profile.contacts || {},
         employment: profile.employment || {},
-        education: profile.education || {},
+        education: profile.education || [],
       };
       setEditedProfile(editableProfile);
     } else {
@@ -200,12 +203,28 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
     try {
       setSaving(true);
+      setValidationErrors({}); // Clear previous validation errors
 
-      // Call the API to update the profile
-      const updateResponse = await UserService.updateCrewProfile(
-        id,
-        editedProfile
-      );
+      // Call the API to update the profile with specific 422 error handling
+      let updateResponse;
+      try {
+        updateResponse = await UserService.updateCrewProfile(
+          id,
+          editedProfile
+        );
+      } catch (apiError: any) {
+        // Handle 422 validation errors specifically
+        if (apiError?.response?.status === 422) {
+          if (apiError?.response?.data?.errors) {
+            const apiValidationErrors = apiError.response.data.errors;
+            setValidationErrors(apiValidationErrors); // Store validation errors for display
+          }
+          // Don't show any toast for validation errors - field-level errors are enough
+          return;
+        }
+        // Re-throw non-422 errors
+        throw apiError;
+      }
 
       if (updateResponse.success && updateResponse.user) {
         const updatedProfile = updateResponse.user;
@@ -216,11 +235,12 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
           physicalTraits: updatedProfile.physical_traits || {},
           contacts: updatedProfile.contacts || {},
           employment: updatedProfile.employment || {},
-          education: updatedProfile.education || {},
+          education: updatedProfile.education || [],
         };
         setProfile(initializedUpdatedProfile);
         setEditedProfile(initializedUpdatedProfile);
         setIsEditing(false);
+        setValidationErrors({}); // Clear validation errors on success
         toast.success("Profile updated successfully!");
       } else {
         throw new Error(updateResponse.message || "Update failed");
@@ -228,18 +248,19 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     } catch (error: any) {
       console.error("Error updating profile:", error);
 
-      // Handle specific validation errors
-      if (error?.response?.status === 422 && error?.response?.data?.errors) {
-        const validationErrors = error.response.data.errors;
-        const errorMessages = Object.values(validationErrors).flat();
-        toast.error(`Validation Error: ${errorMessages.join(", ")}`);
-      } else {
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to update profile";
-        toast.error(errorMessage);
+      // Only show toast error for non-validation errors
+      let errorMessage = "Failed to update profile";
+      
+      // Check for specific error message from backend
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message && !error.message.includes("Request failed with status code")) {
+        // Only use the error message if it's not the generic axios error
+        errorMessage = error.message;
       }
+      
+      toast.error(errorMessage);
+      setValidationErrors({}); // Clear validation errors for non-validation errors
     } finally {
       setSaving(false);
     }
@@ -287,7 +308,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
           physicalTraits: updateResponse.user.physical_traits || {},
           contacts: updateResponse.user.contacts || {},
           employment: updateResponse.user.employment || {},
-          education: updateResponse.user.education || {},
+          education: updateResponse.user.education || [],
         };
         setProfile(initializedUpdatedProfile);
         setEditedProfile(initializedUpdatedProfile);
@@ -633,70 +654,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <i className="bi bi-check-circle text-green-600 text-xl"></i>
-              </div>
-              <span className="text-2xl">
-                {profile.email_verified_at ? "✅" : "⏳"}
-              </span>
-            </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {profile.email_verified_at ? "Verified" : "Pending"}
-            </div>
-            <p className="text-gray-600 text-sm">Account Status</p>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <i className="bi bi-calendar-date text-blue-600 text-xl"></i>
-              </div>
-              <span className="text-2xl">📅</span>
-            </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {profile.employment?.hire_date
-                ? new Date(profile.employment?.hire_date).getFullYear()
-                : "N/A"}
-            </div>
-            <p className="text-gray-600 text-sm">Hire Year</p>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <i className="bi bi-ship text-purple-600 text-xl"></i>
-              </div>
-              <span className="text-2xl">🚢</span>
-            </div>
-            <div className="text-lg font-bold text-gray-900 mb-1 truncate">
-              {profile.employment?.fleet_name || "Unassigned"}
-            </div>
-            <p className="text-gray-600 text-sm">Fleet Assignment</p>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <i className="bi bi-clock-history text-orange-600 text-xl"></i>
-              </div>
-              <span className="text-2xl">🕒</span>
-            </div>
-            <div className="text-lg font-bold text-gray-900 mb-1">
-              {profile.last_login_at
-                ? new Date(profile.last_login_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })
-                : "Never"}
-            </div>
-            <p className="text-gray-600 text-sm">Last Login</p>
-          </div>
-        </div>
-
         {/* Main Content */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           {/* Profile Tabs - Takes up 3 columns */}
@@ -753,6 +710,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onCancel={handleCancel}
                     onNestedInputChange={handleNestedInputChange}
                     nationalities={nationalities}
+                    validationErrors={validationErrors}
                   />
                 )}
 
@@ -767,6 +725,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onSave={handleSave}
                     onCancel={handleCancel}
                     onNestedInputChange={handleNestedInputChange}
+                    validationErrors={validationErrors}
                   />
                 )}
 
@@ -782,6 +741,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onCancel={handleCancel}
                     onInputChange={handleInputChange}
                     onAddressSave={handleSavePermanentAddressId}
+                    validationErrors={validationErrors}
                   />
                 )}
 
@@ -797,9 +757,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     showProgramSelection={showProgramSelection}
                     selectedProgramId={selectedProgramId}
                     batchInput={batchInput}
-                    onEdit={handleEdit}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
                     onAddEmploymentRecord={addEmploymentRecord}
                     onProgramSelect={handleProgramSelect}
                     onBatchSave={handleBatchSave}
@@ -817,6 +774,10 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                 {activeTab === "education" && (
                   <EducationInformation
                     profile={profile}
+                    onProfileUpdate={(updatedProfile) => {
+                      setProfile(updatedProfile);
+                      setEditedProfile(updatedProfile);
+                    }}
                     editedProfile={editedProfile}
                     isEditing={isEditing}
                     saving={saving}

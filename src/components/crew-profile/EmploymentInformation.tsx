@@ -15,9 +15,6 @@ interface EmploymentInformationProps {
   showProgramSelection: boolean;
   selectedProgramId: number | null;
   batchInput: string;
-  onEdit: () => void;
-  onSave: () => void;
-  onCancel: () => void;
   onAddEmploymentRecord: () => void;
   onProgramSelect: (programId: number) => void;
   onBatchSave: () => void;
@@ -45,9 +42,6 @@ export default function EmploymentInformation({
   showProgramSelection,
   selectedProgramId,
   batchInput,
-  onEdit,
-  onSave,
-  onCancel,
   onAddEmploymentRecord,
   onProgramSelect,
   onBatchSave,

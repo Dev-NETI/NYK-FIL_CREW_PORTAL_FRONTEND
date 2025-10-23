@@ -32,9 +32,28 @@ export interface UserResponse extends BaseApiResponse {
   user?: User;
 }
 
+export interface PaginationInfo {
+  current_page: number;
+  per_page: number;
+  total: number;
+  last_page: number;
+  from: number | null;
+  to: number | null;
+  has_more_pages: boolean;
+}
+
+export interface CrewFilters {
+  search: string;
+  status: string;
+  sort_by: string;
+  sort_order: string;
+}
+
 export interface CrewListResponse extends BaseApiResponse {
   crew?: User[];
-  total?: number;
+  pagination?: PaginationInfo;
+  filters?: CrewFilters;
+  total?: number; // Keep for backward compatibility
 }
 
 // User Profile interfaces
@@ -82,11 +101,12 @@ export interface UserEmployment {
   employment_notes?: string;
 }
 
-export interface UserEducation {
-  graduated_school_id?: number;
-  date_graduated?: string;
-  degree?: string;
-  education_level?: string;
+export interface EducationRecord {
+  id: number;
+  school_name: string;
+  date_graduated: string | null;
+  degree: string | null;
+  education_level: string; // 'high_school', 'college', 'higher_education'
 }
 
 export interface UserPhysicalTraits {
@@ -114,7 +134,7 @@ export interface User {
   profile?: UserProfile;
   contacts?: UserContact;
   employment?: UserEmployment;
-  education?: UserEducation;
+  education?: EducationRecord[];
   physical_traits?: UserPhysicalTraits;
   permanent_address?: PermanentAddress;
   current_address?: CurrentAddress;
