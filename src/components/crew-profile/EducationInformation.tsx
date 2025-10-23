@@ -7,6 +7,7 @@ interface EducationInformationProps {
   editedProfile: User | null;
   isEditing: boolean;
   saving: boolean;
+  canEdit?: boolean;
   onEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
@@ -18,6 +19,7 @@ export default function EducationInformation({
   editedProfile,
   isEditing,
   saving,
+  canEdit = true,
   onEdit,
   onSave,
   onCancel,
@@ -75,7 +77,13 @@ export default function EducationInformation({
           {!isEditing ? (
             <button
               onClick={onEdit}
-              className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-5 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl flex items-center space-x-2"
+              disabled={!canEdit}
+              className={`bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-5 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg flex items-center space-x-2 ${
+                canEdit
+                  ? "hover:from-indigo-700 hover:to-indigo-800 hover:shadow-xl"
+                  : "opacity-50 cursor-not-allowed"
+              }`}
+              title={!canEdit ? "You don't have permission to edit this section" : ""}
             >
               <i className="bi bi-pencil text-sm"></i>
               <span>Edit</span>
