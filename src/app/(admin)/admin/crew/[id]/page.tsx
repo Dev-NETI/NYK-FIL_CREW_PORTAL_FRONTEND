@@ -105,7 +105,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
               physicalTraits: loadedProfile.physical_traits || {},
               contacts: loadedProfile.contacts || {},
               employment: loadedProfile.employment || {},
-              education: loadedProfile.education || {},
+              education: loadedProfile.education || [],
             };
             setProfile(initializedProfile);
             setEditedProfile(initializedProfile);
@@ -141,7 +141,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         physicalTraits: profile.physical_traits || {},
         contacts: profile.contacts || {},
         employment: profile.employment || {},
-        education: profile.education || {},
+        education: profile.education || [],
       };
       setEditedProfile(editableProfile);
     } else {
@@ -159,7 +159,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         physicalTraits: profile.physical_traits || {},
         contacts: profile.contacts || {},
         employment: profile.employment || {},
-        education: profile.education || {},
+        education: profile.education || [],
       };
       setEditedProfile(editableProfile);
     } else {
@@ -193,7 +193,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
           physicalTraits: updatedProfile.physical_traits || {},
           contacts: updatedProfile.contacts || {},
           employment: updatedProfile.employment || {},
-          education: updatedProfile.education || {},
+          education: updatedProfile.education || [],
         };
         setProfile(initializedUpdatedProfile);
         setEditedProfile(initializedUpdatedProfile);
@@ -264,7 +264,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
           physicalTraits: updateResponse.user.physical_traits || {},
           contacts: updateResponse.user.contacts || {},
           employment: updateResponse.user.employment || {},
-          education: updateResponse.user.education || {},
+          education: updateResponse.user.education || [],
         };
         setProfile(initializedUpdatedProfile);
         setEditedProfile(initializedUpdatedProfile);
@@ -720,13 +720,10 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                 {activeTab === "education" && (
                   <EducationInformation
                     profile={profile}
-                    editedProfile={editedProfile}
-                    isEditing={isEditing}
-                    saving={saving}
-                    onEdit={handleEdit}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    onInputChange={handleInputChange}
+                    onProfileUpdate={(updatedProfile) => {
+                      setProfile(updatedProfile);
+                      setEditedProfile(updatedProfile);
+                    }}
                   />
                 )}
               </div>

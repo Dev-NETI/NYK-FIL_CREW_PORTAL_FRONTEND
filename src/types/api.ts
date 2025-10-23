@@ -101,11 +101,12 @@ export interface UserEmployment {
   employment_notes?: string;
 }
 
-export interface UserEducation {
-  graduated_school_id?: number;
-  date_graduated?: string;
-  degree?: string;
-  education_level?: string;
+export interface EducationRecord {
+  id: number;
+  school_name: string;
+  date_graduated: string | null;
+  degree: string | null;
+  education_level: string; // 'high_school', 'college', 'higher_education'
 }
 
 export interface UserPhysicalTraits {
@@ -133,7 +134,7 @@ export interface User {
   profile?: UserProfile;
   contacts?: UserContact;
   employment?: UserEmployment;
-  education?: UserEducation;
+  education?: EducationRecord[];
   physical_traits?: UserPhysicalTraits;
   permanent_address?: PermanentAddress;
   current_address?: CurrentAddress;

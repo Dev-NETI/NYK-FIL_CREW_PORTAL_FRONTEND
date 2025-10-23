@@ -88,4 +88,64 @@ export class UserService {
     );
     return response.data;
   }
+
+  /**
+   * Store education information for crew member (admin only)
+   */
+  static async storeEducationInformation(
+    id: string,
+    educationData: {
+      high_school?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+      college?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+      higher_education?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+    }
+  ): Promise<BaseApiResponse> {
+    const response = await api.post<BaseApiResponse>(
+      `/admin/crew/${id}/education-info`,
+      educationData
+    );
+    return response.data;
+  }
+
+  /**
+   * Update education information for crew member (admin only)
+   */
+  static async updateEducationInformation(
+    id: string,
+    educationData: {
+      high_school?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+      college?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+      higher_education?: {
+        school_name: string;
+        date_graduated?: string;
+        degree?: string;
+      };
+    }
+  ): Promise<BaseApiResponse> {
+    const response = await api.put<BaseApiResponse>(
+      `/admin/crew/${id}/education-info`,
+      educationData
+    );
+    return response.data;
+  }
 }

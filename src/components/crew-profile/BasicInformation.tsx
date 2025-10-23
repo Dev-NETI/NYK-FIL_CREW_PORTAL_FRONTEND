@@ -76,9 +76,6 @@ export default function BasicInformation({
           <p className="text-gray-600 mt-1">
             Personal details and identification
           </p>
-          <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-            Please ensure all information is accurate and up to date
-          </Typography>
         </div>
 
         {/* Edit Controls */}
