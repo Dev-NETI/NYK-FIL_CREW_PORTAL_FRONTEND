@@ -1,153 +1,67 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navigation from "@/components/Navigation";
-import axios from "axios";
+import api from "@/lib/axios";
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import { count } from "console";
 import { AuthService } from "@/services";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-// Mock data
-const mockConversations = [
-  {
-    id: 1,
-    name: "Jose Rizal",
-    lastMessage: "Thanks for the update on the schedule!",
-    timestamp: "2m ago",
-    avatar: "JR",
-    unread: true,
-    active: true,
-  },
-  {
-    id: 2,
-    name: "Maria Santos",
-    lastMessage: "Can you send me the document we discussed?",
-    timestamp: "1h ago",
-    avatar: "MS",
-    unread: false,
-    active: false,
-  },
-  {
-    id: 3,
-    name: "Juan dela Cruz",
-    lastMessage: "See you at the meeting tomorrow!",
-    timestamp: "3h ago",
-    avatar: "JD",
-    unread: false,
-    active: false,
-  },
-  {
-    id: 4,
-    name: "Ana Reyes",
-    lastMessage: "Have you completed the training module?",
-    timestamp: "1d ago",
-    avatar: "AR",
-    unread: false,
-    active: false,
-  },
-  {
-    id: 5,
-    name: "Carlos Mendoza",
-    lastMessage: "Great work on the presentation!",
-    timestamp: "2d ago",
-    avatar: "CM",
-    unread: false,
-    active: false,
-  },
-  {
-    id: 6,
-    name: "Carlos Mendoza",
-    lastMessage: "Great work on the presentation!",
-    timestamp: "2d ago",
-    avatar: "CM",
-    unread: false,
-    active: false,
-  },
-  {
-    id: 7,
-    name: "Carlos Mendoza",
-    lastMessage: "Great work on the presentation!",
-    timestamp: "2d ago",
-    avatar: "CM",
-    unread: false,
-    active: false,
-  },
-];
+function getRelativeTime(timestamp: string | Date): string {
+  const now = new Date();
+  const createdAt = new Date(timestamp);
+  const diffInSeconds = Math.floor(
+    (now.getTime() - createdAt.getTime()) / 1000
+  );
 
-const mockMessages = [
-  {
-    id: 1,
-    senderId: 1,
-    text: "Hi! How are you doing?",
-    timestamp: "10:30 AM",
-    isSent: false,
-  },
-  {
-    id: 2,
-    senderId: "me",
-    text: "I'm doing well, thanks! How about you?",
-    timestamp: "10:32 AM",
-    isSent: true,
-  },
-  {
-    id: 3,
-    senderId: 1,
-    text: "I'm good! Just wanted to check if you've seen the updated schedule for next week.",
-    timestamp: "10:33 AM",
-    isSent: false,
-  },
-  {
-    id: 4,
-    senderId: "me",
-    text: "Yes, I saw it. Everything looks good to me.",
-    timestamp: "10:35 AM",
-    isSent: true,
-  },
-  {
-    id: 5,
-    senderId: 1,
-    text: "Thanks for the update on the schedule!",
-    timestamp: "10:36 AM",
-    isSent: false,
-  },
-  {
-    id: 10,
-    senderId: 1,
-    text: "Thanks for the update on the schedule!",
-    timestamp: "10:36 AM",
-    isSent: false,
-  },
-  {
-    id: 6,
-    senderId: 1,
-    text: "Thanks for the update on the schedule!",
-    timestamp: "10:36 AM",
-    isSent: false,
-  },
-  {
-    id: 7,
-    senderId: 1,
-    text: "Thanks for the update on the schedule!",
-    timestamp: "10:36 AM",
-    isSent: false,
-  },
-  {
-    id: 8,
-    senderId: 1,
-    text: "Thanks for the update on the schedule!",
-    timestamp: "10:36 AM",
-    isSent: false,
-  },
-  {
-    id: 9,
-    senderId: 1,
-    text: "Thanks for the update on the schedule!",
-    timestamp: "10:36 AM",
-    isSent: false,
-  },
-];
+  const months = Math.floor(diffInSeconds / (30 * 24 * 60 * 60));
+  const days = Math.floor(diffInSeconds / (24 * 60 * 60));
+  const hours = Math.floor(diffInSeconds / (60 * 60));
+  const minutes = Math.floor(diffInSeconds / 60);
+
+  if (months > 0) return `${months}mo`;
+  if (days > 0) return `${days}d`;
+  if (hours > 0) return `${hours}h`;
+  if (minutes > 0) return `${minutes}m`;
+  if (diffInSeconds > 0) return `${diffInSeconds}s`;
+  return "just now";
+}
+
+function getInitials(name: string): string {
+  if (!name || name.trim() === "") return "";
+
+  const words = name.trim().split(/\s+/);
+
+  if (words.length === 1) {
+    // Single word: take first 2 characters
+    return words[0].substring(0, 2).toUpperCase();
+  }
+
+  // Multiple words: take first letter of first 2 words
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+function formatTimestamp(dateString: string | Date | null | undefined): string {
+  if (!dateString) return "--:--";
+
+  try {
+    const date = new Date(dateString);
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "--:--";
+    }
+
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch (error) {
+    console.error("Error formatting timestamp:", error);
+    return "--:--";
+  }
+}
 
 export default function InboxPage() {
   const [selectedConversation, setSelectedConversation] = useState<
@@ -163,10 +77,29 @@ export default function InboxPage() {
   const [newDepartments, setNewDepartments] = useState("");
   const [newSubjectText, setNewSubjectText] = useState("");
   const [newMessageText, setNewMessageText] = useState("");
-  const [messages, setMessages] = useState(mockMessages);
+  const [messages, setMessages] = useState("");
   const [departmentCategory, setDepartmentCategory] = useState([]);
   const [department, setDepartment] = useState([]);
   const currentUserData = AuthService.getStoredUser();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      const container = messagesEndRef.current.parentElement;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+  };
+
+  const fetchInquiries = async () => {
+    try {
+      const response = await api.get(`/inquiry/${currentUserData!.id}`);
+      setInquiries(response.data);
+    } catch (error) {
+      console.error("Error fetching inquiries:", error);
+    }
+  };
 
   function handleNewMessage() {
     if (!newDepartments || !newSubjectText.trim() || !newMessageText.trim()) {
@@ -175,16 +108,17 @@ export default function InboxPage() {
     }
 
     const payload = {
-      crew_id: currentUserData.id,
+      crew_id: currentUserData!.id,
       message: newMessageText,
+      modified_by: currentUserData!.id,
       subject: newSubjectText,
       department_id: newDepartments,
     };
 
     const loadingToast = toast.loading("Sending message...");
 
-    axios
-      .post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/inquiry`, payload)
+    api
+      .post("/inquiry", payload)
       .then((response) => {
         toast.success("Message sent successfully!", { id: loadingToast });
         setShowNewMessageModal(false);
@@ -193,6 +127,8 @@ export default function InboxPage() {
         setNewDepartments("");
         setNewSubjectText("");
         setNewMessageText("");
+        // Refresh inquiries list
+        fetchInquiries();
       })
       .catch((error) => {
         toast.error(
@@ -209,8 +145,8 @@ export default function InboxPage() {
 
   // Fetch all department categories on mount
   useEffect(() => {
-    axios
-      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/departmentTypes`)
+    api
+      .get("/departmentTypes")
       .then((response) => {
         setDepartmentCategory(response.data);
       })
@@ -218,27 +154,15 @@ export default function InboxPage() {
         console.error("Error fetching department types:", error);
       });
 
-    axios
-      .get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/inquiry/${currentUserData.id}`
-      )
-      .then((response) => {
-        setInquiries(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching department types:", error);
-      });
+    fetchInquiries().then(() => setLoading(false));
   }, []);
 
   // Fetch departments when category changes
   useEffect(() => {
     if (!newDepartmentCategory) return;
 
-    axios
-      .get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/department/${newDepartmentCategory}`
-      )
+    api
+      .get(`/department/${newDepartmentCategory}`)
       .then((response) => {
         setDepartment(response.data);
       })
@@ -247,17 +171,37 @@ export default function InboxPage() {
       });
   }, [newDepartmentCategory]);
 
-  const filteredConversations = mockConversations.filter((conv) =>
-    conv.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [messages]);
 
-  const activeConversation = mockConversations.find(
-    (conv) => conv.id === selectedConversation
-  );
+  const activeConversation = selectedConversation
+    ? inquiries.find((inq: any) => inq.id === selectedConversation)
+    : null;
 
   const handleSelectConversation = (id: number) => {
     setSelectedConversation(id);
     setShowChat(true);
+
+    // Find the selected inquiry and load its messages
+    const selectedInquiry = inquiries.find((inq: any) => inq.id === id);
+    if (selectedInquiry && selectedInquiry.messages) {
+      const formattedMessages = selectedInquiry.messages.map((msg: any) => ({
+        id: msg.id,
+        senderId: msg.sender_id === currentUserData!.id ? "me" : msg.sender_id,
+        text: msg.message,
+        timestamp: formatTimestamp(msg.created_at),
+        isSent: msg.sender_id === currentUserData!.id,
+        created_at: msg.created_at,
+        read_at: msg.read_at,
+        is_staff_reply: msg.is_staff_reply,
+      }));
+      setMessages(formattedMessages);
+    }
   };
 
   const handleBackToInbox = () => {
@@ -265,20 +209,114 @@ export default function InboxPage() {
     setSelectedConversation(null);
   };
 
-  const handleSendMessage = () => {
-    if (messageInput.trim()) {
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !selectedConversation) return;
+    const originalMessageText = messageInput;
+    const payload = {
+      inquiry_id: selectedConversation,
+      message: messageInput,
+      user_id: currentUserData!.id,
+      modified_by: currentUserData!.name,
+    };
+
+    // Optimistically add the message to UI
+    const tempId = `temp-${Date.now()}-${Math.random()}`;
+    const currentTime = new Date().toISOString();
+    const optimisticMessage = {
+      id: tempId,
+      senderId: "me",
+      text: messageInput,
+      timestamp: formatTimestamp(currentTime),
+      isSent: true,
+      created_at: currentTime,
+      read_at: null,
+      is_staff_reply: false,
+    };
+
+    // Add to beginning since backend stores newest first
+    setMessages([optimisticMessage, ...messages]);
+    setMessageInput("");
+
+    try {
+      const response = await api.post("/crew-inquiry-messages", payload);
+
+      // Extract message data - could be in response.data or response.data.data
+      const messageData = response.data.data || response.data;
+
+      // Replace optimistic message with real one from server
       const newMessage = {
-        id: messages.length + 1,
+        id: messageData.id,
         senderId: "me",
-        text: messageInput,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        text: originalMessageText,
+        timestamp: formatTimestamp(messageData.created_at),
         isSent: true,
+        created_at: messageData.created_at,
+        read_at: messageData.read_at || null,
+        is_staff_reply: messageData.is_staff_reply || false,
       };
-      setMessages([...messages, newMessage]);
-      setMessageInput("");
+
+      // Update the messages state with the confirmed message
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === optimisticMessage.id ? newMessage : msg))
+      );
+
+      // Update inquiries list to show the new message at the beginning
+      const updatedInquiries = inquiries.map((inq: any) => {
+        if (inq.id === selectedConversation) {
+          // Check if message already exists to prevent duplicates
+          const messageExists = inq.messages.some(
+            (msg: any) => msg.id === messageData.id
+          );
+
+          if (messageExists) {
+            return inq;
+          }
+
+          return {
+            ...inq,
+            messages: [
+              {
+                id: messageData.id,
+                sender_id: currentUserData!.id,
+                message: originalMessageText,
+                created_at: messageData.created_at,
+                read_at: messageData.read_at || null,
+                is_staff_reply: messageData.is_staff_reply || false,
+              },
+              ...inq.messages,
+            ],
+          };
+        }
+        return inq;
+      });
+
+      setInquiries(updatedInquiries);
+
+      // Reload messages from the updated inquiry to ensure we have complete data
+      const updatedInquiry = updatedInquiries.find(
+        (inq: any) => inq.id === selectedConversation
+      );
+      if (updatedInquiry && updatedInquiry.messages) {
+        const reloadedMessages = updatedInquiry.messages.map((msg: any) => ({
+          id: msg.id,
+          senderId:
+            msg.sender_id === currentUserData!.id ? "me" : msg.sender_id,
+          text: msg.message,
+          timestamp: formatTimestamp(msg.created_at),
+          isSent: msg.sender_id === currentUserData!.id,
+          created_at: msg.created_at,
+          read_at: msg.read_at,
+          is_staff_reply: msg.is_staff_reply,
+        }));
+        setMessages(reloadedMessages);
+      }
+    } catch (error: any) {
+      // Remove optimistic message on error
+      setMessages((prev) =>
+        prev.filter((msg) => msg.id !== optimisticMessage.id)
+      );
+      toast.error(error.response?.data?.message || "Failed to send message");
+      console.error("Error sending message:", error);
     }
   };
 
@@ -308,23 +346,23 @@ export default function InboxPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden">
+    <div className="h-screen overflow-hidden flex flex-col">
       <Navigation currentPath="/crew/inbox" hideBottomNav={showChat} />
       <div
-        className={`h-screen bg-gray-50 overflow-hidden ${
-          showChat ? "pt-16" : ""
+        className={`flex-1 overflow-hidden flex pt-4 lg:pt-16 ${
+          showChat ? "" : "pb-16 md:pb-0"
         }`}
       >
         {/* Main Container */}
-        <div className={`flex ${showChat ? "h-[calc(100vh-4rem)]" : "h-full"}`}>
+        <div className="flex flex-1 w-full">
           {/* Inbox List - Left Column */}
           <div
             className={`${
               showChat ? "hidden md:flex" : "flex"
-            } flex-col w-full md:w-[380px] lg:w-[400px] h-full bg-white border-r border-gray-200 transition-all duration-300`}
+            } flex-col w-full md:w-[380px] lg:w-[400px] h-full bg-white border-r border-gray-200 transition-all duration-300 overflow-hidden`}
           >
             {/* Header */}
-            <div className="p-4 lg:p-6 border-b border-gray-200">
+            <div className="p-4 py-0 lg:p-6 border-b border-gray-200 pb-5">
               <h1 className="text-2xl font-semibold text-gray-900">Inbox</h1>
               <p className="text-sm text-gray-600 mt-1">
                 View and send messages within your crew portal.
@@ -347,14 +385,9 @@ export default function InboxPage() {
             <div className="flex-1 overflow-y-auto">
               {loading ? (
                 <div>
-                  <ConversationSkeleton />
-                  <ConversationSkeleton />
-                  <ConversationSkeleton />
-                  <ConversationSkeleton />
-                  <ConversationSkeleton />
-                  <ConversationSkeleton />
-                  <ConversationSkeleton />
-                  <ConversationSkeleton />
+                  {Array.from({ length: 10 }).map((_, index) => (
+                    <ConversationSkeleton key={`skeleton-${index}`} />
+                  ))}
                 </div>
               ) : inquiries.length > 0 ? (
                 inquiries.map((inquiry) => (
@@ -368,8 +401,13 @@ export default function InboxPage() {
                     <div className="flex items-start gap-3">
                       {/* Avatar */}
                       <div className="flex-shrink-0">
-                        <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
-                          {/* {conv.avatar} */} JR
+                        <div
+                          className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium"
+                          title={`${inquiry.department.department_category.name} - ${inquiry.department.name}`}
+                        >
+                          {getInitials(
+                            inquiry.department.department_category.name
+                          )}
                         </div>
                         {/* {conv.active && (
                         <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-white absolute -mt-3 ml-9"></div>
@@ -387,10 +425,10 @@ export default function InboxPage() {
                           <h3
                             className={`text-sm font-semibold text-gray-900 truncate`}
                           >
-                            Sample
+                            {inquiry.subject}
                           </h3>
                           <span className="text-xs text-gray-500 flex-shrink-0">
-                            Sample
+                            {getRelativeTime(inquiry.messages[0].created_at)}
                           </span>
                         </div>
                         {/* <p
@@ -401,7 +439,7 @@ export default function InboxPage() {
                           {conv.lastMessage}
                         </p> */}
                         <p className={`text-sm text-gray-600 truncate mt-0.5`}>
-                          sample
+                          {inquiry.messages[0].message}
                         </p>
                       </div>
 
@@ -424,17 +462,16 @@ export default function InboxPage() {
               )}
             </div>
           </div>
-
           {/* Chat View - Right Column */}
           <div
             className={`${
               showChat ? "flex" : "hidden md:flex"
-            } flex-col flex-1 h-full bg-white transition-all duration-300`}
+            } flex-col flex-1 bg-white transition-all duration-300 overflow-hidden`}
           >
             {selectedConversation && activeConversation ? (
               <>
                 {/* Chat Header */}
-                <div className="p-4 border-b border-gray-200 flex items-center gap-3">
+                <div className="p-4 border-b border-gray-200 flex items-center gap-3 flex-shrink-0">
                   {/* Back Button (Mobile) */}
                   <button
                     onClick={handleBackToInbox}
@@ -445,18 +482,19 @@ export default function InboxPage() {
 
                   {/* Avatar */}
                   <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium flex-shrink-0">
-                    {activeConversation.avatar}
+                    {getInitials(
+                      activeConversation.department.department_category.name
+                    )}
                   </div>
 
                   {/* User Info */}
                   <div className="flex-1 min-w-0">
                     <h2 className="font-semibold text-gray-900">
-                      {activeConversation.name}
+                      {activeConversation.subject}
                     </h2>
                     <p className="text-xs text-gray-500">
-                      {activeConversation.active
-                        ? "Active now"
-                        : "Last seen 2h ago"}
+                      {activeConversation.department.department_category.name} -{" "}
+                      {activeConversation.department.name}
                     </p>
                   </div>
 
@@ -467,38 +505,59 @@ export default function InboxPage() {
                 </div>
 
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 bg-gray-50">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${
-                        message.isSent ? "justify-end" : "justify-start"
-                      }`}
-                    >
+                <div
+                  className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 bg-gray-50 min-h-0 pb-22"
+                  id="messages-container"
+                >
+                  {messages
+                    .slice()
+                    .reverse()
+                    .map((message, index) => (
                       <div
-                        className={`max-w-[75%] lg:max-w-[60%] ${
-                          message.isSent
-                            ? "bg-blue-600 text-white rounded-2xl rounded-tr-sm"
-                            : "bg-white text-gray-900 rounded-2xl rounded-tl-sm border border-gray-200"
-                        } px-4 py-2.5 shadow-sm`}
+                        key={`${message.id}-${index}`}
+                        className={`flex ${
+                          message.is_staff_reply
+                            ? "justify-start"
+                            : "justify-end"
+                        }`}
                       >
-                        <p className="text-sm leading-relaxed">
-                          {message.text}
-                        </p>
-                        <p
-                          className={`text-xs mt-1 ${
-                            message.isSent ? "text-blue-100" : "text-gray-500"
-                          }`}
+                        <div
+                          className={`max-w-[75%] lg:max-w-[60%] ${
+                            message.is_staff_reply
+                              ? "bg-white text-gray-900 rounded-2xl rounded-tl-sm border border-gray-200"
+                              : "bg-blue-600 text-white rounded-2xl rounded-tr-sm"
+                          } px-4 py-2.5 shadow-sm`}
                         >
-                          {message.timestamp}
-                        </p>
+                          <p className="text-sm leading-relaxed">
+                            {message.text}
+                          </p>
+                          <div
+                            className={`flex items-center gap-1 mt-1 ${
+                              message.is_staff_reply
+                                ? "text-gray-500"
+                                : "text-blue-100"
+                            }`}
+                          >
+                            <span className="text-xs">{message.timestamp}</span>
+                            {!message.is_staff_reply && (
+                              <span className="text-xs">
+                                {message.read_at ? (
+                                  <i className="bi bi-eye" title="Read"></i>
+                                ) : (
+                                  <i className="bi bi-check2" title="Sent"></i>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  <div className="h-4"></div>
+                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* Message Input */}
-                <div className="p-4 border-t border-gray-200 bg-white">
+                <div className="fixed w-full lg:w-[calc(100%-25rem)] bottom-17 lg:bottom-0 p-4 border-t border-gray-200 bg-white flex-shrink-0">
                   <div className="flex items-end gap-2">
                     <div className="flex-1 relative">
                       <input

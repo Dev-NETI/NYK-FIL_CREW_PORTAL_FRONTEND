@@ -379,7 +379,7 @@ export default function Navigation({
       )}
 
       {/* Spacer for mobile bottom nav - Only show when nav is visible */}
-      {!hideBottomNav && <div className="h-14 md:h-0"></div>}
+      {!hideBottomNav && <div className="h-8 md:h-0"></div>}
     </>
   );
 }

@@ -1,7 +1,7 @@
 import React from "react";
 import ConversationItem from "./ConversationItem";
 
-type TicketStatus = "open" | "pending" | "closed";
+type TicketStatus = "open" | "in_progress" | "closed";
 
 interface Conversation {
   id: number;
@@ -20,7 +20,7 @@ interface Conversation {
 
 interface ConversationListProps {
   conversations: Conversation[];
-  selectedConversation: Conversation;
+  selectedConversation: Conversation | null;
   onSelectConversation: (conversation: Conversation) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -78,7 +78,7 @@ export default function ConversationList({
             <ConversationItem
               key={conversation.id}
               conversation={conversation}
-              isSelected={selectedConversation.id === conversation.id}
+              isSelected={selectedConversation?.id === conversation.id}
               onClick={() => onSelectConversation(conversation)}
             />
           ))
