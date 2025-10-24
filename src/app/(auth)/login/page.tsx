@@ -222,7 +222,7 @@ export default function LoginPage() {
         });
       }
     } catch (err) {
-      console.error("Resend OTP error:", err);
+      // console.error("Resend OTP error:", err);
       // Always dismiss loading toast first
       toast.dismiss(loadingToast);
 

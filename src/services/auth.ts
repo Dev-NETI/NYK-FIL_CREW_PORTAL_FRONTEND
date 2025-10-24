@@ -127,7 +127,7 @@ export class AuthService {
         try {
           return JSON.parse(userStr);
         } catch (error) {
-          console.error("Error parsing stored user data:", error);
+          // console.error("Error parsing stored user data:", error);
           this.clearAuthData();
         }
       }
@@ -178,7 +178,7 @@ export class AuthService {
         icon: "👋",
       });
     } catch (error) {
-      console.error("Logout API error:", error);
+      // console.error("Logout API error:", error);
       // Continue with logout even if API call fails
       toast.error("Logout failed, but you will be logged out locally");
     } finally {
