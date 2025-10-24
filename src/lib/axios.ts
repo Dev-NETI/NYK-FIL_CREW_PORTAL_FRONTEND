@@ -40,10 +40,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     // Log successful response
-    console.log(`✅ API Response: ${response.status}`, {
-      url: response.config.url,
-      data: response.data,
-    });
+    // console.log(`✅ API Response: ${response.status}`, {
+    //   url: response.config.url,
+    //   data: response.data,
+    // });
 
     return response;
   },
