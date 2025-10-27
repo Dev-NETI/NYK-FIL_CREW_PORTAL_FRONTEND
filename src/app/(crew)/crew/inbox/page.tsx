@@ -82,6 +82,7 @@ export default function InboxPage() {
   const [department, setDepartment] = useState([]);
   const currentUserData = AuthService.getStoredUser();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const shouldScrollRef = useRef(true); // Track if we should auto-scroll
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -98,6 +99,86 @@ export default function InboxPage() {
       setInquiries(response.data);
     } catch (error) {
       console.error("Error fetching inquiries:", error);
+    }
+  };
+
+  const refreshMessages = async (shouldScroll = false) => {
+    if (!selectedConversation) return;
+
+    try {
+      const response = await api.get(`/inquiry/${currentUserData!.id}`);
+      const updatedInquiries = response.data;
+      setInquiries(updatedInquiries);
+
+      // Find and update messages for the selected conversation
+      const selectedInquiry = updatedInquiries.find(
+        (inq: any) => inq.id === selectedConversation
+      );
+      if (selectedInquiry && selectedInquiry.messages) {
+        shouldScrollRef.current = shouldScroll; // Control scrolling
+        const formattedMessages = selectedInquiry.messages.map((msg: any) => ({
+          id: msg.id,
+          senderId:
+            msg.sender_id === currentUserData!.id ? "me" : msg.sender_id,
+          text: msg.message,
+          timestamp: formatTimestamp(msg.created_at),
+          isSent: msg.sender_id === currentUserData!.id,
+          created_at: msg.created_at,
+          read_at: msg.read_at,
+          is_staff_reply: msg.is_staff_reply,
+        }));
+        setMessages(formattedMessages);
+      }
+    } catch (error) {
+      console.error("Error refreshing messages:", error);
+    }
+  };
+
+  const markMessagesAsRead = async (inquiryId: number) => {
+    try {
+      await api.patch(`/crew-inquiry-messages/${inquiryId}/mark-read`);
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  };
+
+  const getUnreadStaffMessageCount = (inquiry: any): number => {
+    if (!inquiry.messages) return 0;
+    return inquiry.messages.filter(
+      (msg: any) => msg.is_staff_reply && msg.read_at === null
+    ).length;
+  };
+
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case "open":
+        return {
+          bg: "bg-green-100",
+          text: "text-green-800",
+          dot: "bg-green-500",
+          label: "Open",
+        };
+      case "in_progress":
+        return {
+          bg: "bg-yellow-100",
+          text: "text-yellow-800",
+          dot: "bg-yellow-500",
+          label: "Pending",
+        };
+      case "closed":
+        return {
+          bg: "bg-red-100",
+          text: "text-red-800",
+          dot: "bg-red-500",
+          label: "Closed",
+        };
+      default:
+        return {
+          bg: "bg-gray-100",
+          text: "text-gray-800",
+          dot: "bg-gray-500",
+          label: "Unknown",
+        };
     }
   };
 
@@ -171,21 +252,35 @@ export default function InboxPage() {
       });
   }, [newDepartmentCategory]);
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change (only if shouldScrollRef is true)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      scrollToBottom();
-    }, 100);
-    return () => clearTimeout(timer);
+    if (shouldScrollRef.current) {
+      const timer = setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
   }, [messages]);
+
+  // Auto-refresh messages every 5 seconds when a conversation is selected
+  useEffect(() => {
+    if (!selectedConversation) return;
+
+    const intervalId = setInterval(() => {
+      refreshMessages(false); // Refresh without scrolling
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [selectedConversation]);
 
   const activeConversation = selectedConversation
     ? inquiries.find((inq: any) => inq.id === selectedConversation)
     : null;
 
-  const handleSelectConversation = (id: number) => {
+  const handleSelectConversation = async (id: number) => {
     setSelectedConversation(id);
     setShowChat(true);
+    shouldScrollRef.current = true; // Enable scrolling when selecting a conversation
 
     // Find the selected inquiry and load its messages
     const selectedInquiry = inquiries.find((inq: any) => inq.id === id);
@@ -201,6 +296,14 @@ export default function InboxPage() {
         is_staff_reply: msg.is_staff_reply,
       }));
       setMessages(formattedMessages);
+
+      // Mark unread staff messages as read
+      const unreadStaffCount = getUnreadStaffMessageCount(selectedInquiry);
+      if (unreadStaffCount > 0) {
+        await markMessagesAsRead(id);
+        // Refresh inquiries to update the UI
+        fetchInquiries();
+      }
     }
   };
 
@@ -232,6 +335,9 @@ export default function InboxPage() {
       read_at: null,
       is_staff_reply: false,
     };
+
+    // Enable scrolling when user sends a message
+    shouldScrollRef.current = true;
 
     // Add to beginning since backend stores newest first
     setMessages([optimisticMessage, ...messages]);
@@ -441,14 +547,37 @@ export default function InboxPage() {
                         <p className={`text-sm text-gray-600 truncate mt-0.5`}>
                           {inquiry.messages[0].message}
                         </p>
+                        {/* Status Badge */}
+                        <div className="mt-2">
+                          {(() => {
+                            const statusStyle = getStatusStyle(inquiry.status);
+                            return (
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}
+                              >
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}
+                                ></span>
+                                {statusStyle.label}
+                              </span>
+                            );
+                          })()}
+                        </div>
                       </div>
 
-                      {/* Unread Badge */}
-                      {inquiry.messages?.some(
-                        (msg) => msg.read_at === null
-                      ) && (
-                        <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-2"></div>
-                      )}
+                      {/* Unread Staff Messages Count */}
+                      {(() => {
+                        const unreadCount = getUnreadStaffMessageCount(inquiry);
+                        return unreadCount > 0 ? (
+                          <div className="flex-shrink-0 mt-2">
+                            <div className="min-w-[20px] h-5 px-1.5 bg-blue-600 text-white rounded-full flex items-center justify-center">
+                              <span className="text-xs font-semibold">
+                                {unreadCount > 99 ? "99+" : unreadCount}
+                              </span>
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                 ))
@@ -556,29 +685,41 @@ export default function InboxPage() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Message Input */}
+                {/* Message Input / Closed Label */}
                 <div className="fixed w-full lg:w-[calc(100%-25rem)] bottom-17 lg:bottom-0 p-4 border-t border-gray-200 bg-white flex-shrink-0">
-                  <div className="flex items-end gap-2">
-                    <div className="flex-1 relative">
-                      <input
-                        type="text"
-                        placeholder="Type your message..."
-                        value={messageInput}
-                        onChange={(e) => setMessageInput(e.target.value)}
-                        onKeyPress={(e) =>
-                          e.key === "Enter" && handleSendMessage()
-                        }
-                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      />
+                  {activeConversation.status === "closed" ? (
+                    // Closed Inquiry Label
+                    <div className="flex items-center justify-center gap-2 py-3 px-4 bg-gray-100 border border-gray-300 rounded-2xl">
+                      <i className="bi bi-lock-fill text-gray-600"></i>
+                      <span className="text-sm font-medium text-gray-700">
+                        This inquiry has been closed. No further messages can be
+                        sent.
+                      </span>
                     </div>
-                    <button
-                      onClick={handleSendMessage}
-                      disabled={!messageInput.trim()}
-                      className="w-12 h-12 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
-                    >
-                      <i className="bi bi-send-fill text-lg"></i>
-                    </button>
-                  </div>
+                  ) : (
+                    // Message Input
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1 relative">
+                        <input
+                          type="text"
+                          placeholder="Type your message..."
+                          value={messageInput}
+                          onChange={(e) => setMessageInput(e.target.value)}
+                          onKeyPress={(e) =>
+                            e.key === "Enter" && handleSendMessage()
+                          }
+                          className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        />
+                      </div>
+                      <button
+                        onClick={handleSendMessage}
+                        disabled={!messageInput.trim()}
+                        className="w-12 h-12 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+                      >
+                        <i className="bi bi-send-fill text-lg"></i>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
