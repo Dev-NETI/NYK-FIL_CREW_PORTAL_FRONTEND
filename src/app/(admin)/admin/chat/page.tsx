@@ -7,7 +7,7 @@ import api from "@/lib/axios";
 import { AuthService } from "@/services";
 
 // Ticket status type
-export type TicketStatus = "open" | "in_progress" | "closed";
+export type TicketStatus = "open" | "pending" | "closed" | "in_progress";
 
 function formatTimestamp(dateString: string | Date | null | undefined): string {
   if (!dateString) return "--:--";
