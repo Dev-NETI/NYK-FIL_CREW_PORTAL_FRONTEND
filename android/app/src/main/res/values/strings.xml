@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">nykfil-app-frontend</string>
-    <string name="title_activity_main">nykfil-app-frontend</string>
+    <string name="app_name">nykfil-super-app</string>
+    <string name="title_activity_main">nykfil-super-app</string>
     <string name="package_name">com.netiaccess.superapp</string>
     <string name="custom_url_scheme">com.netiaccess.superapp</string>
 </resources>
