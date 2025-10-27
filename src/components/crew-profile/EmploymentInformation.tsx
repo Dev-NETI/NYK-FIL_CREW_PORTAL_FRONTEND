@@ -8,6 +8,7 @@ interface EmploymentInformationProps {
   profile: User;
   isEditing: boolean;
   saving: boolean;
+  canEdit?: boolean;
   programs: Program[];
   employmentRecords: EmploymentRecord[];
   editingEmploymentId: number | null;
@@ -15,13 +16,17 @@ interface EmploymentInformationProps {
   selectedProgramId: number | null;
   batchInput: string;
   onEdit: () => void;
-  onSave: () => void;
   onCancel: () => void;
+  onSave: () => void;
   onAddEmploymentRecord: () => void;
   onProgramSelect: (programId: number) => void;
   onBatchSave: () => void;
   onCancelBatchInput: () => void;
-  onUpdateEmploymentRecord: (id: number, field: string, value: string | number) => void;
+  onUpdateEmploymentRecord: (
+    id: number,
+    field: string,
+    value: string | number
+  ) => void;
   onDeleteEmploymentRecord: (employmentId: number) => void;
   onSaveEmploymentRecord: (employmentId: number) => void;
   onCancelEmploymentEdit: () => void;
@@ -31,9 +36,9 @@ interface EmploymentInformationProps {
 }
 
 export default function EmploymentInformation({
-  profile,
   isEditing,
   saving,
+  canEdit = true,
   programs,
   employmentRecords,
   editingEmploymentId,
@@ -41,8 +46,8 @@ export default function EmploymentInformation({
   selectedProgramId,
   batchInput,
   onEdit,
-  onSave,
   onCancel,
+  onSave,
   onAddEmploymentRecord,
   onProgramSelect,
   onBatchSave,
@@ -64,47 +69,9 @@ export default function EmploymentInformation({
             <i className="bi bi-briefcase text-blue-600 mr-3"></i>
             Employment Information
           </h2>
-          <p className="text-gray-600 mt-1">Work history and employment records</p>
-        </div>
-        
-        {/* Edit Controls */}
-        <div className="flex items-center space-x-3">
-          {!isEditing ? (
-            <button
-              onClick={onEdit}
-              className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white px-5 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl flex items-center space-x-2"
-            >
-              <i className="bi bi-pencil text-sm"></i>
-              <span>Edit</span>
-            </button>
-          ) : (
-            <div className="flex space-x-2">
-              <button
-                onClick={onCancel}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2.5 rounded-xl transition-colors duration-200 text-sm font-medium shadow-lg flex items-center space-x-2"
-              >
-                <i className="bi bi-x text-sm"></i>
-                <span>Cancel</span>
-              </button>
-              <button
-                onClick={onSave}
-                disabled={saving}
-                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl flex items-center space-x-2"
-              >
-                {saving ? (
-                  <>
-                    <i className="bi bi-arrow-clockwise animate-spin text-sm"></i>
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-check text-sm"></i>
-                    <span>Save</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+          <p className="text-gray-600 mt-1">
+            Work history and employment records
+          </p>
         </div>
       </div>
 
@@ -115,7 +82,17 @@ export default function EmploymentInformation({
           </h3>
           <button
             onClick={onAddEmploymentRecord}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm"
+            disabled={!canEdit}
+            className={`text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm ${
+              canEdit
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+            title={
+              !canEdit
+                ? "You don't have permission to add employment records"
+                : ""
+            }
           >
             <i className="bi bi-plus mr-2"></i>
             Add Employment
@@ -174,11 +151,7 @@ export default function EmploymentInformation({
                   Selected Program
                 </label>
                 <p className="text-gray-900 py-2 px-3 bg-white rounded-lg border border-gray-200">
-                  {
-                    programs.find(
-                      (p) => p.id === selectedProgramId
-                    )?.name
-                  }
+                  {programs.find((p) => p.id === selectedProgramId)?.name}
                 </p>
               </div>
               <div>
@@ -215,12 +188,20 @@ export default function EmploymentInformation({
         {employmentRecords.length === 0 ? (
           <div className="text-center py-8">
             <i className="bi bi-briefcase text-4xl text-gray-300 mb-3"></i>
-            <p className="text-gray-500 mb-4">
-              No employment records found
-            </p>
+            <p className="text-gray-500 mb-4">No employment records found</p>
             <button
               onClick={onAddEmploymentRecord}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              disabled={!canEdit}
+              className={`text-white px-4 py-2 rounded-lg transition-colors duration-200 ${
+                canEdit
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+              title={
+                !canEdit
+                  ? "You don't have permission to add employment records"
+                  : ""
+              }
             >
               Add First Employment Record
             </button>
@@ -260,14 +241,9 @@ export default function EmploymentInformation({
                           }
                           className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                          <option value="">
-                            Select program
-                          </option>
+                          <option value="">Select program</option>
                           {programs.map((program) => (
-                            <option
-                              key={program.id}
-                              value={program.id}
-                            >
+                            <option key={program.id} value={program.id}>
                               {program.name}
                             </option>
                           ))}
@@ -276,8 +252,7 @@ export default function EmploymentInformation({
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-3 w-3 bg-blue-600 rounded-full mr-3"></div>
                           <div className="text-sm font-medium text-gray-900">
-                            {employment.program?.name ||
-                              "Not assigned"}
+                            {employment.program?.name || "Not assigned"}
                           </div>
                         </div>
                       )}
@@ -308,18 +283,14 @@ export default function EmploymentInformation({
                         <div className="flex space-x-2">
                           <button
                             onClick={() =>
-                              onSaveEmploymentRecord(
-                                employment.id
-                              )
+                              onSaveEmploymentRecord(employment.id)
                             }
                             className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-100"
                           >
                             <i className="bi bi-check-lg"></i>
                           </button>
                           <button
-                            onClick={() =>
-                              onCancelEmploymentEdit()
-                            }
+                            onClick={() => onCancelEmploymentEdit()}
                             className="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-100"
                           >
                             <i className="bi bi-x-lg"></i>
@@ -329,9 +300,7 @@ export default function EmploymentInformation({
                         <div className="flex space-x-2">
                           <button
                             onClick={() =>
-                              onSetEditingEmploymentId(
-                                employment.id
-                              )
+                              onSetEditingEmploymentId(employment.id)
                             }
                             className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-100"
                           >
@@ -339,9 +308,7 @@ export default function EmploymentInformation({
                           </button>
                           <button
                             onClick={() =>
-                              onDeleteEmploymentRecord(
-                                employment.id
-                              )
+                              onDeleteEmploymentRecord(employment.id)
                             }
                             className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-100"
                           >

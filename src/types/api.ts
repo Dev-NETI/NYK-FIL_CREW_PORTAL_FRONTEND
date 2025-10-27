@@ -32,9 +32,28 @@ export interface UserResponse extends BaseApiResponse {
   user?: User;
 }
 
+export interface PaginationInfo {
+  current_page: number;
+  per_page: number;
+  total: number;
+  last_page: number;
+  from: number | null;
+  to: number | null;
+  has_more_pages: boolean;
+}
+
+export interface CrewFilters {
+  search: string;
+  status: string;
+  sort_by: string;
+  sort_order: string;
+}
+
 export interface CrewListResponse extends BaseApiResponse {
   crew?: User[];
-  total?: number;
+  pagination?: PaginationInfo;
+  filters?: CrewFilters;
+  total?: number; // Keep for backward compatibility
 }
 
 // User Profile interfaces
@@ -82,11 +101,12 @@ export interface UserEmployment {
   employment_notes?: string;
 }
 
-export interface UserEducation {
-  graduated_school_id?: number;
-  date_graduated?: string;
-  degree?: string;
-  education_level?: string;
+export interface EducationRecord {
+  id: number;
+  school_name: string;
+  date_graduated: string | null;
+  degree: string | null;
+  education_level: string; // 'high_school', 'college', 'higher_education'
 }
 
 export interface UserPhysicalTraits {
@@ -96,7 +116,6 @@ export interface UserPhysicalTraits {
   eye_color?: string;
   hair_color?: string;
 }
-
 
 // Updated User interface with new structure
 export interface User {
@@ -114,9 +133,10 @@ export interface User {
   profile?: UserProfile;
   contacts?: UserContact;
   employment?: UserEmployment;
-  education?: UserEducation;
+  education?: EducationRecord[];
   physical_traits?: UserPhysicalTraits;
-
+  permanent_address?: PermanentAddress;
+  current_address?: CurrentAddress;
 
   // Address fields (temporary backward compatibility)
   permanent_region?: string;
@@ -125,12 +145,12 @@ export interface User {
   permanent_barangay?: string;
   permanent_street?: string;
   permanent_postal_code?: string;
-  contact_region?: string;
-  contact_province?: string;
-  contact_city?: string;
-  contact_barangay?: string;
-  contact_street?: string;
-  contact_postal_code?: string;
+  current_region?: string;
+  current_province?: string;
+  current_city?: string;
+  current_barangay?: string;
+  current_street?: string;
+  current_postal_code?: string;
 
   // Contact fields
   emergency_contact_number?: string;
@@ -147,6 +167,25 @@ export interface User {
   higher_education_graduation_date?: string;
 }
 
+export interface PermanentAddress {
+  full_address?: string;
+  brgy_id?: string;
+  city_id?: string;
+  province_id?: string;
+  region_id?: string;
+  street_address?: string;
+  zip_code?: string;
+}
+
+export interface CurrentAddress {
+  full_address?: string;
+  brgy_id?: string;
+  city_id?: string;
+  province_id?: string;
+  region_id?: string;
+  street_address?: string;
+  zip_code?: string;
+}
 // Request interfaces
 export interface LoginInitiateRequest {
   email: string;

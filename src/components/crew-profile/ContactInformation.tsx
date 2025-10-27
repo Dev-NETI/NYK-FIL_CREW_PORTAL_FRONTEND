@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Region, Province, City, Barangay, Address } from "@/types/api";
+import { User, Region, Province, City, Barangay } from "@/types/api";
 import { GeographyService, AddressService } from "@/services";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
@@ -11,13 +11,18 @@ import {
   Typography,
   CircularProgress,
   Grid,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
+import ValidationError from "@/components/ui/ValidationError";
+import { useValidation } from "@/hooks/useValidation";
 
 interface ContactInformationProps {
   profile: User;
   editedProfile: User | null;
   isEditing: boolean;
   saving: boolean;
+  canEdit?: boolean;
   onEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
@@ -25,7 +30,8 @@ interface ContactInformationProps {
   onAddressSave?: (
     permanentAddressId?: number,
     contactAddressId?: number
-  ) => void;
+  ) => Promise<void> | void;
+  validationErrors?: Record<string, string[]>;
 }
 
 export default function ContactInformation({
@@ -33,21 +39,26 @@ export default function ContactInformation({
   editedProfile,
   isEditing,
   saving,
+  canEdit = true,
   onEdit,
   onSave,
   onCancel,
   onInputChange,
   onAddressSave,
+  validationErrors = {},
 }: ContactInformationProps) {
+  // Use validation hook for cleaner validation logic
+  const { getValidationError, hasValidationError } = useValidation({ validationErrors });
   // Geography data state
   const [regions, setRegions] = useState<Region[]>([]);
   const [permanentProvinces, setPermanentProvinces] = useState<Province[]>([]);
   const [permanentCities, setPermanentCities] = useState<City[]>([]);
   const [permanentBarangays, setPermanentBarangays] = useState<Barangay[]>([]);
-  const [contactProvinces, setContactProvinces] = useState<Province[]>([]);
-  const [contactCities, setContactCities] = useState<City[]>([]);
-  const [contactBarangays, setContactBarangays] = useState<Barangay[]>([]);
+  const [currentProvinces, setCurrentProvinces] = useState<Province[]>([]);
+  const [currentCities, setCurrentCities] = useState<City[]>([]);
+  const [currentBarangays, setCurrentBarangays] = useState<Barangay[]>([]);
   const [loadingGeography, setLoadingGeography] = useState(false);
+  const [sameAsPermanent, setSameAsPermanent] = useState(false);
 
   // Load regions on component mount
   useEffect(() => {
@@ -73,13 +84,24 @@ export default function ContactInformation({
     const loadPermanentProvinces = async () => {
       const regionCode =
         editedProfile?.permanent_region || profile.permanent_region;
+
       if (regionCode) {
         try {
           const response = await GeographyService.getProvincesByRegion(
             regionCode
           );
+
           if (response.success) {
             setPermanentProvinces(response.data);
+            // Reset dependent dropdowns when region changes
+            setPermanentCities([]);
+            setPermanentBarangays([]);
+            // Clear dependent fields in editedProfile
+            if (editedProfile) {
+              onInputChange("permanent_province", "");
+              onInputChange("permanent_city", "");
+              onInputChange("permanent_barangay", "");
+            }
           }
         } catch (error) {
           console.error("Error loading permanent provinces:", error);
@@ -99,13 +121,22 @@ export default function ContactInformation({
     const loadPermanentCities = async () => {
       const provinceCode =
         editedProfile?.permanent_province || profile.permanent_province;
+
       if (provinceCode) {
         try {
           const response = await GeographyService.getCitiesByProvince(
             provinceCode
           );
+
           if (response.success) {
             setPermanentCities(response.data);
+            // Reset dependent dropdowns when province changes
+            setPermanentBarangays([]);
+            // Clear dependent fields in editedProfile
+            if (editedProfile) {
+              onInputChange("permanent_city", "");
+              onInputChange("permanent_barangay", "");
+            }
           }
         } catch (error) {
           console.error("Error loading permanent cities:", error);
@@ -123,11 +154,17 @@ export default function ContactInformation({
   useEffect(() => {
     const loadPermanentBarangays = async () => {
       const cityCode = editedProfile?.permanent_city || profile.permanent_city;
+
       if (cityCode) {
         try {
           const response = await GeographyService.getBarangaysByCity(cityCode);
+
           if (response.success) {
             setPermanentBarangays(response.data);
+            // Clear dependent fields in editedProfile
+            if (editedProfile) {
+              onInputChange("permanent_barangay", "");
+            }
           }
         } catch (error) {
           console.error("Error loading permanent barangays:", error);
@@ -140,77 +177,81 @@ export default function ContactInformation({
     loadPermanentBarangays();
   }, [editedProfile?.permanent_city, profile.permanent_city]);
 
-  // Load provinces when contact region changes
+  // Load provinces when current region changes
   useEffect(() => {
-    const loadContactProvinces = async () => {
+    const loadCurrentProvinces = async () => {
       const regionCode =
-        editedProfile?.contact_region || profile.contact_region;
-      if (regionCode) {
+        editedProfile?.current_region || profile.current_region;
+      if (regionCode && !sameAsPermanent) {
         try {
           const response = await GeographyService.getProvincesByRegion(
             regionCode
           );
           if (response.success) {
-            setContactProvinces(response.data);
+            setCurrentProvinces(response.data);
           }
         } catch (error) {
-          console.error("Error loading contact provinces:", error);
+          console.error("Error loading current provinces:", error);
         }
       } else {
-        setContactProvinces([]);
-        setContactCities([]);
-        setContactBarangays([]);
+        setCurrentProvinces([]);
+        setCurrentCities([]);
+        setCurrentBarangays([]);
       }
     };
 
-    loadContactProvinces();
-  }, [editedProfile?.contact_region, profile.contact_region]);
+    loadCurrentProvinces();
+  }, [editedProfile?.current_region, profile.current_region, sameAsPermanent]);
 
-  // Load cities when contact province changes
+  // Load cities when current province changes
   useEffect(() => {
-    const loadContactCities = async () => {
+    const loadCurrentCities = async () => {
       const provinceCode =
-        editedProfile?.contact_province || profile.contact_province;
-      if (provinceCode) {
+        editedProfile?.current_province || profile.current_province;
+      if (provinceCode && !sameAsPermanent) {
         try {
           const response = await GeographyService.getCitiesByProvince(
             provinceCode
           );
           if (response.success) {
-            setContactCities(response.data);
+            setCurrentCities(response.data);
           }
         } catch (error) {
-          console.error("Error loading contact cities:", error);
+          console.error("Error loading current cities:", error);
         }
       } else {
-        setContactCities([]);
-        setContactBarangays([]);
+        setCurrentCities([]);
+        setCurrentBarangays([]);
       }
     };
 
-    loadContactCities();
-  }, [editedProfile?.contact_province, profile.contact_province]);
+    loadCurrentCities();
+  }, [
+    editedProfile?.current_province,
+    profile.current_province,
+    sameAsPermanent,
+  ]);
 
-  // Load barangays when contact city changes
+  // Load barangays when current city changes
   useEffect(() => {
-    const loadContactBarangays = async () => {
-      const cityCode = editedProfile?.contact_city || profile.contact_city;
-      if (cityCode) {
+    const loadCurrentBarangays = async () => {
+      const cityCode = editedProfile?.current_city || profile.current_city;
+      if (cityCode && !sameAsPermanent) {
         try {
           const response = await GeographyService.getBarangaysByCity(cityCode);
           if (response.success) {
-            setContactBarangays(response.data);
+            setCurrentBarangays(response.data);
           }
         } catch (error) {
-          console.error("Error loading contact barangays:", error);
+          console.error("Error loading current barangays:", error);
         }
       } else {
-        setContactBarangays([]);
+        setCurrentBarangays([]);
       }
     };
 
-    loadContactBarangays();
-  }, [editedProfile?.contact_city, profile.contact_city]);
+    loadCurrentBarangays();
+  }, [editedProfile?.current_city, profile.current_city, sameAsPermanent]);
 
   // Helper function to get display text for geography fields
   const getGeographyDisplayText = (
@@ -222,14 +263,54 @@ export default function ContactInformation({
     return item ? item.desc : code;
   };
 
+  // Component for displaying field with label and value (copied from BasicInformation)
+  const DisplayField = ({
+    label,
+    value,
+    className = "",
+  }: {
+    label: string;
+    value: string | null | undefined;
+    className?: string;
+  }) => (
+    <div className={`space-y-1 ${className}`}>
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border">
+        {value || "Not specified"}
+      </p>
+    </div>
+  );
+
+  // Handle "same as permanent address" checkbox
+  const handleSameAsPermanentChange = (checked: boolean) => {
+    setSameAsPermanent(checked);
+
+    if (checked && editedProfile) {
+      // Copy permanent address to current address
+      onInputChange("current_region", editedProfile.permanent_region || "");
+      onInputChange("current_province", editedProfile.permanent_province || "");
+      onInputChange("current_city", editedProfile.permanent_city || "");
+      onInputChange("current_barangay", editedProfile.permanent_barangay || "");
+      onInputChange("current_street", editedProfile.permanent_street || "");
+      onInputChange(
+        "current_postal_code",
+        editedProfile.permanent_postal_code || ""
+      );
+    } else if (!checked && editedProfile) {
+      // Clear current address fields
+      onInputChange("current_region", "");
+      onInputChange("current_province", "");
+      onInputChange("current_city", "");
+      onInputChange("current_barangay", "");
+      onInputChange("current_street", "");
+      onInputChange("current_postal_code", "");
+    }
+  };
+
   // Function to save addresses and update user contacts
-  const handleSaveAddresses = async (): Promise<{
-    permanentAddressId?: number;
-    contactAddressId?: number;
-  }> => {
-    const promises: Promise<any>[] = [];
+  const handleSaveAddresses = async () => {
     let permanentAddressId: number | undefined;
-    let contactAddressId: number | undefined;
+    let currentAddressId: number | undefined;
 
     // Save permanent address if we have the required data
     const permRegion =
@@ -241,83 +322,112 @@ export default function ContactInformation({
       editedProfile?.permanent_barangay || profile.permanent_barangay;
 
     if (permRegion && permProvince && permCity && permBarangay) {
-      const permanentAddressPromise =
-        AddressService.createOrUpdateFromGeography(
-          {
-            user_id: profile.id,
-            street_address:
-              editedProfile?.permanent_street || profile.permanent_street || "",
-            region_code: permRegion,
-            province_code: permProvince,
-            city_code: permCity,
-            barangay_code: permBarangay,
-            zip_code:
-              editedProfile?.permanent_postal_code ||
-              profile.permanent_postal_code ||
-              "",
-          },
-          profile.contacts?.permanent_address_id
-        ).then((response) => {
-          if (response.success) {
-            permanentAddressId = response.data.id;
-            return response;
-          }
-          throw new Error(
-            response.message || "Failed to save permanent address"
-          );
-        });
-
-      promises.push(permanentAddressPromise);
-    }
-
-    // Save contact address if we have the required data
-    const contRegion = editedProfile?.contact_region || profile.contact_region;
-    const contProvince =
-      editedProfile?.contact_province || profile.contact_province;
-    const contCity = editedProfile?.contact_city || profile.contact_city;
-    const contBarangay =
-      editedProfile?.contact_barangay || profile.contact_barangay;
-
-    if (contRegion && contProvince && contCity && contBarangay) {
-      const contactAddressPromise = AddressService.createOrUpdateFromGeography(
-        {
+      try {
+        const addressData = {
           user_id: profile.id,
           street_address:
-            editedProfile?.contact_street || profile.contact_street || "",
-          region_code: contRegion,
-          province_code: contProvince,
-          city_code: contCity,
-          barangay_code: contBarangay,
+            editedProfile?.permanent_street || profile.permanent_street || "",
+          region_code: permRegion,
+          province_code: permProvince,
+          city_code: permCity,
+          barangay_code: permBarangay,
           zip_code:
-            editedProfile?.contact_postal_code ||
-            profile.contact_postal_code ||
+            editedProfile?.permanent_postal_code ||
+            profile.permanent_postal_code ||
             "",
-        },
-        profile.contacts?.current_address_id
-      ).then((response) => {
+        };
+
+        const response = await AddressService.createOrUpdateFromGeography(
+          addressData,
+          profile.contacts?.permanent_address_id
+        );
+
         if (response.success) {
-          contactAddressId = response.data.id;
-          return response;
+          permanentAddressId = response.data.id;
         }
-        throw new Error(response.message || "Failed to save contact address");
-      });
-
-      promises.push(contactAddressPromise);
-    }
-
-    try {
-      await Promise.all(promises);
-
-      if (onAddressSave) {
-        onAddressSave(permanentAddressId, contactAddressId);
+      } catch (error) {
+        throw error;
       }
-
-      return { permanentAddressId, contactAddressId };
-    } catch (error: any) {
-      console.error("Error saving addresses:", error);
-      toast.error(error.message || "Failed to save addresses");
-      throw error;
     }
+
+    // Save current address - always create separate record
+    let currRegion,
+      currProvince,
+      currCity,
+      currBarangay,
+      currStreet,
+      currPostalCode;
+
+    if (sameAsPermanent) {
+      // Use permanent address data but create a separate record
+      currRegion = permRegion;
+      currProvince = permProvince;
+      currCity = permCity;
+      currBarangay = permBarangay;
+      currStreet =
+        editedProfile?.permanent_street || profile.permanent_street || "";
+      currPostalCode =
+        editedProfile?.permanent_postal_code ||
+        profile.permanent_postal_code ||
+        "";
+    } else {
+      // Use current address data
+      currRegion = editedProfile?.current_region || profile.current_region;
+      currProvince =
+        editedProfile?.current_province || profile.current_province;
+      currCity = editedProfile?.current_city || profile.current_city;
+      currBarangay =
+        editedProfile?.current_barangay || profile.current_barangay;
+      currStreet =
+        editedProfile?.current_street || profile.current_street || "";
+      currPostalCode =
+        editedProfile?.current_postal_code || profile.current_postal_code || "";
+    }
+
+    // Always create/update a separate current address record
+    if (currRegion && currProvince && currCity && currBarangay) {
+      try {
+        const currentAddressData = {
+          user_id: profile.id,
+          street_address: currStreet,
+          region_code: currRegion,
+          province_code: currProvince,
+          city_code: currCity,
+          barangay_code: currBarangay,
+          zip_code: currPostalCode,
+        };
+
+        const currentResponse =
+          await AddressService.createOrUpdateFromGeography(
+            currentAddressData,
+            sameAsPermanent ? undefined : profile.contacts?.current_address_id
+          );
+
+        if (currentResponse.success) {
+          currentAddressId = currentResponse.data.id;
+        }
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    // Update the profile with address IDs - always use separate IDs
+    if (editedProfile) {
+      editedProfile.contacts = {
+        ...editedProfile.contacts,
+        permanent_address_id: permanentAddressId,
+        current_address_id: currentAddressId,
+      };
+    }
+
+    // Also call the onAddressSave callback if it exists (for additional processing)
+    if (onAddressSave && (permanentAddressId || currentAddressId)) {
+      try {
+        await onAddressSave(permanentAddressId, currentAddressId);
+      } catch (error) {}
+    }
+
+    return { permanentAddressId, currentAddressId };
   };
 
   // Render geography select field with Material UI
@@ -328,7 +438,8 @@ export default function ContactInformation({
     value: string | undefined,
     placeholder: string,
     required: boolean = false,
-    loading: boolean = false
+    loading: boolean = false,
+    disabled: boolean = false
   ) => {
     const currentOption =
       options.find((option) => option.code === value) || null;
@@ -344,7 +455,7 @@ export default function ContactInformation({
               onInputChange(field, newValue?.code || "");
             }}
             loading={loading}
-            disabled={loading}
+            disabled={loading || disabled}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -416,50 +527,56 @@ export default function ContactInformation({
     value: string,
     field: string,
     required: boolean = false,
-    type: string = "text"
+    type: string = "text",
+    disabled: boolean = false
   ) => {
+    // Handle contact fields that are nested in the contacts object
+    const contactFields = [
+      "mobile_number",
+      "alternate_phone",
+      "emergency_contact_name",
+      "emergency_contact_phone",
+      "emergency_contact_relationship",
+      "email_personal",
+    ];
+
+    const getFieldValue = () => {
+      if (contactFields.includes(field)) {
+        return (
+          (editedProfile?.contacts?.[
+            field as keyof typeof editedProfile.contacts
+          ] as string) || ""
+        );
+      }
+      return (editedProfile?.[field as keyof User] as string) || "";
+    };
+
+    // Get validation error path - contact fields have contacts. prefix
+    const validationField = contactFields.includes(field) ? `contacts.${field}` : field;
+
     return (
       <Box>
         {isEditing ? (
-          <TextField
-            label={label}
-            type={type}
-            value={(editedProfile?.[field as keyof User] as string) || ""}
-            onChange={(e) => onInputChange(field, e.target.value)}
-            required={required}
-            variant="outlined"
-            fullWidth
-            placeholder={`Enter ${label.toLowerCase()}`}
-          />
+          <div>
+            <TextField
+              label={label}
+              type={type}
+              value={getFieldValue()}
+              onChange={(e) => onInputChange(field, e.target.value)}
+              required={required}
+              variant="outlined"
+              fullWidth
+              placeholder={`Enter ${label.toLowerCase()}`}
+              disabled={disabled}
+              error={hasValidationError(validationField)}
+            />
+            <ValidationError errors={getValidationError(validationField)} />
+          </div>
         ) : (
-          <Box sx={{ mb: 2 }}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 1, fontWeight: 600 }}
-            >
-              {label} {required && <span style={{ color: "red" }}>*</span>}
-            </Typography>
-            <Box
-              sx={{
-                p: 2,
-                bgcolor: "grey.50",
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: "grey.200",
-                minHeight: "56px",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <Typography
-                variant="body1"
-                color={value ? "text.primary" : "text.secondary"}
-              >
-                {value || "Not provided"}
-              </Typography>
-            </Box>
-          </Box>
+          <DisplayField
+            label={label + (required ? " *" : "")}
+            value={value !== "Not provided" ? value : undefined}
+          />
         )}
       </Box>
     );
@@ -484,7 +601,13 @@ export default function ContactInformation({
           {!isEditing ? (
             <button
               onClick={onEdit}
-              className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-5 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl flex items-center space-x-2"
+              disabled={!canEdit}
+              className={`bg-gradient-to-r from-green-600 to-green-700 text-white px-5 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg flex items-center space-x-2 ${
+                canEdit
+                  ? "hover:from-green-700 hover:to-green-800 hover:shadow-xl"
+                  : "opacity-50 cursor-not-allowed"
+              }`}
+              title={!canEdit ? "You don't have permission to edit this section" : ""}
             >
               <i className="bi bi-pencil text-sm"></i>
               <span>Edit</span>
@@ -501,13 +624,23 @@ export default function ContactInformation({
               <button
                 onClick={async () => {
                   try {
-                    // First save addresses
-                    await handleSaveAddresses();
-                    // Then call the regular save function
+                    // Save addresses first to get the address IDs
+                    const addressResult = await handleSaveAddresses();
+
+                    // Call onSave to save other profile changes
                     onSave();
+
+                    // Log success with address ID for debugging
+                    console.log("Address saved successfully:", {
+                      permanentAddressId: addressResult.permanentAddressId,
+                      currentAddressId: addressResult.currentAddressId,
+                    });
+
+                    toast.success("Contact information saved successfully!");
                   } catch (error) {
-                    // Address saving failed, don't proceed with regular save
+                    // Address saving failed
                     console.error("Address saving failed:", error);
+                    toast.error("Failed to save address information");
                   }
                 }}
                 disabled={saving}
@@ -536,85 +669,102 @@ export default function ContactInformation({
           Mailing Address / Permanent Address
         </h3>
         <Grid container spacing={3}>
-          <Grid size={12}>
-            {renderGeographyField(
-              "Region",
-              "permanent_region",
-              regions.map((r) => ({ code: r.reg_code, desc: r.reg_desc })),
-              editedProfile?.permanent_region || profile.permanent_region,
-              "Select region",
-              false,
-              loadingGeography
-            )}
-          </Grid>
+          {isEditing ? (
+            <>
+              <Grid size={12}>
+                {renderGeographyField(
+                  "Region",
+                  "permanent_region",
+                  regions.map((r) => ({ code: r.reg_code, desc: r.reg_desc })),
+                  editedProfile?.permanent_region || profile.permanent_region,
+                  "Select region",
+                  false,
+                  loadingGeography
+                )}
+              </Grid>
+              <Grid size={12}>
+                {renderGeographyField(
+                  "Province",
+                  "permanent_province",
+                  permanentProvinces.map((p) => ({
+                    code: p.prov_code,
+                    desc: p.prov_desc,
+                  })),
+                  editedProfile?.permanent_province ||
+                    profile.permanent_province,
+                  "Select province",
+                  false,
+                  false
+                )}
+              </Grid>
 
-          <Grid size={12}>
-            {renderGeographyField(
-              "Province",
-              "permanent_province",
-              permanentProvinces.map((p) => ({
-                code: p.prov_code,
-                desc: p.prov_desc,
-              })),
-              editedProfile?.permanent_province || profile.permanent_province,
-              "Select province",
-              false,
-              false
-            )}
-          </Grid>
+              <Grid size={12}>
+                {renderGeographyField(
+                  "City/Municipality",
+                  "permanent_city",
+                  permanentCities.map((c) => ({
+                    code: c.citymun_code,
+                    desc: c.citymun_desc,
+                  })),
+                  editedProfile?.permanent_city || profile.permanent_city,
+                  "Select city/municipality",
+                  false,
+                  false
+                )}
+              </Grid>
 
-          <Grid size={12}>
-            {renderGeographyField(
-              "City/Municipality",
-              "permanent_city",
-              permanentCities.map((c) => ({
-                code: c.citymun_code,
-                desc: c.citymun_desc,
-              })),
-              editedProfile?.permanent_city || profile.permanent_city,
-              "Select city/municipality",
-              false,
-              false
-            )}
-          </Grid>
+              <Grid size={12}>
+                {renderGeographyField(
+                  "Subdivision/Barangay",
+                  "permanent_barangay",
+                  permanentBarangays.map((b) => ({
+                    code: b.brgy_code,
+                    desc: b.brgy_desc,
+                  })),
+                  editedProfile?.permanent_barangay ||
+                    profile.permanent_barangay,
+                  "Select barangay",
+                  false,
+                  false
+                )}
+              </Grid>
 
-          <Grid size={12}>
-            {renderGeographyField(
-              "Subdivision/Barangay",
-              "permanent_barangay",
-              permanentBarangays.map((b) => ({
-                code: b.brgy_code,
-                desc: b.brgy_desc,
-              })),
-              editedProfile?.permanent_barangay || profile.permanent_barangay,
-              "Select barangay",
-              false,
-              false
-            )}
-          </Grid>
+              <Grid size={12}>
+                <div>
+                  <TextField
+                    label="Building Name, Floor, Unit Number, Street Name"
+                    value={editedProfile?.permanent_street || ""}
+                    onChange={(e) =>
+                      onInputChange("permanent_street", e.target.value)
+                    }
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={3}
+                    placeholder="Enter complete address"
+                    error={hasValidationError("permanent_street")}
+                  />
+                  <ValidationError errors={getValidationError("permanent_street")} />
+                </div>
+              </Grid>
 
-          <Grid size={12}>
-            {isEditing ? (
-              <TextField
-                label="Building Name, Floor, Unit Number, Street Name"
-                value={editedProfile?.permanent_street || ""}
-                onChange={(e) =>
-                  onInputChange("permanent_street", e.target.value)
-                }
-                variant="outlined"
-                fullWidth
-                multiline
-                rows={3}
-                placeholder="Enter complete address"
-              />
-            ) : (
+              <Grid size={12}>
+                {renderField(
+                  "Postal Code",
+                  profile.permanent_address?.zip_code || "Not provided",
+                  "permanent_postal_code"
+                )}
+              </Grid>
+            </>
+          ) : (
+            <Grid size={12}>
               <Box sx={{ mb: 2 }}>
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{ mb: 1, fontWeight: 600 }}
                 >
-                  Building Name, Floor, Unit Number, Street Name
+                  Full Address
                 </Typography>
                 <Box
                   sx={{
@@ -631,113 +781,146 @@ export default function ContactInformation({
                   <Typography
                     variant="body1"
                     color={
-                      profile.permanent_street
+                      profile?.permanent_address?.full_address
                         ? "text.primary"
                         : "text.secondary"
                     }
                   >
-                    {profile.permanent_street || "Not provided"}
+                    {profile?.permanent_address?.full_address || "Not provided"}
                   </Typography>
                 </Box>
               </Box>
-            )}
-          </Grid>
-
-          <Grid size={12}>
-            {renderField(
-              "Postal Code",
-              profile.permanent_postal_code || "Not provided",
-              "permanent_postal_code"
-            )}
-          </Grid>
+            </Grid>
+          )}
         </Grid>
       </div>
 
-      {/* Contact Address Section */}
+      {/* Current Address Section */}
       <div className="bg-green-50 rounded-xl p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Contact Address
+          Current Address
         </h3>
+
+        {isEditing && (
+          <div className="mb-4">
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={sameAsPermanent}
+                  onChange={(e) =>
+                    handleSameAsPermanentChange(e.target.checked)
+                  }
+                  color="primary"
+                />
+              }
+              label="Same as permanent address"
+            />
+          </div>
+        )}
+
         <Grid container spacing={3}>
-          <Grid size={12}>
-            {renderGeographyField(
-              "Region",
-              "contact_region",
-              regions.map((r) => ({ code: r.reg_code, desc: r.reg_desc })),
-              editedProfile?.contact_region || profile.contact_region,
-              "Select region",
-              false,
-              loadingGeography
-            )}
-          </Grid>
+          {isEditing ? (
+            <>
+              <Grid size={12}>
+                {renderGeographyField(
+                  "Region",
+                  "current_region",
+                  regions.map((r) => ({ code: r.reg_code, desc: r.reg_desc })),
+                  editedProfile?.current_region || profile.current_region,
+                  "Select region",
+                  false,
+                  loadingGeography,
+                  sameAsPermanent
+                )}
+              </Grid>
+              <Grid size={12}>
+                {renderGeographyField(
+                  "Province",
+                  "current_province",
+                  currentProvinces.map((p) => ({
+                    code: p.prov_code,
+                    desc: p.prov_desc,
+                  })),
+                  editedProfile?.current_province || profile.current_province,
+                  "Select province",
+                  false,
+                  false,
+                  sameAsPermanent
+                )}
+              </Grid>
 
-          <Grid size={12}>
-            {renderGeographyField(
-              "Province",
-              "contact_province",
-              contactProvinces.map((p) => ({
-                code: p.prov_code,
-                desc: p.prov_desc,
-              })),
-              editedProfile?.contact_province || profile.contact_province,
-              "Select province",
-              false,
-              false
-            )}
-          </Grid>
+              <Grid size={12}>
+                {renderGeographyField(
+                  "City/Municipality",
+                  "current_city",
+                  currentCities.map((c) => ({
+                    code: c.citymun_code,
+                    desc: c.citymun_desc,
+                  })),
+                  editedProfile?.current_city || profile.current_city,
+                  "Select city/municipality",
+                  false,
+                  false,
+                  sameAsPermanent
+                )}
+              </Grid>
 
-          <Grid size={12}>
-            {renderGeographyField(
-              "City/Municipality",
-              "contact_city",
-              contactCities.map((c) => ({
-                code: c.citymun_code,
-                desc: c.citymun_desc,
-              })),
-              editedProfile?.contact_city || profile.contact_city,
-              "Select city/municipality",
-              false,
-              false
-            )}
-          </Grid>
+              <Grid size={12}>
+                {renderGeographyField(
+                  "Subdivision/Barangay",
+                  "current_barangay",
+                  currentBarangays.map((b) => ({
+                    code: b.brgy_code,
+                    desc: b.brgy_desc,
+                  })),
+                  editedProfile?.current_barangay || profile.current_barangay,
+                  "Select barangay",
+                  false,
+                  false,
+                  sameAsPermanent
+                )}
+              </Grid>
 
-          <Grid size={12}>
-            {renderGeographyField(
-              "Subdivision/Barangay",
-              "contact_barangay",
-              contactBarangays.map((b) => ({
-                code: b.brgy_code,
-                desc: b.brgy_desc,
-              })),
-              editedProfile?.contact_barangay || profile.contact_barangay,
-              "Select barangay",
-              false,
-              false
-            )}
-          </Grid>
+              <Grid size={12}>
+                <div>
+                  <TextField
+                    label="Building Name, Floor, Unit Number, Street Name"
+                    value={editedProfile?.current_street || ""}
+                    onChange={(e) =>
+                      onInputChange("current_street", e.target.value)
+                    }
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={3}
+                    placeholder="Enter complete address"
+                    disabled={sameAsPermanent}
+                    error={hasValidationError("current_street")}
+                  />
+                  <ValidationError errors={getValidationError("current_street")} />
+                </div>
+              </Grid>
 
-          <Grid size={12}>
-            {isEditing ? (
-              <TextField
-                label="Building Name, Floor, Unit Number, Street Name"
-                value={editedProfile?.contact_street || ""}
-                onChange={(e) =>
-                  onInputChange("contact_street", e.target.value)
-                }
-                variant="outlined"
-                fullWidth
-                multiline
-                rows={3}
-                placeholder="Enter complete address"
-              />
-            ) : (
+              <Grid size={12}>
+                {renderField(
+                  "Postal Code",
+                  profile.current_address?.zip_code || "Not provided",
+                  "current_postal_code",
+                  false,
+                  "text",
+                  sameAsPermanent
+                )}
+              </Grid>
+            </>
+          ) : (
+            <Grid size={12}>
               <Box sx={{ mb: 2 }}>
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{ mb: 1, fontWeight: 600 }}
                 >
-                  Building Name, Floor, Unit Number, Street Name
+                  Full Address
                 </Typography>
                 <Box
                   sx={{
@@ -754,85 +937,29 @@ export default function ContactInformation({
                   <Typography
                     variant="body1"
                     color={
-                      profile.contact_street ? "text.primary" : "text.secondary"
+                      profile?.current_address?.full_address
+                        ? "text.primary"
+                        : "text.secondary"
                     }
                   >
-                    {profile.contact_street || "Not provided"}
+                    {profile?.current_address?.full_address || "Not provided"}
                   </Typography>
                 </Box>
               </Box>
-            )}
-          </Grid>
-
-          <Grid size={12}>
-            {renderField(
-              "Postal Code",
-              profile.contact_postal_code || "Not provided",
-              "contact_postal_code"
-            )}
-          </Grid>
+            </Grid>
+          )}
         </Grid>
       </div>
 
-      {/* Contact Information Section */}
+      {/* My Contact Section */}
       <div className="bg-orange-50 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Contact Information
+          My Contact Information
         </h3>
         <Grid container spacing={3}>
-          <Grid size={12}>
-            <Box>
-              {isEditing ? (
-                <TextField
-                  label="Email Address"
-                  type="email"
-                  value={editedProfile?.email || ""}
-                  onChange={(e) => onInputChange("email", e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  placeholder="Enter email address"
-                />
-              ) : (
-                <Box sx={{ mb: 2 }}>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 1, fontWeight: 600 }}
-                  >
-                    Email Address
-                  </Typography>
-                  <Box
-                    sx={{
-                      p: 2,
-                      bgcolor: "grey.50",
-                      borderRadius: 2,
-                      border: "1px solid",
-                      borderColor: "grey.200",
-                      minHeight: "56px",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Typography variant="body1" color="text.primary">
-                      {profile.email}
-                      {profile.email_verified_at && (
-                        <Typography
-                          component="span"
-                          sx={{ ml: 1, color: "green", fontSize: "0.875rem" }}
-                        >
-                          ✓ Verified
-                        </Typography>
-                      )}
-                    </Typography>
-                  </Box>
-                </Box>
-              )}
-            </Box>
-          </Grid>
-
-          <Grid size={12}>
+          <Grid size={6}>
             {renderField(
-              "Mobile No.",
+              "Emergency Contact Number No.",
               profile.contacts?.mobile_number ||
                 (profile as any).mobile_number ||
                 "Not provided",
@@ -841,12 +968,70 @@ export default function ContactInformation({
               "tel"
             )}
           </Grid>
+          <Grid size={6}>
+            {renderField(
+              "Alternate Mobile No.",
+              profile.contacts?.alternate_phone ||
+                (profile as any).alternate_phone ||
+                "Not provided",
+              "alternate_phone",
+              false,
+              "tel"
+            )}
+          </Grid>
 
           <Grid size={12}>
             {renderField(
-              "Emergency Contact Number",
-              profile.emergency_contact_number || "Not provided",
-              "emergency_contact_number",
+              "Personal Email Address",
+              profile.contacts?.email_personal ||
+                (profile as any).email_personal ||
+                "Not provided",
+              "email_personal"
+            )}
+          </Grid>
+        </Grid>
+      </div>
+
+      {/* Contact Information Section */}
+      <div className="bg-red-50 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Contact Emergency
+        </h3>
+        <Grid container spacing={3}>
+          <Grid size={12}>
+            <Box>
+              {isEditing ? (
+                <div>
+                  <TextField
+                    label="Emergency Contact Name"
+                    type="text"
+                    value={editedProfile?.contacts?.emergency_contact_name || ""}
+                    onChange={(e) =>
+                      onInputChange("emergency_contact_name", e.target.value)
+                    }
+                    variant="outlined"
+                    fullWidth
+                    placeholder="Enter emergency contact name"
+                    error={hasValidationError("contacts.emergency_contact_name")}
+                  />
+                  <ValidationError errors={getValidationError("contacts.emergency_contact_name")} />
+                </div>
+              ) : (
+                <DisplayField
+                  label="Emergency Contact Name"
+                  value={profile.contacts?.emergency_contact_name}
+                />
+              )}
+            </Box>
+          </Grid>
+
+          <Grid size={12}>
+            {renderField(
+              "Emergency Contact Number No.",
+              profile.contacts?.emergency_contact_phone ||
+                (profile as any).emergency_contact_phone ||
+                "Not provided",
+              "emergency_contact_phone",
               false,
               "tel"
             )}
@@ -855,8 +1040,9 @@ export default function ContactInformation({
           <Grid size={12}>
             {renderField(
               "Emergency Contact Relation",
-              profile.emergency_contact_relation || "Not provided",
-              "emergency_contact_relation"
+              profile.contacts?.emergency_contact_relationship ||
+                "Not provided",
+              "emergency_contact_relationship"
             )}
           </Grid>
         </Grid>
