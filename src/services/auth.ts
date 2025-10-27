@@ -17,9 +17,7 @@ export class AuthService {
    * Get CSRF cookie from Laravel Sanctum
    */
   static async getCsrfCookie(): Promise<void> {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL?.replace("/api", "") ||
-      "http://localhost:8000";
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace("/api", "");
     await api.get("/sanctum/csrf-cookie", {
       baseURL: baseUrl,
     });
