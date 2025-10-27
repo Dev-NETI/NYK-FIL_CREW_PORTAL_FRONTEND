@@ -420,41 +420,59 @@ export default function ChatWindow({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
+      {/* Input Area / Closed Label */}
       <div className="bg-white border-t border-gray-200 px-6 py-4 shadow-lg">
-        <div className="flex items-end space-x-3">
-          <div className="flex-1">
-            <textarea
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your response to this ticket..."
-              rows={3}
-              disabled={isSendingMessage}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            />
+        {conversation.status === "closed" ? (
+          // Closed Conversation Label
+          <div className="flex items-center justify-center gap-3 py-4 px-6 bg-red-50 border border-red-200 rounded-lg">
+            <i className="bi bi-lock-fill text-red-600 text-xl"></i>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-red-800">
+                This conversation has been closed
+              </p>
+              <p className="text-xs text-red-600 mt-1">
+                No further messages can be sent. Reopen the ticket to continue the conversation.
+              </p>
+            </div>
           </div>
-          <button
-            onClick={handleSendMessage}
-            disabled={inputMessage.trim() === "" || isSendingMessage}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed font-medium shadow-sm flex items-center space-x-2"
-          >
-            {isSendingMessage ? (
-              <>
-                <i className="bi bi-arrow-repeat animate-spin"></i>
-                <span>Sending...</span>
-              </>
-            ) : (
-              <>
-                <i className="bi bi-send"></i>
-                <span>Send</span>
-              </>
-            )}
-          </button>
-        </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Press Enter to send, Shift + Enter for new line
-        </p>
+        ) : (
+          // Message Input
+          <>
+            <div className="flex items-end space-x-3">
+              <div className="flex-1">
+                <textarea
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your response to this ticket..."
+                  rows={3}
+                  disabled={isSendingMessage}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                />
+              </div>
+              <button
+                onClick={handleSendMessage}
+                disabled={inputMessage.trim() === "" || isSendingMessage}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed font-medium shadow-sm flex items-center space-x-2"
+              >
+                {isSendingMessage ? (
+                  <>
+                    <i className="bi bi-arrow-repeat animate-spin"></i>
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-send"></i>
+                    <span>Send</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Press Enter to send, Shift + Enter for new line
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

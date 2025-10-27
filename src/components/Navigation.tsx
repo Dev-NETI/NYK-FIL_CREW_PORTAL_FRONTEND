@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { User } from "@/types/api";
+import api from "@/lib/axios";
 
 interface NavigationProps {
   currentPath?: string;
@@ -33,8 +34,7 @@ export default function Navigation({
   );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(user || null);
-  // Mock unread message count - replace with actual data from API later
-  const [unreadCount] = useState(3);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Get user from localStorage if not provided as prop
   useEffect(() => {
@@ -43,6 +43,40 @@ export default function Navigation({
       setCurrentUser(storedUser);
     }
   }, [user]);
+
+  // Fetch unread message count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (!currentUser?.id) return;
+
+      try {
+        const response = await api.get(`/inquiry/${currentUser.id}`);
+        const inquiries = response.data;
+
+        // Calculate total unread staff messages
+        let totalUnread = 0;
+        inquiries.forEach((inquiry: any) => {
+          if (inquiry.messages) {
+            const unreadStaffMessages = inquiry.messages.filter(
+              (msg: any) => msg.is_staff_reply && msg.read_at === null
+            );
+            totalUnread += unreadStaffMessages.length;
+          }
+        });
+
+        setUnreadCount(totalUnread);
+      } catch (error) {
+        console.error("Error fetching unread count:", error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Set up interval to refresh unread count every 10 seconds
+    const intervalId = setInterval(fetchUnreadCount, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [currentUser?.id]);
 
   // Update previousActive when the route changes
   useEffect(() => {

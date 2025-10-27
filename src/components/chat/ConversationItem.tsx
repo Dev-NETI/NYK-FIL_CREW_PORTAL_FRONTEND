@@ -107,9 +107,9 @@ export default function ConversationItem({
 }: ConversationItemProps) {
   const statusStyle = statusConfig[conversation.status] || statusConfig.open;
 
-  // Calculate unread count - count messages from crew (not staff replies) that haven't been read
+  // Calculate unread count - count messages from crew (is_staff_reply === false or 0) that haven't been read
   const unreadCount = conversation.messages.filter(
-    (msg) => !msg.is_staff_reply && msg.read_at === null
+    (msg) => (msg.is_staff_reply === false || msg.is_staff_reply === 0) && msg.read_at === null
   ).length;
 
   return (
