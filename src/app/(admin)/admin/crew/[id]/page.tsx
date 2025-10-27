@@ -759,6 +759,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     showProgramSelection={showProgramSelection}
                     selectedProgramId={selectedProgramId}
                     batchInput={batchInput}
+                    onEdit={handleEdit}
+                    onCancel={handleCancel}
+                    onSave={handleSave}
                     onAddEmploymentRecord={addEmploymentRecord}
                     onProgramSelect={handleProgramSelect}
                     onBatchSave={handleBatchSave}

@@ -1,7 +1,7 @@
 import React from "react";
 import ConversationItem from "./ConversationItem";
 
-type TicketStatus = "open" | "in_progress" | "closed";
+type TicketStatus = "open" | "pending" | "closed" | "in_progress";
 
 interface Conversation {
   id: number;
