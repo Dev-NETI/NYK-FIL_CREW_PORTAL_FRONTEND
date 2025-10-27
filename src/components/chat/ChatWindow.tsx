@@ -2,8 +2,11 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import MessageBubble from "./MessageBubble";
+import api from "@/lib/axios";
+import toast from "react-hot-toast";
+import { AuthService } from "@/services";
 
-type TicketStatus = "open" | "pending" | "closed";
+type TicketStatus = "open" | "pending" | "closed" | "in_progress";
 
 interface Message {
   id: number;
@@ -14,19 +17,73 @@ interface Message {
 
 interface Conversation {
   id: number;
-  ticketNumber: string;
-  userName: string;
-  userEmail: string;
-  isOnline: boolean;
+  ticketNumber?: string;
+  userName?: string;
+  userEmail?: string;
+  modified_by?: string;
+  isOnline?: boolean;
   status: TicketStatus;
-  priority: string;
+  priority?: string;
   subject: string;
+  crew?: {
+    profile?: {
+      first_name?: string;
+      last_name?: string;
+    };
+  };
 }
 
 interface ChatWindowProps {
   conversation: Conversation;
   messages: Message[];
   onStatusChange: (ticketId: number, newStatus: TicketStatus) => void;
+  onMessageSent?: () => void; // Callback to refresh messages after sending
+}
+
+//Update Status
+async function updateInquiryStatus(
+  inquiryId: number,
+  status: TicketStatus
+): Promise<boolean> {
+  try {
+    const response = await api.put(`/admin-inquiry-messages/${inquiryId}`, {
+      status: status,
+    });
+
+    return true;
+  } catch (error: any) {
+    console.error(
+      "❌ Error updating status:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+}
+
+// Send Admin Message
+async function sendAdminMessage(
+  inquiryId: number,
+  message: string,
+  userId: number,
+  userName: string
+): Promise<any> {
+  try {
+    const response = await api.post("/admin-messages", {
+      inquiry_id: inquiryId,
+      message: message,
+      user_id: userId,
+      modified_by: userName,
+      is_staff_reply: true,
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "❌ Error sending message:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
 }
 
 // Status configuration
@@ -38,7 +95,7 @@ const statusConfig = {
     label: "Open",
     icon: "bi-check-circle",
   },
-  pending: {
+  in_progress: {
     bg: "bg-yellow-100",
     text: "text-yellow-800",
     dot: "bg-yellow-500",
@@ -54,24 +111,86 @@ const statusConfig = {
   },
 };
 
-export default function ChatWindow({ conversation, messages, onStatusChange }: ChatWindowProps) {
+export default function ChatWindow({
+  conversation,
+  messages,
+  onStatusChange,
+  onMessageSent,
+}: ChatWindowProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const shouldScrollRef = useRef(true); // Flag to control auto-scroll
+  const currentUser = AuthService.getStoredUser();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  function getInitials(name: string): string {
+    if (!name || name.trim() === "") return "";
+
+    const words = name.trim().split(/\s+/);
+
+    if (words.length === 1) {
+      // Single word: take first 2 characters
+      return words[0].substring(0, 2).toUpperCase();
+    }
+
+    // Multiple words: take first letter of first 2 words
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+
+  const scrollToBottom = (force = false) => {
+    if (force || shouldScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
+  // Check if user is near the bottom of the scroll area
+  const isNearBottom = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return true;
+
+    const threshold = 150; // pixels from bottom
+    const scrollBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    return scrollBottom < threshold;
+  };
+
+  // Handle scroll events to update shouldScrollRef
+  const handleScroll = () => {
+    shouldScrollRef.current = isNearBottom();
+  };
+
+  // Auto-scroll only if user is near bottom
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  // Reset updating status and scroll to bottom when conversation changes
+  useEffect(() => {
+    setIsUpdatingStatus(false);
+    shouldScrollRef.current = true; // Always scroll to bottom when switching conversations
+    setTimeout(() => scrollToBottom(true), 100);
+  }, [conversation?.id]);
+
+  // Add scroll listener to track user position
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowStatusDropdown(false);
       }
     };
@@ -80,13 +199,49 @@ export default function ChatWindow({ conversation, messages, onStatusChange }: C
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSendMessage = () => {
-    if (inputMessage.trim() === "") return;
+  const handleSendMessage = async () => {
+    if (inputMessage.trim() === "" || isSendingMessage || !currentUser) return;
 
-    // Here you would integrate with your API to send the message
-    console.log("Sending message:", inputMessage);
+    const messageText = inputMessage.trim();
+    setIsSendingMessage(true);
 
+    // Clear input immediately for better UX
     setInputMessage("");
+
+    const loadingToast = toast.loading("Sending message...");
+
+    try {
+      // Send admin message
+      await sendAdminMessage(
+        conversation.id,
+        messageText,
+        currentUser.id,
+        currentUser.name
+      );
+
+      toast.success("Message sent successfully!", { id: loadingToast });
+
+      // Trigger parent refresh to get updated messages
+      if (onMessageSent) {
+        onMessageSent();
+      }
+
+      // Force scroll to bottom after sending
+      shouldScrollRef.current = true;
+      setTimeout(() => scrollToBottom(true), 100);
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to send message";
+      toast.error(errorMessage, { id: loadingToast });
+
+      // Restore message on error
+      setInputMessage(messageText);
+      console.error("❌ Error sending message:", error);
+    } finally {
+      setIsSendingMessage(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -96,13 +251,71 @@ export default function ChatWindow({ conversation, messages, onStatusChange }: C
     }
   };
 
-  const handleStatusChange = (newStatus: TicketStatus) => {
-    onStatusChange(conversation.id, newStatus);
-    setShowStatusDropdown(false);
+  const handleStatusChange = async (newStatus: TicketStatus) => {
+    if (isUpdatingStatus) return; // Prevent multiple simultaneous updates
+
+    console.log(
+      "🔄 Updating conversation ID:",
+      conversation.id,
+      "to status:",
+      newStatus
+    );
+    setIsUpdatingStatus(true);
+    const loadingToast = toast.loading(`Updating status to ${newStatus}...`);
+
+    try {
+      // Call API to update status in backend
+      await updateInquiryStatus(conversation.id, newStatus);
+      console.log(
+        "✅ API update successful for conversation:",
+        conversation.id
+      );
+
+      // Update UI through parent callback
+      onStatusChange(conversation.id, newStatus);
+
+      toast.success(`Status updated to ${newStatus} successfully!`, {
+        id: loadingToast,
+      });
+      setShowStatusDropdown(false);
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update status";
+      toast.error(errorMessage, { id: loadingToast });
+      console.error("❌ Error updating status:", error);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
   };
 
-  const currentStatusStyle = statusConfig[conversation.status];
+  // Show empty state when no conversation is selected
+  if (!conversation) {
+    return (
+      <div className="flex-1 flex flex-col bg-gray-50">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center px-6">
+            <div className="w-24 h-24 mx-auto mb-6 bg-gray-200 rounded-full flex items-center justify-center">
+              <i className="bi bi-chat-square-text text-5xl text-gray-400"></i>
+            </div>
+            <h3 className="text-2xl font-semibold text-gray-900 mb-3">
+              No Conversation Selected
+            </h3>
+            <p className="text-gray-500 text-lg mb-2">
+              Select a ticket from the left sidebar to view and respond to
+              messages
+            </p>
+            <p className="text-gray-400 text-sm">
+              All your support conversations will appear here
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
+  const currentStatusStyle = statusConfig[conversation.status];
   return (
     <div className="flex-1 flex flex-col bg-gray-50">
       {/* Ticket Header */}
@@ -113,7 +326,12 @@ export default function ChatWindow({ conversation, messages, onStatusChange }: C
             {/* User Avatar */}
             <div className="relative">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-semibold shadow-md">
-                {conversation.userName.charAt(0).toUpperCase()}
+                {getInitials(
+                  conversation.crew?.profile?.first_name &&
+                    conversation.crew?.profile?.last_name
+                    ? `${conversation.crew.profile.first_name} ${conversation.crew.profile.last_name}`
+                    : conversation.userName || ""
+                )}
               </div>
               {conversation.isOnline && (
                 <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
@@ -122,71 +340,15 @@ export default function ChatWindow({ conversation, messages, onStatusChange }: C
 
             {/* User Details */}
             <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-lg font-bold text-gray-900">
-                  {conversation.userName}
-                </h2>
-                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                  {conversation.ticketNumber}
-                </span>
-              </div>
-              <p className="text-sm text-gray-600">{conversation.userEmail}</p>
-              <p className="text-xs text-gray-500 mt-0.5 italic">{conversation.subject}</p>
-            </div>
-          </div>
-
-          {/* Status and Actions */}
-          <div className="flex items-center space-x-3">
-            {/* Current Status Badge */}
-            <span
-              className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold ${currentStatusStyle.bg} ${currentStatusStyle.text} shadow-sm`}
-            >
-              <i className={`bi ${currentStatusStyle.icon} mr-1.5`}></i>
-              {currentStatusStyle.label}
-            </span>
-
-            {/* Status Change Dropdown */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center space-x-2"
-              >
-                <i className="bi bi-gear"></i>
-                <span>Change Status</span>
-                <i className={`bi ${showStatusDropdown ? 'bi-chevron-up' : 'bi-chevron-down'} text-xs`}></i>
-              </button>
-
-              {/* Dropdown Menu */}
-              {showStatusDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
-                  <div className="px-3 py-2 border-b border-gray-100">
-                    <p className="text-xs font-semibold text-gray-500 uppercase">
-                      Update Status
-                    </p>
-                  </div>
-                  {(Object.keys(statusConfig) as TicketStatus[]).map((status) => {
-                    const style = statusConfig[status];
-                    return (
-                      <button
-                        key={status}
-                        onClick={() => handleStatusChange(status)}
-                        disabled={conversation.status === status}
-                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 ${
-                          conversation.status === status
-                            ? "opacity-50 cursor-not-allowed bg-gray-50"
-                            : ""
-                        }`}
-                      >
-                        <span className={`w-2.5 h-2.5 rounded-full ${style.dot}`}></span>
-                        <span className={`font-medium ${style.text}`}>{style.label}</span>
-                        {conversation.status === status && (
-                          <i className="bi bi-check-lg ml-auto text-blue-600"></i>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+              <p className="text-sm text-gray-600">
+                {conversation.crew?.profile?.first_name &&
+                conversation.crew?.profile?.last_name
+                  ? `${conversation.crew.profile.first_name} ${conversation.crew.profile.last_name}`
+                  : conversation.userName || "Unknown User"}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5 italic">
+                {conversation.subject}
+              </p>
             </div>
           </div>
         </div>
@@ -195,33 +357,48 @@ export default function ChatWindow({ conversation, messages, onStatusChange }: C
         <div className="flex items-center space-x-2 pt-3 border-t border-gray-100">
           <button
             onClick={() => handleStatusChange("closed")}
-            disabled={conversation.status === "closed"}
+            disabled={conversation.status === "closed" || isUpdatingStatus}
             className="px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1.5"
           >
-            <i className="bi bi-x-circle"></i>
+            {isUpdatingStatus ? (
+              <i className="bi bi-arrow-repeat animate-spin"></i>
+            ) : (
+              <i className="bi bi-x-circle"></i>
+            )}
             <span>Mark as Closed</span>
           </button>
           <button
-            onClick={() => handleStatusChange("pending")}
-            disabled={conversation.status === "pending"}
+            onClick={() => handleStatusChange("in_progress")}
+            disabled={conversation.status === "in_progress" || isUpdatingStatus}
             className="px-3 py-1.5 bg-yellow-50 text-yellow-700 text-xs font-medium rounded hover:bg-yellow-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1.5"
           >
-            <i className="bi bi-clock-history"></i>
+            {isUpdatingStatus ? (
+              <i className="bi bi-arrow-repeat animate-spin"></i>
+            ) : (
+              <i className="bi bi-clock-history"></i>
+            )}
             <span>Set Pending</span>
           </button>
           <button
             onClick={() => handleStatusChange("open")}
-            disabled={conversation.status === "open"}
+            disabled={conversation.status === "open" || isUpdatingStatus}
             className="px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1.5"
           >
-            <i className="bi bi-arrow-clockwise"></i>
+            {isUpdatingStatus ? (
+              <i className="bi bi-arrow-repeat animate-spin"></i>
+            ) : (
+              <i className="bi bi-arrow-clockwise"></i>
+            )}
             <span>Reopen</span>
           </button>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto px-6 py-4 space-y-4"
+      >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <div className="text-center">
@@ -253,16 +430,26 @@ export default function ChatWindow({ conversation, messages, onStatusChange }: C
               onKeyPress={handleKeyPress}
               placeholder="Type your response to this ticket..."
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              disabled={isSendingMessage}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
           <button
             onClick={handleSendMessage}
-            disabled={inputMessage.trim() === ""}
+            disabled={inputMessage.trim() === "" || isSendingMessage}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed font-medium shadow-sm flex items-center space-x-2"
           >
-            <i className="bi bi-send"></i>
-            <span>Send</span>
+            {isSendingMessage ? (
+              <>
+                <i className="bi bi-arrow-repeat animate-spin"></i>
+                <span>Sending...</span>
+              </>
+            ) : (
+              <>
+                <i className="bi bi-send"></i>
+                <span>Send</span>
+              </>
+            )}
           </button>
         </div>
         <p className="text-xs text-gray-500 mt-2">
