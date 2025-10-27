@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { User } from "@/types/api";
-import api from "@/lib/axios";
+import { useCrewUnreadCount } from "@/contexts/CrewUnreadCountContext";
 
 interface NavigationProps {
   currentPath?: string;
@@ -34,7 +34,7 @@ export default function Navigation({
   );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(user || null);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { unreadCount } = useCrewUnreadCount();
 
   // Get user from localStorage if not provided as prop
   useEffect(() => {
@@ -43,40 +43,6 @@ export default function Navigation({
       setCurrentUser(storedUser);
     }
   }, [user]);
-
-  // Fetch unread message count
-  useEffect(() => {
-    const fetchUnreadCount = async () => {
-      if (!currentUser?.id) return;
-
-      try {
-        const response = await api.get(`/inquiry/${currentUser.id}`);
-        const inquiries = response.data;
-
-        // Calculate total unread staff messages
-        let totalUnread = 0;
-        inquiries.forEach((inquiry: any) => {
-          if (inquiry.messages) {
-            const unreadStaffMessages = inquiry.messages.filter(
-              (msg: any) => msg.is_staff_reply && msg.read_at === null
-            );
-            totalUnread += unreadStaffMessages.length;
-          }
-        });
-
-        setUnreadCount(totalUnread);
-      } catch (error) {
-        console.error("Error fetching unread count:", error);
-      }
-    };
-
-    fetchUnreadCount();
-
-    // Set up interval to refresh unread count every 10 seconds
-    const intervalId = setInterval(fetchUnreadCount, 10000);
-
-    return () => clearInterval(intervalId);
-  }, [currentUser?.id]);
 
   // Update previousActive when the route changes
   useEffect(() => {
@@ -98,7 +64,7 @@ export default function Navigation({
     },
     {
       href: "/crew/inbox",
-      label: "Inbox",
+      label: "Chat",
       icon: "chat",
       activeIcon: "chat-fill",
     },
@@ -188,8 +154,8 @@ export default function Navigation({
                           : ""
                       }`}
                     ></i>
-                    {/* Unread Badge for Inbox */}
-                    {item.label === "Inbox" && unreadCount > 0 && (
+                    {/* Unread Badge for Chat */}
+                    {item.label === "Chat" && unreadCount > 0 && (
                       <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-semibold rounded-full h-4 w-4 flex items-center justify-center z-20 animate-in zoom-in-50 duration-300">
                         {unreadCount}
                       </span>
@@ -386,8 +352,8 @@ export default function Navigation({
                       clickedItem === item.href ? "scale-110" : "scale-100"
                     }`}
                   ></i>
-                  {/* Unread Badge for Inbox */}
-                  {item.label === "Inbox" && unreadCount > 0 && (
+                  {/* Unread Badge for Chat */}
+                  {item.label === "Chat" && unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center shadow-sm ring-2 ring-white">
                       {unreadCount}
                     </span>

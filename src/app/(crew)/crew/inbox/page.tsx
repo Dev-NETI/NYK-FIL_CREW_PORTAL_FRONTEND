@@ -8,6 +8,7 @@ import { count } from "console";
 import { AuthService } from "@/services";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useCrewUnreadCount } from "@/contexts/CrewUnreadCountContext";
 
 function getRelativeTime(timestamp: string | Date): string {
   const now = new Date();
@@ -83,6 +84,7 @@ export default function InboxPage() {
   const currentUserData = AuthService.getStoredUser();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shouldScrollRef = useRef(true); // Track if we should auto-scroll
+  const { refetchUnreadCount } = useCrewUnreadCount();
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -137,6 +139,8 @@ export default function InboxPage() {
   const markMessagesAsRead = async (inquiryId: number) => {
     try {
       await api.patch(`/crew-inquiry-messages/${inquiryId}/mark-read`);
+      // Trigger immediate refetch of unread count
+      await refetchUnreadCount();
     } catch (error) {
       console.error("Error marking messages as read:", error);
     }

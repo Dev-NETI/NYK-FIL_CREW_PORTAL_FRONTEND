@@ -5,6 +5,7 @@ import ConversationList from "@/components/chat/ConversationList";
 import ChatWindow from "@/components/chat/ChatWindow";
 import api from "@/lib/axios";
 import { AuthService } from "@/services";
+import { useUnreadCount } from "@/contexts/UnreadCountContext";
 
 // Ticket status type
 export type TicketStatus = "open" | "pending" | "closed" | "in_progress";
@@ -73,12 +74,15 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const currentUserData = useRef(AuthService.getStoredUser());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { refetchUnreadCount } = useUnreadCount();
 
   // Function to mark messages as read
   const markMessagesAsRead = async (inquiryId: number) => {
     try {
       await api.patch(`/admin-messages/${inquiryId}/mark-read`);
       console.log("✅ Messages marked as read for inquiry:", inquiryId);
+      // Trigger immediate refetch of unread count
+      await refetchUnreadCount();
     } catch (error) {
       console.error("❌ Error marking messages as read:", error);
     }
