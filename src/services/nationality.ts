@@ -19,7 +19,7 @@ export interface NationalityResponse extends BaseApiResponse {
 export class NationalityService {
 
     static async getNationalities(): Promise<NationalityListResponse> {
-        const response = await api.get<NationalityListResponse>('/admin/nationalities');
+        const response = await api.get<NationalityListResponse>('/nationalities');
         return response.data;
     }
 

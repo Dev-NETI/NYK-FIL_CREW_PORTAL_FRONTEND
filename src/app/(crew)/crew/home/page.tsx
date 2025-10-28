@@ -155,7 +155,7 @@ export default function Dashboard() {
         }
       `}</style>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pt-15">
         <div className="px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
@@ -554,9 +554,6 @@ export default function Dashboard() {
                       <h3 className="text-gray-900 text-sm sm:text-base lg:text-lg font-semibold mb-1 sm:mb-2 text-center">
                         {link.title}
                       </h3>
-                      <p className="text-xs text-gray-500 text-center flex-1">
-                        {link.description}
-                      </p>
                     </div>
                   </button>
                 ))}

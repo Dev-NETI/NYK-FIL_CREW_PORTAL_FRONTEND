@@ -68,6 +68,14 @@ export default function Navigation({
       icon: "chat",
       activeIcon: "chat-fill",
     },
+    {
+      href: currentUser?.profile?.crew_id
+        ? `/crew/profile/${currentUser.profile.crew_id}`
+        : "/crew/profile",
+      label: "Profile",
+      icon: "person",
+      activeIcon: "person-fill",
+    },
   ];
 
   const isActive = (path: string) => currentRoute === path;
@@ -86,7 +94,7 @@ export default function Navigation({
 
   return (
     <>
-      <nav className="bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 backdrop-blur-md border-b border-blue-400/20 fixed top-0 left-0 right-0 z-50 shadow-md">
+      <nav className="bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 backdrop-blur-md border-b border-blue-400/20 fixed top-0 left-0 right-0 z-50 shadow-md pt-7">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
             {/* Logo */}
@@ -327,7 +335,7 @@ export default function Navigation({
 
       {/* Mobile Bottom Navigation - Hidden when chat is open */}
       {!hideBottomNav && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/98 backdrop-blur-lg border-t border-gray-200 shadow-[0_-2px_10px_-2px_rgba(0,0,0,0.06)] z-40 md:hidden">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/98 backdrop-blur-lg border-t border-gray-200 shadow-[0_-2px_10px_-2px_rgba(0,0,0,0.06)] z-40 md:hidden pb-10">
           <div className="grid grid-cols-4 px-2">
             {navItems.map((item) => (
               <Link
