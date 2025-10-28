@@ -63,30 +63,32 @@ export default function EmploymentInformation({
   return (
     <div className="space-y-8">
       {/* Header Section */}
-      <div className="flex items-center justify-between pb-6 border-b border-gray-200">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-            <i className="bi bi-briefcase text-blue-600 mr-3"></i>
-            Employment Information
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 sm:pb-6 border-b border-gray-200 space-y-3 sm:space-y-0">
+        <div className="flex-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
+            <i className="bi bi-briefcase text-blue-600 mr-2 sm:mr-3 text-lg sm:text-xl"></i>
+            <span className="leading-tight">Employment Information</span>
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
             Work history and employment records
           </p>
         </div>
       </div>
 
       <div className="bg-purple-50 rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0">
           <h3 className="text-lg font-semibold text-gray-900">
             Employment History
           </h3>
+          
+          {/* Add Employment Button - Mobile App Style */}
           <button
             onClick={onAddEmploymentRecord}
             disabled={!canEdit}
-            className={`text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm ${
+            className={`w-full sm:w-auto bg-purple-600 text-white px-6 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] ${
               canEdit
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-gray-400 cursor-not-allowed"
+                ? "hover:bg-purple-700 active:bg-purple-800 shadow-sm active:shadow-none"
+                : "opacity-50 cursor-not-allowed"
             }`}
             title={
               !canEdit
@@ -94,8 +96,8 @@ export default function EmploymentInformation({
                 : ""
             }
           >
-            <i className="bi bi-plus mr-2"></i>
-            Add Employment
+            <i className="bi bi-plus text-base"></i>
+            <span>Add Employment</span>
           </button>
         </div>
 

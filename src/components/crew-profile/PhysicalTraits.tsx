@@ -64,55 +64,55 @@ export default function PhysicalTraits({
   return (
     <div className="space-y-8">
       {/* Header Section */}
-      <div className="flex items-center justify-between pb-6 border-b border-gray-200">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-            <i className="bi bi-body-text text-blue-600 mr-3"></i>
-            Physical Traits
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 sm:pb-6 border-b border-gray-200 space-y-3 sm:space-y-0">
+        <div className="flex-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
+            <i className="bi bi-body-text text-blue-600 mr-2 sm:mr-3 text-lg sm:text-xl"></i>
+            <span className="leading-tight">Physical Traits</span>
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
             Physical characteristics and measurements
           </p>
         </div>
 
-        {/* Edit Controls */}
-        <div className="flex items-center space-x-3">
+        {/* Edit Controls - Mobile App Style */}
+        <div className="flex items-center space-x-2 sm:space-x-3 w-full sm:w-auto">
           {!isEditing ? (
             <button
               onClick={onEdit}
               disabled={!canEdit}
-              className={`bg-gradient-to-r from-purple-600 to-purple-700 text-white px-5 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg flex items-center space-x-2 ${
+              className={`w-full sm:w-auto bg-purple-600 text-white px-6 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] ${
                 canEdit
-                  ? "hover:from-purple-700 hover:to-purple-800 hover:shadow-xl"
+                  ? "hover:bg-purple-700 active:bg-purple-800 shadow-sm active:shadow-none"
                   : "opacity-50 cursor-not-allowed"
               }`}
               title={!canEdit ? "You don't have permission to edit this section" : ""}
             >
-              <i className="bi bi-pencil text-sm"></i>
-              <span>Edit</span>
+              <i className="bi bi-pencil text-base"></i>
+              <span>Edit Physical</span>
             </button>
           ) : (
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 w-full sm:w-auto">
               <button
                 onClick={onCancel}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2.5 rounded-xl transition-colors duration-200 text-sm font-medium shadow-lg flex items-center space-x-2"
+                className="flex-1 sm:flex-none bg-gray-100 text-gray-700 px-5 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] hover:bg-gray-200 active:bg-gray-300 border border-gray-200"
               >
-                <i className="bi bi-x text-sm"></i>
-                <span>Cancel</span>
+                <i className="bi bi-x-lg text-base"></i>
+                <span className="sm:inline">Cancel</span>
               </button>
               <button
                 onClick={onSave}
                 disabled={saving}
-                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl flex items-center space-x-2"
+                className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] shadow-sm active:shadow-none"
               >
                 {saving ? (
                   <>
-                    <i className="bi bi-arrow-clockwise animate-spin text-sm"></i>
+                    <i className="bi bi-arrow-clockwise animate-spin text-base"></i>
                     <span>Saving...</span>
                   </>
                 ) : (
                   <>
-                    <i className="bi bi-check text-sm"></i>
+                    <i className="bi bi-check-lg text-base"></i>
                     <span>Save</span>
                   </>
                 )}

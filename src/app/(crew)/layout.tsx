@@ -10,7 +10,7 @@ export default function CrewLayout({
   return (
     <div className="min-h-screen">
       <Navigation />
-      <main className="pb-20 md:pb-8">{children}</main>
+      <main className="pb-25 md:pb-8 pt-5">{children}</main>
     </div>
   );
 }

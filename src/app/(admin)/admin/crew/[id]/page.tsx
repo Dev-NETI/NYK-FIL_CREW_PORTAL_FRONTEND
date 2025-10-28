@@ -590,70 +590,136 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Profile Header Card */}
-        <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-xl border border-white/20 overflow-hidden mb-8">
-          <div className="relative">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800">
-              <div className="absolute inset-0 opacity-30">
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                    backgroundSize: "60px 60px",
-                  }}
-                ></div>
-              </div>
-            </div>
+        {/* Enhanced Hero Section */}
+        <div className="relative overflow-hidden rounded-3xl shadow-2xl mb-8">
+          {/* Background with better contrast */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800"></div>
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: 'url("/anchor.jpg")',
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          ></div>
 
-            <div className="relative px-8 py-12">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-8">
-                {/* Avatar */}
-                <div className="flex-shrink-0 mb-6 lg:mb-0">
-                  <div className="w-32 h-32 lg:w-40 lg:h-40 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-2xl ring-4 ring-white/30">
-                    <span className="text-4xl lg:text-5xl font-bold text-white">
-                      {profile.name
-                        ? profile.name
+          {/* Content with improved readability */}
+          <div className="relative px-8 py-16">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-12">
+              {/* Avatar with better styling */}
+              <div className="flex-shrink-0 text-center lg:text-left mb-8 lg:mb-0">
+                <div className="relative">
+                  <div className="w-40 h-40 lg:w-48 lg:h-48 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full mx-auto lg:mx-0 flex items-center justify-center shadow-2xl border-4 border-white/20 backdrop-blur-sm">
+                    <span className="text-4xl lg:text-5xl font-bold text-white drop-shadow-lg">
+                      {profile.name || profile.profile?.full_name
+                        ? (profile.name || profile.name)
                             .split(" ")
                             .map((n) => n[0])
                             .join("")
                         : profile.email.charAt(0).toUpperCase()}
                     </span>
                   </div>
+                  {/* Admin badge */}
+                  <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                    <i className="bi bi-shield-check text-white text-lg font-bold"></i>
+                  </div>
                 </div>
+              </div>
 
-                {/* Profile Info */}
-                <div className="flex-1 text-center lg:text-left">
-                  <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
+              {/* Profile Info with better contrast */}
+              <div className="flex-1 text-center lg:text-left">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
+                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-4">
+                    <div className="bg-purple-500/20 backdrop-blur-sm px-3 py-1 rounded-full border border-purple-400/30">
+                      <span className="text-xs text-purple-200 font-semibold uppercase tracking-wide">
+                        Admin View
+                      </span>
+                    </div>
+                    <div className="bg-green-500/20 backdrop-blur-sm px-3 py-1 rounded-full border border-green-400/30">
+                      <span className="text-xs text-green-200 font-semibold uppercase tracking-wide">
+                        Active Profile
+                      </span>
+                    </div>
+                  </div>
+
+                  <h1 className="text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg">
                     {profile.name ||
                       profile.profile?.full_name ||
                       profile.email}
                   </h1>
-                  <p className="text-xl text-blue-100 mb-4">
-                    {profile.employment?.rank_name || "Not assigned"}
-                  </p>
 
-                  {/* Quick Info Tags */}
-                  <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-                    <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm flex items-center space-x-2">
-                      <i className="bi bi-hash"></i>
-                      <span>ID: {profile.id || id}</span>
+                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-6">
+                    <div className="bg-blue-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-blue-400/30">
+                      <p className="text-lg text-blue-100 font-semibold">
+                        {profile.employment?.rank_name || "Not assigned"}
+                      </p>
                     </div>
-                    <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm flex items-center space-x-2">
-                      <i className="bi bi-envelope"></i>
-                      <span className="truncate max-w-[200px]">
-                        {profile.email}
-                      </span>
+                    {(profile.profile?.crew_id || id) && (
+                      <div className="bg-emerald-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-emerald-400/30">
+                        <p className="text-lg text-emerald-100 font-semibold">
+                          Crew ID: {profile.profile?.crew_id || id}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-white/90">
+                    <div className="bg-white/5 backdrop-blur-sm p-4 rounded-lg border border-white/10">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+                          <i className="bi bi-envelope text-blue-300 text-lg"></i>
+                        </div>
+                        <div>
+                          <p className="text-xs text-blue-200 uppercase tracking-wide">
+                            Email
+                          </p>
+                          <p className="text-sm font-medium truncate">
+                            {profile.email}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm flex items-center space-x-2">
-                      <i className="bi bi-person-badge"></i>
-                      <span>Active</span>
+
+                    <div className="bg-white/5 backdrop-blur-sm p-4 rounded-lg border border-white/10">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center">
+                          <i className="bi bi-hash text-purple-300 text-lg"></i>
+                        </div>
+                        <div>
+                          <p className="text-xs text-purple-200 uppercase tracking-wide">
+                            User ID
+                          </p>
+                          <p className="text-sm font-medium">{profile.id}</p>
+                        </div>
+                      </div>
                     </div>
+
+                    {profile.employment?.fleet_name && (
+                      <div className="bg-white/5 backdrop-blur-sm p-4 rounded-lg border border-white/10 md:col-span-2">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-cyan-500/20 rounded-full flex items-center justify-center">
+                            <i className="bi bi-ship text-cyan-300 text-lg"></i>
+                          </div>
+                          <div>
+                            <p className="text-xs text-cyan-200 uppercase tracking-wide">
+                              Fleet
+                            </p>
+                            <p className="text-sm font-medium">
+                              {profile.employment.fleet_name}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-purple-400/10 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-blue-400/10 to-transparent rounded-full blur-3xl"></div>
         </div>
 
         {/* Main Content */}

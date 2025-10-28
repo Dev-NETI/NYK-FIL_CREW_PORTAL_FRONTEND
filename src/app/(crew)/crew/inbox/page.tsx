@@ -744,7 +744,7 @@ export default function InboxPage() {
         {/* Floating New Message Button */}
         <button
           onClick={() => setShowNewMessageModal(true)}
-          className={`fixed w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-10 ${
+          className={`fixed w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-10 mb-8 ${
             showChat
               ? "hidden md:flex bottom-6 md:right-auto md:left-[calc(380px-4.5rem)] lg:left-[calc(400px-4.5rem)]"
               : "bottom-24 right-6"
