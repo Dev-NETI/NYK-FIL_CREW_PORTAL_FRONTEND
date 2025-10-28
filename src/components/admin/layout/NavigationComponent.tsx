@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { AuthService } from "@/services/auth";
 import { useUser } from "@/hooks/useUser";
+import { useUnreadCount } from "@/contexts/UnreadCountContext";
 
 interface NavigationComponentProps {
   sidebarOpen: boolean;
@@ -21,6 +22,7 @@ export default function NavigationComponent({
   const [maintenanceDropdownOpen, setMaintenanceDropdownOpen] = useState(false);
   const [generalSettingsDropdownOpen, setGeneralSettingsDropdownOpen] =
     useState(false);
+  const { unreadCount } = useUnreadCount();
 
   // Helper function to check if user has a specific role
   const hasRole = (roleName: string) => {
@@ -187,14 +189,21 @@ export default function NavigationComponent({
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className={`flex items-center px-6 py-3 transition-colors ${
+                  className={`flex items-center justify-between px-6 py-3 transition-colors ${
                     link.isActive
                       ? "bg-blue-700 text-white border-r-2 border-blue-300"
                       : "text-white hover:bg-blue-800 hover:text-blue-100"
                   }`}
                 >
-                  <i className={`bi ${link.icon} mr-3`}></i>
-                  {link.label}
+                  <div className="flex items-center">
+                    <i className={`bi ${link.icon} mr-3`}></i>
+                    {link.label}
+                  </div>
+                  {link.label === "Chat" && unreadCount > 0 && (
+                    <span className="bg-red-500 text-white text-xs font-semibold rounded-full min-w-[20px] h-5 px-2 flex items-center justify-center">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </Link>
               </li>
             ))}
