@@ -27,7 +27,7 @@ export default function DocumentsPage() {
       title: "Certificates",
       description: "Training certificates, licenses, and qualifications",
       icon: "🎓",
-      path: "/crew/documents/certificates",
+      path: "/crew/documents/certificate",
       color: "from-green-500 to-green-700",
       hoverColor: "hover:from-green-600 hover:to-green-800",
     },
