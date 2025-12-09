@@ -2,7 +2,10 @@ import { useState, useEffect, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
-import { CrewCertificateService } from "@/services/crew-certificate";
+import {
+  CrewCertificateService,
+  CrewCertificate,
+} from "@/services/crew-certificate";
 import {
   CertificateTypeService,
   CertificateType,
@@ -10,14 +13,14 @@ import {
 import { CertificateService, Certificate } from "@/services/certificate";
 import { X, Upload, FileText } from "lucide-react";
 
-interface CrewCertificateFormComponentProps {
+interface CrewCertificateEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  crewId: string;
+  certificate: CrewCertificate;
 }
 
-// Yup validation schema - will be created dynamically based on selected certificate
+// Yup validation schema
 const createValidationSchema = (selectedCertificate: Certificate | null) => {
   return Yup.object().shape({
     certificate_id: Yup.number()
@@ -36,7 +39,6 @@ const createValidationSchema = (selectedCertificate: Certificate | null) => {
       .min(3, "Issuing authority must be at least 3 characters")
       .max(255, "Issuing authority must not exceed 255 characters"),
 
-    // Grade is required only if certificate.stcw_type === "COC"
     grade:
       selectedCertificate?.stcw_type === "COC"
         ? Yup.string()
@@ -49,7 +51,6 @@ const createValidationSchema = (selectedCertificate: Certificate | null) => {
             .trim()
             .max(255, "Grade must not exceed 255 characters"),
 
-    // Rank permitted is required only if certificate.certificate_type_id === 6
     rank_permitted:
       selectedCertificate?.certificate_type_id === 6
         ? Yup.string()
@@ -82,11 +83,11 @@ const createValidationSchema = (selectedCertificate: Certificate | null) => {
 const fileValidationSchema = Yup.mixed<File>()
   .nullable()
   .test("fileSize", "File size must not exceed 5MB", (value) => {
-    if (!value) return true; // File is optional
-    return value.size <= 5 * 1024 * 1024; // 5MB
+    if (!value) return true;
+    return value.size <= 5 * 1024 * 1024;
   })
   .test("fileType", "Only PDF and image files are allowed", (value) => {
-    if (!value) return true; // File is optional
+    if (!value) return true;
     const ALLOWED_TYPES = [
       "application/pdf",
       "image/jpeg",
@@ -97,13 +98,13 @@ const fileValidationSchema = Yup.mixed<File>()
     return ALLOWED_TYPES.includes(value.type);
   });
 
-export default function CrewCertificateFormComponent({
+export default function CrewCertificateEditModal({
   isOpen,
   onClose,
   onSuccess,
-  crewId,
-}: CrewCertificateFormComponentProps) {
-  // Form data state
+  certificate,
+}: CrewCertificateEditModalProps) {
+  // Form data state - Initialize with existing certificate data
   const [formData, setFormData] = useState({
     certificate_id: "",
     certificate_no: "",
@@ -147,6 +148,30 @@ export default function CrewCertificateFormComponent({
     loadCertificateTypes();
   }, []);
 
+  // Initialize form with existing certificate data
+  useEffect(() => {
+    if (certificate && isOpen) {
+      setFormData({
+        certificate_id: certificate.certificate_id?.toString() || "",
+        certificate_no: certificate.certificate_no || "",
+        issued_by: certificate.issued_by || "",
+        date_issued: certificate.date_issued || "",
+        expiry_date: certificate.expiry_date || "",
+        grade: certificate.grade || "",
+        rank_permitted: certificate.rank_permitted || "",
+      });
+
+      // Set the certificate type and load certificates
+      if (certificate.certificate?.certificate_type_id) {
+        setSelectedCertificateTypeId(
+          certificate.certificate.certificate_type_id.toString()
+        );
+      }
+
+      setSelectedCertificate(certificate.certificate || null);
+    }
+  }, [certificate, isOpen]);
+
   // Load certificates when certificate type is selected
   useEffect(() => {
     const loadCertificates = async () => {
@@ -166,13 +191,12 @@ export default function CrewCertificateFormComponent({
       } else {
         setCertificates([]);
         setFilteredCertificates([]);
-        setFormData((prev) => ({ ...prev, certificate_id: "" }));
       }
     };
     loadCertificates();
   }, [selectedCertificateTypeId]);
 
-  // Handle file selection with Yup validation
+  // Handle file selection
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
@@ -217,11 +241,9 @@ export default function CrewCertificateFormComponent({
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // Update selected certificate when certificate_id changes
     if (field === "certificate_id") {
       const cert = filteredCertificates.find((c) => c.id === parseInt(value));
       setSelectedCertificate(cert || null);
-      // Clear grade and rank_permitted when changing certificate
       setFormData((prev) => ({ ...prev, grade: "", rank_permitted: "" }));
       setErrors((prev) => ({ ...prev, grade: "", rank_permitted: "" }));
     }
@@ -235,7 +257,7 @@ export default function CrewCertificateFormComponent({
     setIsSaving(true);
 
     try {
-      // Validate all fields using the schema
+      // Validate all fields
       const schema = createValidationSchema(selectedCertificate);
       await schema.validate(formData, { abortEarly: false });
 
@@ -244,13 +266,11 @@ export default function CrewCertificateFormComponent({
         await fileValidationSchema.validate(documentFile);
       }
 
-      // Clear any existing errors
       setErrors({});
       setFileError("");
 
       // Prepare form data
       const submitData = new FormData();
-      submitData.append("crew_id", crewId);
       submitData.append("certificate_id", formData.certificate_id);
 
       if (formData.certificate_no) {
@@ -276,15 +296,16 @@ export default function CrewCertificateFormComponent({
       }
 
       // Submit to API
-      // console.log(submitData);
-      await CrewCertificateService.createCrewCertificate(submitData);
+      await CrewCertificateService.updateCrewCertificate(
+        certificate.id,
+        submitData
+      );
 
-      toast.success("Certificate added successfully!");
+      toast.success("Certificate updated successfully!");
       handleClose();
       onSuccess();
     } catch (error: any) {
       if (error instanceof Yup.ValidationError) {
-        // Handle validation errors
         const validationErrors: Record<string, string> = {};
         error.inner.forEach((err) => {
           if (err.path) {
@@ -294,10 +315,9 @@ export default function CrewCertificateFormComponent({
         setErrors(validationErrors);
         toast.error("Please fix validation errors");
       } else {
-        // Handle API errors
-        console.error("Error adding certificate:", error);
+        console.error("Error updating certificate:", error);
         toast.error(
-          error?.response?.data?.message || "Failed to add certificate"
+          error?.response?.data?.message || "Failed to update certificate"
         );
       }
     } finally {
@@ -307,17 +327,6 @@ export default function CrewCertificateFormComponent({
 
   // Reset form and close
   const handleClose = () => {
-    setFormData({
-      certificate_id: "",
-      certificate_no: "",
-      issued_by: "",
-      date_issued: "",
-      expiry_date: "",
-      grade: "",
-      rank_permitted: "",
-    });
-    setSelectedCertificateTypeId("");
-    setSelectedCertificate(null);
     setDocumentFile(null);
     setFileError("");
     setErrors({});
@@ -354,7 +363,7 @@ export default function CrewCertificateFormComponent({
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
                 <div className="flex items-center justify-between mb-6">
                   <Dialog.Title className="text-2xl font-bold text-gray-900">
-                    Add Crew Certificate
+                    Edit Certificate
                   </Dialog.Title>
                   <button
                     onClick={handleClose}
@@ -452,7 +461,7 @@ export default function CrewCertificateFormComponent({
                     )}
                   </div>
 
-                  {/* Grade (for COC) - Only show if certificate.stcw_type === "COC" */}
+                  {/* Grade (for COC) */}
                   {selectedCertificate?.stcw_type === "COC" && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -477,7 +486,7 @@ export default function CrewCertificateFormComponent({
                     </div>
                   )}
 
-                  {/* Rank Permitted - Only show if certificate.certificate_type_id === 6 */}
+                  {/* Rank Permitted */}
                   {selectedCertificate?.certificate_type_id === 6 && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -579,8 +588,14 @@ export default function CrewCertificateFormComponent({
                   {/* File Upload */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upload Certificate File
+                      Update Certificate File (Optional)
                     </label>
+                    {certificate.file_path && !documentFile && (
+                      <p className="text-xs text-gray-600 mb-2">
+                        Current file: {certificate.file_ext?.toUpperCase()}{" "}
+                        document
+                      </p>
+                    )}
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
                       {documentFile ? (
                         <div className="flex items-center justify-between">
@@ -611,7 +626,7 @@ export default function CrewCertificateFormComponent({
                             htmlFor="file-upload"
                             className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
                           >
-                            Click to upload
+                            Click to upload new file
                           </label>
                           <p className="text-xs text-gray-500 mt-1">
                             PDF or Image (Max 5MB)
@@ -646,7 +661,7 @@ export default function CrewCertificateFormComponent({
                       disabled={isSaving}
                       className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
                     >
-                      {isSaving ? "Saving..." : "Add Certificate"}
+                      {isSaving ? "Saving..." : "Update Certificate"}
                     </button>
                   </div>
                 </form>
