@@ -539,7 +539,6 @@ export default function ContactInformation({
       "emergency_contact_name",
       "emergency_contact_phone",
       "emergency_contact_relationship",
-      "email_personal",
     ];
 
     const getFieldValue = () => {
@@ -985,16 +984,6 @@ export default function ContactInformation({
               "alternate_phone",
               false,
               "tel"
-            )}
-          </Grid>
-
-          <Grid size={12}>
-            {renderField(
-              "Personal Email Address",
-              profile.contacts?.email_personal ||
-                (profile as any).email_personal ||
-                "Not provided",
-              "email_personal"
             )}
           </Grid>
         </Grid>

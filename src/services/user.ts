@@ -17,7 +17,7 @@ export class UserService {
   }
 
   /**
-   * Update user profile
+   * Update user profile (deprecated - use ProfileUpdateRequestService.submitUpdateRequest instead)
    */
   static async updateUserProfile(
     crewId: string,

@@ -76,7 +76,6 @@ export interface UserProfile {
 export interface UserContact {
   mobile_number?: string;
   alternate_phone?: string;
-  email_personal?: string;
   permanent_address_id?: number;
   current_address_id?: number;
   emergency_contact_name?: string;

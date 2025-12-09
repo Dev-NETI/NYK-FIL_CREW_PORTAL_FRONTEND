@@ -184,7 +184,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
       const editableProfile = {
         ...profile,
         profile: profile.profile || {},
-        physicalTraits: profile.physical_traits || {},
+        physical_traits: profile.physical_traits || {},
         contacts: profile.contacts || {},
         employment: profile.employment || {},
         education: profile.education || [],
@@ -231,7 +231,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         const initializedUpdatedProfile = {
           ...updatedProfile,
           profile: updatedProfile.profile || {},
-          physicalTraits: updatedProfile.physical_traits || {},
+          physical_traits: updatedProfile.physical_traits || {},
           contacts: updatedProfile.contacts || {},
           employment: updatedProfile.employment || {},
           education: updatedProfile.education || [],
