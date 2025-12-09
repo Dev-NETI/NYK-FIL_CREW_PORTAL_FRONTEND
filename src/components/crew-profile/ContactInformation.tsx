@@ -2,6 +2,7 @@
 
 import { User, Region, Province, City, Barangay } from "@/types/api";
 import { GeographyService, AddressService } from "@/services";
+import { AuthService } from "@/services/auth";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import {
@@ -265,6 +266,16 @@ export default function ContactInformation({
     return item ? item.desc : code;
   };
 
+  // Helper function to get geography description by code
+  const getGeographyDesc = (
+    code: string | undefined,
+    options: { code: string; desc: string }[]
+  ): string | undefined => {
+    if (!code) return undefined;
+    const item = options.find((option) => option.code === code);
+    return item?.desc;
+  };
+
   // Component for displaying field with label and value (copied from BasicInformation)
   const DisplayField = ({
     label,
@@ -337,6 +348,33 @@ export default function ContactInformation({
             editedProfile?.permanent_postal_code ||
             profile.permanent_postal_code ||
             "",
+          type: "permanent" as const,
+          // Add descriptive names for full address generation
+          region_desc: getGeographyDesc(
+            permRegion,
+            regions.map((r) => ({ code: r.reg_code, desc: r.reg_desc }))
+          ),
+          province_desc: getGeographyDesc(
+            permProvince,
+            permanentProvinces.map((p) => ({
+              code: p.prov_code,
+              desc: p.prov_desc,
+            }))
+          ),
+          city_desc: getGeographyDesc(
+            permCity,
+            permanentCities.map((c) => ({
+              code: c.citymun_code,
+              desc: c.citymun_desc,
+            }))
+          ),
+          barangay_desc: getGeographyDesc(
+            permBarangay,
+            permanentBarangays.map((b) => ({
+              code: b.brgy_code,
+              desc: b.brgy_desc,
+            }))
+          ),
         };
 
         const response = await AddressService.createOrUpdateFromGeography(
@@ -397,6 +435,48 @@ export default function ContactInformation({
           city_code: currCity,
           barangay_code: currBarangay,
           zip_code: currPostalCode,
+          type: "current" as const,
+          // Add descriptive names for full address generation
+          region_desc: getGeographyDesc(
+            currRegion,
+            regions.map((r) => ({ code: r.reg_code, desc: r.reg_desc }))
+          ),
+          province_desc: getGeographyDesc(
+            currProvince,
+            sameAsPermanent
+              ? permanentProvinces.map((p) => ({
+                  code: p.prov_code,
+                  desc: p.prov_desc,
+                }))
+              : currentProvinces.map((p) => ({
+                  code: p.prov_code,
+                  desc: p.prov_desc,
+                }))
+          ),
+          city_desc: getGeographyDesc(
+            currCity,
+            sameAsPermanent
+              ? permanentCities.map((c) => ({
+                  code: c.citymun_code,
+                  desc: c.citymun_desc,
+                }))
+              : currentCities.map((c) => ({
+                  code: c.citymun_code,
+                  desc: c.citymun_desc,
+                }))
+          ),
+          barangay_desc: getGeographyDesc(
+            currBarangay,
+            sameAsPermanent
+              ? permanentBarangays.map((b) => ({
+                  code: b.brgy_code,
+                  desc: b.brgy_desc,
+                }))
+              : currentBarangays.map((b) => ({
+                  code: b.brgy_code,
+                  desc: b.brgy_desc,
+                }))
+          ),
         };
 
         const currentResponse =
@@ -629,21 +709,35 @@ export default function ContactInformation({
               <button
                 onClick={async () => {
                   try {
-                    // Save addresses first to get the address IDs
-                    const addressResult = await handleSaveAddresses();
+                    // Check user role to determine save behavior
+                    const currentUser = AuthService.getStoredUser();
+                    const isAdmin = currentUser?.is_crew === 0;
 
-                    // Call onSave to save other profile changes
-                    onSave();
+                    if (isAdmin) {
+                      // Admin can save addresses directly
+                      const addressResult = await handleSaveAddresses();
 
-                    // Log success with address ID for debugging
-                    console.log("Address saved successfully:", {
-                      permanentAddressId: addressResult.permanentAddressId,
-                      currentAddressId: addressResult.currentAddressId,
-                    });
+                      // Call onSave to save other profile changes
+                      onSave();
+
+                      // Log success with address ID for debugging
+                      console.log("Address saved successfully:", {
+                        permanentAddressId: addressResult.permanentAddressId,
+                        currentAddressId: addressResult.currentAddressId,
+                      });
+                    } else {
+                      // Crew member: All changes go through pre-approval system
+                      // Don't save addresses directly, let the main profile page handle the approval workflow
+                      onSave();
+                    }
                   } catch (error) {
-                    // Address saving failed
-                    console.error("Address saving failed:", error);
-                    toast.error("Failed to save address information");
+                    // Address saving failed (for admin) or approval submission failed (for crew)
+                    console.error("Save operation failed:", error);
+                    const errorMessage =
+                      AuthService.getStoredUser()?.is_crew === 0
+                        ? "Failed to save address information"
+                        : "Failed to submit update request";
+                    toast.error(errorMessage);
                   }
                 }}
                 disabled={saving}
@@ -652,12 +746,24 @@ export default function ContactInformation({
                 {saving ? (
                   <>
                     <i className="bi bi-arrow-clockwise animate-spin text-base"></i>
-                    <span>Saving...</span>
+                    <span>
+                      {(() => {
+                        const currentUser = AuthService.getStoredUser();
+                        const isAdmin = currentUser?.is_crew === 0;
+                        return isAdmin ? "Saving..." : "Submitting...";
+                      })()}
+                    </span>
                   </>
                 ) : (
                   <>
                     <i className="bi bi-check-lg text-base"></i>
-                    <span>Save</span>
+                    <span>
+                      {(() => {
+                        const currentUser = AuthService.getStoredUser();
+                        const isAdmin = currentUser?.is_crew === 0;
+                        return isAdmin ? "Save" : "Submit for Approval";
+                      })()}
+                    </span>
                   </>
                 )}
               </button>
