@@ -151,6 +151,29 @@ export default function CrewCertificateEditModal({
     loadCertificateTypes();
   }, [isOpen]);
 
+  // Helper function to format date for input field
+  const formatDateForInput = (dateString: string | null | undefined): string => {
+    if (!dateString) return "";
+
+    // If the date is already in YYYY-MM-DD format, return as is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+
+    // Otherwise, parse and format to YYYY-MM-DD
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    } catch {
+      return "";
+    }
+  };
+
   // Initialize form with existing certificate data
   useEffect(() => {
     if (certificate && isOpen) {
@@ -158,8 +181,8 @@ export default function CrewCertificateEditModal({
         certificate_id: certificate.certificate_id?.toString() || "",
         certificate_no: certificate.certificate_no || "",
         issued_by: certificate.issued_by || "",
-        date_issued: certificate.date_issued || "",
-        expiry_date: certificate.expiry_date || "",
+        date_issued: formatDateForInput(certificate.date_issued),
+        expiry_date: formatDateForInput(certificate.expiry_date),
         grade: certificate.grade || "",
         rank_permitted: certificate.rank_permitted || "",
       });
