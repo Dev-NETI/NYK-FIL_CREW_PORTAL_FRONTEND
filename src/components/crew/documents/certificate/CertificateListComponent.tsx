@@ -1,10 +1,19 @@
 import { useState, useEffect, useMemo } from "react";
 import CertificateListItemComponent from "./CertificateListItemComponent";
-import { CrewCertificateService, CrewCertificate, CrewCertificateFilters } from "@/services/crew-certificate";
-import { CertificateTypeService, CertificateType } from "@/services/certificate-type";
+import {
+  CrewCertificateService,
+  CrewCertificate,
+  CrewCertificateFilters,
+} from "@/services/crew-certificate";
+import {
+  CertificateTypeService,
+  CertificateType,
+} from "@/services/certificate-type";
 import { useUser } from "@/hooks/useUser";
 import toast from "react-hot-toast";
 import { Search, Filter, X, ChevronLeft, ChevronRight } from "lucide-react";
+import CrewCertificateEditModal from "./CrewCertificateEditModal";
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -13,9 +22,19 @@ export default function CertificateListComponent() {
   const [certificates, setCertificates] = useState<CrewCertificate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCertificateType, setSelectedCertificateType] = useState<string>("");
-  const [certificateTypes, setCertificateTypes] = useState<CertificateType[]>([]);
+  const [selectedCertificateType, setSelectedCertificateType] =
+    useState<string>("");
+  const [certificateTypes, setCertificateTypes] = useState<CertificateType[]>(
+    []
+  );
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Shared modals state
+  const [editingCertificate, setEditingCertificate] =
+    useState<CrewCertificate | null>(null);
+  const [deletingCertificate, setDeletingCertificate] =
+    useState<CrewCertificate | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Load certificate types on mount
   useEffect(() => {
@@ -86,7 +105,7 @@ export default function CertificateListComponent() {
   // Pagination handlers
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const goToNextPage = () => goToPage(currentPage + 1);
@@ -98,7 +117,43 @@ export default function CertificateListComponent() {
     setSelectedCertificateType("");
   };
 
-  const hasActiveFilters = searchTerm.trim() !== "" || selectedCertificateType !== "";
+  const hasActiveFilters =
+    searchTerm.trim() !== "" || selectedCertificateType !== "";
+
+  // Edit/Delete handlers
+  const handleEditClick = (certificate: CrewCertificate) => {
+    setEditingCertificate(certificate);
+  };
+
+  const handleDeleteClick = (certificate: CrewCertificate) => {
+    setDeletingCertificate(certificate);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingCertificate) return;
+
+    setIsDeleting(true);
+    try {
+      await CrewCertificateService.deleteCrewCertificate(
+        deletingCertificate.id
+      );
+      toast.success("Certificate deleted successfully!");
+      setDeletingCertificate(null);
+      fetchCertificates(); // Refresh list
+    } catch (error: any) {
+      console.error("Error deleting certificate:", error);
+      toast.error(
+        error?.response?.data?.message || "Failed to delete certificate"
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleEditSuccess = () => {
+    setEditingCertificate(null);
+    fetchCertificates(); // Refresh list
+  };
 
   if (isLoading) {
     return (
@@ -173,7 +228,12 @@ export default function CertificateListComponent() {
             )}
             {selectedCertificateType && (
               <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-800 rounded-lg text-sm font-medium">
-                Type: {certificateTypes.find(t => t.id === parseInt(selectedCertificateType))?.name}
+                Type:{" "}
+                {
+                  certificateTypes.find(
+                    (t) => t.id === parseInt(selectedCertificateType)
+                  )?.name
+                }
                 <button
                   onClick={() => setSelectedCertificateType("")}
                   className="hover:text-purple-900"
@@ -190,10 +250,18 @@ export default function CertificateListComponent() {
       <div className="text-sm text-gray-600 px-2">
         {certificates.length > 0 ? (
           <p>
-            Showing <span className="font-semibold text-gray-900">{startIndex + 1}-{Math.min(endIndex, certificates.length)}</span> of{" "}
-            <span className="font-semibold text-gray-900">{certificates.length}</span>{" "}
+            Showing{" "}
+            <span className="font-semibold text-gray-900">
+              {startIndex + 1}-{Math.min(endIndex, certificates.length)}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-gray-900">
+              {certificates.length}
+            </span>{" "}
             {certificates.length === 1 ? "certificate" : "certificates"}
-            {hasActiveFilters && <span className="text-indigo-600"> (filtered)</span>}
+            {hasActiveFilters && (
+              <span className="text-indigo-600"> (filtered)</span>
+            )}
           </p>
         ) : null}
       </div>
@@ -205,7 +273,10 @@ export default function CertificateListComponent() {
             key={cert.id}
             certificate={{
               id: cert.id,
-              name: cert.certificate?.name || cert.certificate?.code || `Certificate #${cert.certificate_id}`,
+              name:
+                cert.certificate?.name ||
+                cert.certificate?.code ||
+                `Certificate #${cert.certificate_id}`,
               issueDate: cert.date_issued || "",
               expiryDate: cert.expiry_date || "",
               issuingAuthority: cert.issued_by || "N/A",
@@ -215,6 +286,8 @@ export default function CertificateListComponent() {
             }}
             certificateData={cert}
             onUpdate={fetchCertificates}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
           />
         ))}
 
@@ -229,7 +302,9 @@ export default function CertificateListComponent() {
               )}
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {hasActiveFilters ? "No Certificates Found" : "No Certificates Yet"}
+              {hasActiveFilters
+                ? "No Certificates Found"
+                : "No Certificates Yet"}
             </h3>
             <p className="text-gray-600 mb-6">
               {hasActiveFilters
@@ -254,7 +329,9 @@ export default function CertificateListComponent() {
           <div className="flex items-center justify-between">
             {/* Page Info */}
             <div className="text-sm text-gray-600">
-              Page <span className="font-semibold text-gray-900">{currentPage}</span> of{" "}
+              Page{" "}
+              <span className="font-semibold text-gray-900">{currentPage}</span>{" "}
+              of{" "}
               <span className="font-semibold text-gray-900">{totalPages}</span>
             </div>
 
@@ -271,41 +348,45 @@ export default function CertificateListComponent() {
 
               {/* Page Numbers */}
               <div className="hidden sm:flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                  // Show first page, last page, current page, and pages around current
-                  const showPage =
-                    page === 1 ||
-                    page === totalPages ||
-                    (page >= currentPage - 1 && page <= currentPage + 1);
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => {
+                    // Show first page, last page, current page, and pages around current
+                    const showPage =
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1);
 
-                  // Show ellipsis
-                  const showEllipsisBefore = page === currentPage - 2 && currentPage > 3;
-                  const showEllipsisAfter = page === currentPage + 2 && currentPage < totalPages - 2;
+                    // Show ellipsis
+                    const showEllipsisBefore =
+                      page === currentPage - 2 && currentPage > 3;
+                    const showEllipsisAfter =
+                      page === currentPage + 2 && currentPage < totalPages - 2;
 
-                  if (showEllipsisBefore || showEllipsisAfter) {
+                    if (showEllipsisBefore || showEllipsisAfter) {
+                      return (
+                        <span key={page} className="px-2 text-gray-400">
+                          ...
+                        </span>
+                      );
+                    }
+
+                    if (!showPage) return null;
+
                     return (
-                      <span key={page} className="px-2 text-gray-400">
-                        ...
-                      </span>
+                      <button
+                        key={page}
+                        onClick={() => goToPage(page)}
+                        className={`min-w-[2.5rem] px-3 py-2 rounded-lg font-medium transition-colors ${
+                          currentPage === page
+                            ? "bg-indigo-600 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
                     );
                   }
-
-                  if (!showPage) return null;
-
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => goToPage(page)}
-                      className={`min-w-[2.5rem] px-3 py-2 rounded-lg font-medium transition-colors ${
-                        currentPage === page
-                          ? "bg-indigo-600 text-white"
-                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
+                )}
               </div>
 
               {/* Mobile: Simple page indicator */}
@@ -324,6 +405,31 @@ export default function CertificateListComponent() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Shared Edit Modal */}
+      {editingCertificate && (
+        <CrewCertificateEditModal
+          isOpen={!!editingCertificate}
+          onClose={() => setEditingCertificate(null)}
+          onSuccess={handleEditSuccess}
+          certificate={editingCertificate}
+        />
+      )}
+
+      {/* Shared Delete Modal */}
+      {deletingCertificate && (
+        <DeleteConfirmationModal
+          isOpen={!!deletingCertificate}
+          onClose={() => setDeletingCertificate(null)}
+          onConfirm={handleConfirmDelete}
+          isDeleting={isDeleting}
+          certificateName={
+            deletingCertificate.certificate?.name ||
+            deletingCertificate.certificate?.code ||
+            "this certificate"
+          }
+        />
       )}
     </div>
   );

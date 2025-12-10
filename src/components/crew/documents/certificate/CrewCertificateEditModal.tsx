@@ -135,18 +135,21 @@ export default function CrewCertificateEditModal({
   const [fileError, setFileError] = useState("");
   const [isLoadingCertificates, setIsLoadingCertificates] = useState(false);
 
-  // Load certificate types on mount
+  // Load certificate types when modal opens
   useEffect(() => {
     const loadCertificateTypes = async () => {
+      if (!isOpen) return;
+
       try {
         const types = await CertificateTypeService.getCertificateTypes();
         setCertificateTypes(types);
       } catch (error) {
+        console.error("Failed to load certificate types:", error);
         toast.error("Failed to load certificate types");
       }
     };
     loadCertificateTypes();
-  }, []);
+  }, [isOpen]);
 
   // Initialize form with existing certificate data
   useEffect(() => {
