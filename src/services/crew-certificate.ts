@@ -19,7 +19,7 @@ export interface CrewCertificate {
   modified_by?: string;
   certificate?: Certificate;
   // Computed fields from API
-  status?: 'valid' | 'expired' | 'expiring_soon';
+  status?: "valid" | "expired" | "expiring_soon";
   has_file?: boolean;
   days_until_expiry?: number | null;
 }
@@ -51,16 +51,25 @@ export class CrewCertificateService {
     const params = new URLSearchParams();
 
     if (filters?.search) {
-      params.append('search', filters.search);
+      params.append("search", filters.search);
     }
     if (filters?.certificate_type_id) {
-      params.append('certificate_type_id', filters.certificate_type_id.toString());
+      params.append(
+        "certificate_type_id",
+        filters.certificate_type_id.toString()
+      );
     }
 
     const queryString = params.toString();
-    const url = `/crew/${crewId}/certificates${queryString ? `?${queryString}` : ''}`;
+    const url = `/crew/${crewId}/certificates${
+      queryString ? `?${queryString}` : ""
+    }`;
 
-    const response = await api.get<{ success: boolean; data: CrewCertificate[]; count: number }>(url);
+    const response = await api.get<{
+      success: boolean;
+      data: CrewCertificate[];
+      count: number;
+    }>(url);
     return response.data.data;
   }
 
@@ -71,7 +80,10 @@ export class CrewCertificateService {
   static async createCrewCertificate(
     data: CreateCrewCertificateData | FormData
   ): Promise<CrewCertificate> {
-    const response = await api.post<CrewCertificate>("/crew-certificates", data);
+    const response = await api.post<CrewCertificate>(
+      "/crew-certificates",
+      data
+    );
     return response.data;
   }
 
@@ -87,17 +99,19 @@ export class CrewCertificateService {
 
     if (isFormData) {
       // For FormData, we need to use POST with _method override for Laravel
-      data.append('_method', 'PUT');
-      const response = await api.post<{ success: boolean; data: CrewCertificate; message: string }>(
-        `/crew-certificates/${id}`,
-        data
-      );
+      data.append("_method", "PUT");
+      const response = await api.post<{
+        success: boolean;
+        data: CrewCertificate;
+        message: string;
+      }>(`/crew-certificates/${id}`, data);
       return response.data.data;
     } else {
-      const response = await api.put<{ success: boolean; data: CrewCertificate; message: string }>(
-        `/crew-certificates/${id}`,
-        data
-      );
+      const response = await api.put<{
+        success: boolean;
+        data: CrewCertificate;
+        message: string;
+      }>(`/crew-certificates/${id}`, data);
       return response.data.data;
     }
   }

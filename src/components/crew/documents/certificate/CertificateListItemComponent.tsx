@@ -1,12 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import {
-  CrewCertificate,
-  CrewCertificateService,
-} from "@/services/crew-certificate";
+import { CrewCertificate } from "@/services/crew-certificate";
 import CertificateViewModal from "./CertificateViewModal";
-import CrewCertificateEditModal from "./CrewCertificateEditModal";
-import DeleteConfirmationModal from "./DeleteConfirmationModal";
-import toast from "react-hot-toast";
 
 interface Certificate {
   id: number;
@@ -23,6 +17,8 @@ interface CertificateListItemComponentProps {
   certificate: Certificate;
   certificateData?: CrewCertificate;
   onUpdate?: () => void;
+  onEditClick?: (certificate: CrewCertificate) => void;
+  onDeleteClick?: (certificate: CrewCertificate) => void;
 }
 
 // Helper functions
@@ -80,13 +76,12 @@ export default function CertificateListItemComponent({
   certificate,
   certificateData,
   onUpdate,
+  onEditClick,
+  onDeleteClick,
 }: CertificateListItemComponentProps) {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
   const startOffsetRef = useRef(0);
@@ -176,40 +171,16 @@ export default function CertificateListItemComponent({
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     setSwipeOffset(0);
-    setIsEditModalOpen(true);
+    if (certificateData && onEditClick) {
+      onEditClick(certificateData);
+    }
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     setSwipeOffset(0);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!certificateData) return;
-
-    setIsDeleting(true);
-    try {
-      await CrewCertificateService.deleteCrewCertificate(certificateData.id);
-      toast.success("Certificate deleted successfully!");
-      setIsDeleteModalOpen(false);
-      if (onUpdate) {
-        onUpdate();
-      }
-    } catch (error: any) {
-      console.error("Error deleting certificate:", error);
-      toast.error(
-        error?.response?.data?.message || "Failed to delete certificate"
-      );
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleEditSuccess = () => {
-    setIsEditModalOpen(false);
-    if (onUpdate) {
-      onUpdate();
+    if (certificateData && onDeleteClick) {
+      onDeleteClick(certificateData);
     }
   };
 
@@ -305,25 +276,6 @@ export default function CertificateListItemComponent({
           certificate={certificateData}
         />
       )}
-
-      {/* Edit Modal */}
-      {certificateData && (
-        <CrewCertificateEditModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSuccess={handleEditSuccess}
-          certificate={certificateData}
-        />
-      )}
-
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleConfirmDelete}
-        isDeleting={isDeleting}
-        certificateName={certificate.name}
-      />
     </>
   );
 }
