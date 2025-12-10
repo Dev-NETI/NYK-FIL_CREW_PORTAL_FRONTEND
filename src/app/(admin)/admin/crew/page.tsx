@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import CrewTable from "@/components/CrewTable";
 import { UserService } from "@/services";
 import { User, PaginationInfo } from "@/types/api";
@@ -121,6 +122,15 @@ export default function CrewManagement() {
                   <p className="text-gray-600 mt-1 text-sm sm:text-base">
                     Manage your crew members information
                   </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Link
+                    href="/admin/crew/profile-update-approvals"
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    <i className="bi bi-check-circle mr-2"></i>
+                    Profile Approvals
+                  </Link>
                 </div>
               </div>
             </div>
