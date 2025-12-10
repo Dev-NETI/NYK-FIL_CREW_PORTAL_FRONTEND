@@ -48,6 +48,14 @@ function getStatusColor(status: string) {
         icon: "text-red-600",
         bg: "bg-red-600",
       };
+    case "pending_approval":
+      return {
+        badge: "bg-orange-100 text-orange-800 border-orange-300",
+        card: "border-orange-200",
+        gradient: "from-orange-50 to-orange-100",
+        icon: "text-orange-600",
+        bg: "bg-orange-600",
+      };
     default:
       return {
         badge: "bg-gray-100 text-gray-800 border-gray-300",
@@ -67,6 +75,8 @@ function getStatusLabel(status: string) {
       return "Expiring Soon";
     case "expired":
       return "Expired";
+    case "pending_approval":
+      return "Pending Approval";
     default:
       return "Unknown";
   }
@@ -87,9 +97,11 @@ export default function CertificateListItemComponent({
   const startOffsetRef = useRef(0);
 
   const colors = getStatusColor(certificate.status);
+  const isPending = certificate.status === "pending_approval";
 
   // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (isPending) return; // Disable swipe for pending certificates
     setIsDragging(true);
     startXRef.current = e.touches[0].clientX;
     startOffsetRef.current = swipeOffset;
@@ -121,6 +133,7 @@ export default function CertificateListItemComponent({
 
   // Mouse handlers
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (isPending) return; // Disable swipe for pending certificates
     setIsDragging(true);
     startXRef.current = e.clientX;
     startOffsetRef.current = swipeOffset;
@@ -162,7 +175,8 @@ export default function CertificateListItemComponent({
   }, [isDragging, swipeOffset]);
 
   const handleCardClick = () => {
-    // Only open modal if not currently swiping/dragging
+    // Don't open modal if pending or currently swiping/dragging
+    if (isPending) return;
     if (swipeOffset === 0 && !isDragging) {
       setIsViewModalOpen(true);
     }
@@ -219,9 +233,11 @@ export default function CertificateListItemComponent({
             colors.gradient
           } rounded-xl p-3 border ${
             colors.card
-          } hover:shadow-lg transition-all duration-300 ${
-            swipeOffset === 0
-              ? "cursor-pointer"
+          } transition-all duration-300 ${
+            isPending
+              ? "opacity-60 cursor-not-allowed"
+              : swipeOffset === 0
+              ? "cursor-pointer hover:shadow-lg"
               : "cursor-grab active:cursor-grabbing"
           } relative`}
         >
