@@ -82,6 +82,18 @@ export default function ContactInformation({
     loadRegions();
   }, []);
 
+  // Clear geography arrays when not editing to avoid stale data
+  useEffect(() => {
+    if (!isEditing) {
+      setPermanentProvinces([]);
+      setPermanentCities([]);
+      setPermanentBarangays([]);
+      setCurrentProvinces([]);
+      setCurrentCities([]);
+      setCurrentBarangays([]);
+    }
+  }, [isEditing]);
+
   // Load provinces when permanent region changes
   useEffect(() => {
     const loadPermanentProvinces = async () => {

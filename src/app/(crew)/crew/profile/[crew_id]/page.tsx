@@ -96,7 +96,34 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     if (!profile) return;
 
     setEditingSection(section);
-    setEditedProfile({ ...profile });
+    
+    // Create edited profile with address fields properly populated
+    const newEditedProfile = { ...profile };
+    
+    // If editing contact section, populate address fields from relationships
+    if (section === "contact") {
+      // Populate permanent address fields
+      if (profile.permanent_address) {
+        newEditedProfile.permanent_region = profile.permanent_address.region_id;
+        newEditedProfile.permanent_province = profile.permanent_address.province_id;
+        newEditedProfile.permanent_city = profile.permanent_address.city_id;
+        newEditedProfile.permanent_barangay = profile.permanent_address.brgy_id;
+        newEditedProfile.permanent_street = profile.permanent_address.street_address;
+        newEditedProfile.permanent_postal_code = profile.permanent_address.zip_code;
+      }
+      
+      // Populate current address fields
+      if (profile.current_address) {
+        newEditedProfile.current_region = profile.current_address.region_id;
+        newEditedProfile.current_province = profile.current_address.province_id;
+        newEditedProfile.current_city = profile.current_address.city_id;
+        newEditedProfile.current_barangay = profile.current_address.brgy_id;
+        newEditedProfile.current_street = profile.current_address.street_address;
+        newEditedProfile.current_postal_code = profile.current_address.zip_code;
+      }
+    }
+    
+    setEditedProfile(newEditedProfile);
     setValidationErrors({});
   };
 
