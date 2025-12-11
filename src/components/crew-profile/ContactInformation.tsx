@@ -108,15 +108,6 @@ export default function ContactInformation({
 
           if (response.success) {
             setPermanentProvinces(response.data);
-            // Reset dependent dropdowns when region changes
-            setPermanentCities([]);
-            setPermanentBarangays([]);
-            // Clear dependent fields in editedProfile
-            if (editedProfile) {
-              onInputChange("permanent_province", "");
-              onInputChange("permanent_city", "");
-              onInputChange("permanent_barangay", "");
-            }
           }
         } catch (error) {
           console.error("Error loading permanent provinces:", error);
@@ -145,13 +136,6 @@ export default function ContactInformation({
 
           if (response.success) {
             setPermanentCities(response.data);
-            // Reset dependent dropdowns when province changes
-            setPermanentBarangays([]);
-            // Clear dependent fields in editedProfile
-            if (editedProfile) {
-              onInputChange("permanent_city", "");
-              onInputChange("permanent_barangay", "");
-            }
           }
         } catch (error) {
           console.error("Error loading permanent cities:", error);
@@ -176,10 +160,6 @@ export default function ContactInformation({
 
           if (response.success) {
             setPermanentBarangays(response.data);
-            // Clear dependent fields in editedProfile
-            if (editedProfile) {
-              onInputChange("permanent_barangay", "");
-            }
           }
         } catch (error) {
           console.error("Error loading permanent barangays:", error);
