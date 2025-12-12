@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 import { TravelDocumentService } from "@/services/travel-document";
-import { TravelDocumentApprovalService, TravelDocumentUpdate } from "@/services/travel-document-approval";
+import {
+  TravelDocumentApprovalService,
+  TravelDocumentUpdate,
+} from "@/services/travel-document-approval";
 import ViewTravelDocumentModal from "./ViewTravelDocumentModal";
 import DeleteConfirmationModalComponent from "./DeleteConfirmationModalComponent";
 import EditTravelDocumentModal from "./EditTravelDocumentModal";
@@ -37,7 +40,9 @@ export default function TravelDocumentListItemComponent({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [pendingUpdates, setPendingUpdates] = useState<TravelDocumentUpdate[]>([]);
+  const [pendingUpdates, setPendingUpdates] = useState<TravelDocumentUpdate[]>(
+    []
+  );
   const [loadingPending, setLoadingPending] = useState(true);
 
   // Swipe gesture states
@@ -52,12 +57,14 @@ export default function TravelDocumentListItemComponent({
     const fetchPendingUpdates = async () => {
       try {
         setLoadingPending(true);
-        const history = await TravelDocumentApprovalService.getHistory(document.id);
+        const history = await TravelDocumentApprovalService.getHistory(
+          document.id
+        );
         // Filter for pending updates only
-        const pending = history.filter(update => update.status === 'pending');
+        const pending = history.filter((update) => update.status === "pending");
         setPendingUpdates(pending);
       } catch (error) {
-        console.error('Error fetching pending updates:', error);
+        console.error("Error fetching pending updates:", error);
       } finally {
         setLoadingPending(false);
       }
@@ -97,15 +104,21 @@ export default function TravelDocumentListItemComponent({
     setShowDeleteConfirm(false);
   };
 
+  // Check if document has pending updates
+  const hasPendingUpdates = !loadingPending && pendingUpdates.length > 0;
+
   // Swipe gesture handlers
   const handleTouchStart = (e: React.TouchEvent) => {
+    // Disable swiping if there are pending updates
+    if (hasPendingUpdates) return;
+
     startX.current = e.touches[0].clientX;
     currentX.current = e.touches[0].clientX;
     setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
+    if (!isDragging || hasPendingUpdates) return;
     currentX.current = e.touches[0].clientX;
     const diff = currentX.current - startX.current;
 
@@ -116,7 +129,7 @@ export default function TravelDocumentListItemComponent({
   };
 
   const handleTouchEnd = () => {
-    if (!isDragging) return;
+    if (!isDragging || hasPendingUpdates) return;
     setIsDragging(false);
 
     // If swiped more than 80px, lock it open, otherwise close
@@ -128,13 +141,16 @@ export default function TravelDocumentListItemComponent({
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Disable swiping if there are pending updates
+    if (hasPendingUpdates) return;
+
     startX.current = e.clientX;
     currentX.current = e.clientX;
     setIsDragging(true);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
+    if (!isDragging || hasPendingUpdates) return;
     currentX.current = e.clientX;
     const diff = currentX.current - startX.current;
 
@@ -145,7 +161,7 @@ export default function TravelDocumentListItemComponent({
   };
 
   const handleMouseUp = () => {
-    if (!isDragging) return;
+    if (!isDragging || hasPendingUpdates) return;
     setIsDragging(false);
 
     // If swiped more than 80px, lock it open, otherwise close
@@ -177,6 +193,9 @@ export default function TravelDocumentListItemComponent({
   };
 
   const handleCardClick = () => {
+    // Disable clicking if there are pending updates
+    if (hasPendingUpdates) return;
+
     if (swipeOffset === 0) {
       setIsViewModalOpen(true);
     } else {
@@ -298,7 +317,13 @@ export default function TravelDocumentListItemComponent({
             transform: `translateX(${swipeOffset}px)`,
             transition: isDragging ? "none" : "transform 0.3s ease-out",
           }}
-          className={`bg-gradient-to-r ${colors.gradient} rounded-xl p-5 border ${colors.border} hover:shadow-lg transition-all duration-300 cursor-pointer select-none relative`}
+          className={`bg-gradient-to-r ${
+            colors.gradient
+          } rounded-xl p-5 border ${colors.border} ${
+            hasPendingUpdates
+              ? "opacity-70 cursor-not-allowed"
+              : "hover:shadow-lg cursor-pointer"
+          } transition-all duration-300 select-none relative`}
         >
           <div className="flex items-center gap-4">
             {/* Icon */}
@@ -313,7 +338,7 @@ export default function TravelDocumentListItemComponent({
             {/* Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-xl font-semibold text-gray-900">
+                <h3 className="text-base font-semibold text-gray-900">
                   {document.documentType}
                 </h3>
                 {!loadingPending && pendingUpdates.length > 0 && (

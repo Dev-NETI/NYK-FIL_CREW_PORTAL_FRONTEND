@@ -43,7 +43,7 @@ export default function TravelDocumentApprovalModal({
   };
 
   const getCrewName = () => {
-    const profile = update.travelDocument?.user_profile;
+    const profile = update.travelDocument?.userProfile;
     if (!profile) return "Unknown Crew";
     return `${profile.first_name} ${profile.middle_name || ""} ${
       profile.last_name
@@ -268,7 +268,7 @@ export default function TravelDocumentApprovalModal({
                 <div>
                   <div className="text-xs text-gray-500 mb-1">Crew ID</div>
                   <div className="text-sm font-medium text-gray-900">
-                    {update.travelDocument?.user_profile?.crew_id || "N/A"}
+                    {update.travelDocument?.userProfile?.crew_id || "N/A"}
                   </div>
                 </div>
                 <div>
@@ -276,7 +276,7 @@ export default function TravelDocumentApprovalModal({
                     Document Type
                   </div>
                   <div className="text-sm font-medium text-gray-900">
-                    {update.travelDocument?.travel_document_type?.name || "N/A"}
+                    {update.travelDocument?.travelDocumentType?.name || "N/A"}
                   </div>
                 </div>
                 <div>
@@ -430,7 +430,7 @@ export default function TravelDocumentApprovalModal({
           isOpen={showDocumentViewer}
           onClose={() => setShowDocumentViewer(false)}
           documentTypeName={
-            update.travelDocument?.travel_document_type?.name ||
+            update.travelDocument?.travelDocumentType?.name ||
             "Travel Document"
           }
           travelDocumentId={update.travelDocument?.id || 0}

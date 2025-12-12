@@ -39,7 +39,8 @@ export default function TravelDocumentPendingUpdatesTableListItemComponent({
   };
 
   const getCrewName = () => {
-    const profile = update.travelDocument?.user_profile;
+    // Try to get profile from travelDocument first, then fallback to update.userProfile
+    const profile = update.travelDocument?.userProfile || update.userProfile;
     if (!profile) return "Unknown Crew";
     return `${profile.first_name} ${profile.middle_name || ""} ${
       profile.last_name
@@ -47,17 +48,36 @@ export default function TravelDocumentPendingUpdatesTableListItemComponent({
   };
 
   const getDocumentType = () => {
-    return update.travelDocument?.travel_document_type?.name || "N/A";
+    // If travelDocument is deleted (for rejected new documents), get type from updated_data
+    if (update.travelDocument?.travelDocumentType?.name) {
+      return update.travelDocument.travelDocumentType.name;
+    }
+
+    // Fallback: try to get document type name from updated_data
+    const typeId = update.updated_data.travel_document_type_id;
+    if (typeId) {
+      // Map common IDs to names (you might need to adjust these)
+      const typeMap: Record<number, string> = {
+        1: "Passport",
+        2: "Seafarer's Identification and Record Book (SIRB)",
+        3: "Seafarer's Identity Document (SID)",
+        4: "US VISA",
+      };
+      return typeMap[typeId] || "N/A";
+    }
+
+    return "N/A";
   };
 
   return (
     <tr className="hover:bg-gray-50">
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm font-medium text-gray-900">
-          {getCrewName()}
-        </div>
+        <div className="text-sm font-medium text-gray-900">{getCrewName()}</div>
         <div className="text-sm text-gray-500">
-          {update.travelDocument?.user_profile?.crew_id || "N/A"}
+          {update.travelDocument?.userProfile?.crew_id ||
+            update.userProfile?.crew_id ||
+            update.crew_id ||
+            "N/A"}
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">

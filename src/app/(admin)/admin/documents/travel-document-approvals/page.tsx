@@ -53,7 +53,10 @@ export default function TravelDocumentApprovalsPage() {
     try {
       const response = await TravelDocumentApprovalService.approve(id);
       if (response.success) {
-        toast.success(response.message);
+        toast.success(
+          "Document approved successfully! An email notification has been sent to the crew member.",
+          { duration: 5000 }
+        );
         setShowModal(false);
         await loadUpdates();
       } else {
@@ -70,7 +73,10 @@ export default function TravelDocumentApprovalsPage() {
         rejection_reason: reason,
       });
       if (response.success) {
-        toast.success(response.message);
+        toast.success(
+          "Document rejected. An email notification with the rejection reason has been sent to the crew member.",
+          { duration: 5000 }
+        );
         setShowModal(false);
         await loadUpdates();
       } else {
