@@ -109,9 +109,8 @@ export default function DocumentsPage() {
 
   const documentCards = [
     {
-      title: "Employment Document Approvals",
-      description:
-        "Review and approve crew employment document update requests",
+      title: "Personal Document Approvals",
+      description: "Review and approve crew personal document update requests",
       icon: FileCheck,
       color: "blue",
       gradient: "from-blue-500 to-indigo-600",
@@ -329,7 +328,7 @@ export default function DocumentsPage() {
                         {pendingEmploymentCount}
                       </div>
                       <div className="text-sm text-gray-600">
-                        Employment Pending
+                        Personal Pending
                       </div>
                     </div>
                   </div>
