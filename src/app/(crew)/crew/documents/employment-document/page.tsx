@@ -21,7 +21,7 @@ export default function EmploymentDocumentsPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
-                    Employment Documents
+                    Personal Documents
                   </h1>
                   <p className="text-gray-600 text-sm sm:text-base mt-1">
                     View and manage your employment-related documents
