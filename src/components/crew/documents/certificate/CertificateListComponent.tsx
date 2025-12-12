@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import CertificateListItemComponent from "./CertificateListItemComponent";
+import CertificateListSkeleton from "./CertificateListSkeleton";
 import {
   CrewCertificateService,
   CrewCertificate,
@@ -156,14 +157,7 @@ export default function CertificateListComponent() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading certificates...</p>
-        </div>
-      </div>
-    );
+    return <CertificateListSkeleton />;
   }
 
   return (

@@ -2,7 +2,7 @@
 
 import { motion, type Variants } from "framer-motion";
 
-function EmploymentDocumentListSkeleton() {
+function CertificateListSkeleton() {
   const shimmerVariants: Variants = {
     initial: { x: "-100%" },
     animate: {
@@ -91,12 +91,12 @@ function EmploymentDocumentListSkeleton() {
                 variants={pulseVariants}
                 initial="initial"
                 animate="animate"
-                className="w-14 h-14 bg-gradient-to-br from-purple-200 to-purple-300 rounded-xl shadow-md flex items-center justify-center"
+                className="w-14 h-14 bg-gradient-to-br from-green-200 to-green-300 rounded-xl shadow-md flex items-center justify-center"
               >
                 <motion.svg
                   variants={spinVariants}
                   animate="animate"
-                  className="w-7 h-7 text-purple-500"
+                  className="w-7 h-7 text-green-500"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
@@ -165,7 +165,7 @@ function EmploymentDocumentListSkeleton() {
           <motion.svg
             variants={spinVariants}
             animate="animate"
-            className="w-5 h-5 text-purple-600"
+            className="w-5 h-5 text-green-600"
             fill="none"
             viewBox="0 0 24 24"
           >
@@ -183,7 +183,7 @@ function EmploymentDocumentListSkeleton() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </motion.svg>
-          <span className="text-sm font-medium">Loading employment documents</span>
+          <span className="text-sm font-medium">Loading certificates</span>
           <span className="flex gap-1">
             {[0, 0.15, 0.3].map((delay, idx) => (
               <motion.span
@@ -191,7 +191,7 @@ function EmploymentDocumentListSkeleton() {
                 variants={bounceVariants(delay)}
                 initial="initial"
                 animate="animate"
-                className="w-1 h-1 bg-purple-600 rounded-full"
+                className="w-1 h-1 bg-green-600 rounded-full"
               />
             ))}
           </span>
@@ -201,4 +201,4 @@ function EmploymentDocumentListSkeleton() {
   );
 }
 
-export default EmploymentDocumentListSkeleton;
+export default CertificateListSkeleton;

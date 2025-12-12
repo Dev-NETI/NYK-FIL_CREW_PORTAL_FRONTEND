@@ -45,8 +45,9 @@ export interface TravelDocument {
   created_at: string;
   updated_at: string;
   modified_by: string | null;
-  user_profile?: UserProfile;
-  travel_document_type?: TravelDocumentType;
+  // Relationships are now in camelCase from API Resource
+  userProfile?: UserProfile;
+  travelDocumentType?: TravelDocumentType;
 }
 
 export interface TravelDocumentUpdate {
@@ -63,7 +64,7 @@ export interface TravelDocumentUpdate {
   updated_at: string;
   modified_by: string | null;
   travelDocument?: TravelDocument;
-  user_profile?: UserProfile;
+  userProfile?: UserProfile;
 }
 
 export interface ApprovalResponse {
@@ -81,30 +82,34 @@ export class TravelDocumentApprovalService {
    * Get all pending update requests
    */
   static async getPendingUpdates(): Promise<TravelDocumentUpdate[]> {
-    const response = await api.get<TravelDocumentUpdate[]>(
+    const response = await api.get(
       "/travel-document-updates"
     );
-    return response.data;
+    // Laravel Resource Collections wrap data in { data: [...] }
+    const data = response.data;
+    return Array.isArray(data) ? data : (data.data || []);
   }
 
   /**
    * Get all update requests (pending, approved, rejected)
    */
   static async getAllUpdates(): Promise<TravelDocumentUpdate[]> {
-    const response = await api.get<TravelDocumentUpdate[]>(
+    const response = await api.get(
       "/travel-document-updates/all"
     );
-    return response.data;
+    // Laravel Resource Collections wrap data in { data: [...] }
+    const data = response.data;
+    return Array.isArray(data) ? data : (data.data || []);
   }
 
   /**
    * Get single update request
    */
   static async getUpdate(id: number): Promise<TravelDocumentUpdate> {
-    const response = await api.get<TravelDocumentUpdate>(
+    const response = await api.get<{ data?: TravelDocumentUpdate } & TravelDocumentUpdate>(
       `/travel-document-updates/${id}`
     );
-    return response.data;
+    return (response.data as any).data || response.data;
   }
 
   /**
@@ -134,9 +139,7 @@ export class TravelDocumentApprovalService {
   /**
    * Get update history for a specific travel document
    */
-  static async getHistory(
-    documentId: number
-  ): Promise<TravelDocumentUpdate[]> {
+  static async getHistory(documentId: number): Promise<TravelDocumentUpdate[]> {
     const response = await api.get<{
       success: boolean;
       data: TravelDocumentUpdate[];
