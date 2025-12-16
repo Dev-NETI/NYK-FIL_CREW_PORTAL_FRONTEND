@@ -59,7 +59,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         // Check if user can view this profile
         const currentUserCrewId = currentUserData.profile?.crew_id;
         const canAccess =
-          currentUserCrewId === crewId || currentUserData.is_crew === 0;
+          currentUserCrewId === crewId || currentUserData.is_crew === false;
         if (!canAccess) {
           toast.error("You are not authorized to view this profile");
           router.push("/crew/home");
@@ -129,7 +129,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
     setEditedProfile(newEditedProfile);
 
-    console.log(newEditedProfile);
     setValidationErrors({});
   };
 
@@ -186,7 +185,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
       }
 
       // Check if user is admin - if so, allow direct update
-      if (currentUser.is_crew === 0) {
+      if (currentUser.is_crew === false) {
         // Admin can update directly - keep original logic
         const response = await UserService.updateUserProfile(
           editedProfile.id.toString(),
@@ -268,7 +267,8 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     setProfile(updatedProfile);
   };
 
-  const canEdit = currentUser?.is_crew === 0 || currentUser?.id === profile?.id;
+  const canEdit =
+    currentUser?.is_crew === false || currentUser?.id === profile?.id;
 
   if (loading) {
     return (

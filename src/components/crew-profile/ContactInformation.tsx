@@ -113,17 +113,6 @@ export default function ContactInformation({
 
           if (response.success) {
             setPermanentProvinces(response.data);
-            // Only reset dependent dropdowns and fields if not initializing edit mode
-            if (!isInitializing) {
-              setPermanentCities([]);
-              setPermanentBarangays([]);
-              // Clear dependent fields in editedProfile only if user changed region
-              if (editedProfile) {
-                onInputChange("permanent_province", "");
-                onInputChange("permanent_city", "");
-                onInputChange("permanent_barangay", "");
-              }
-            }
           }
         } catch (error) {
           console.error("Error loading permanent provinces:", error);
@@ -152,15 +141,6 @@ export default function ContactInformation({
 
           if (response.success) {
             setPermanentCities(response.data);
-            // Only reset dependent dropdowns and fields if not initializing edit mode
-            if (!isInitializing) {
-              setPermanentBarangays([]);
-              // Clear dependent fields in editedProfile only if user changed province
-              if (editedProfile) {
-                onInputChange("permanent_city", "");
-                onInputChange("permanent_barangay", "");
-              }
-            }
           }
         } catch (error) {
           console.error("Error loading permanent cities:", error);
@@ -185,10 +165,6 @@ export default function ContactInformation({
 
           if (response.success) {
             setPermanentBarangays(response.data);
-            // Only clear dependent fields if not initializing edit mode
-            if (!isInitializing && editedProfile) {
-              onInputChange("permanent_barangay", "");
-            }
           }
         } catch (error) {
           console.error("Error loading permanent barangays:", error);
@@ -345,6 +321,61 @@ export default function ContactInformation({
     </div>
   );
 
+  // Save button content component for cleaner rendering
+  const SaveButtonContent = ({ loading }: { loading: boolean }) => {
+    const currentUser = AuthService.getStoredUser();
+    const isAdmin = currentUser?.is_crew === false;
+
+    if (loading) {
+      return (
+        <>
+          <i className="bi bi-arrow-clockwise animate-spin text-base"></i>
+          <span>{isAdmin ? "Saving..." : "Submitting..."}</span>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <i className="bi bi-check-lg text-base"></i>
+        <span>{isAdmin ? "Save Contact Info" : "Submit for Approval"}</span>
+      </>
+    );
+  };
+
+  // Handle save button click - supports both admin and crew workflows
+  const handleSaveClick = async () => {
+    try {
+      const currentUser = AuthService.getStoredUser();
+      const isAdmin = currentUser?.is_crew === false;
+
+      if (isAdmin) {
+        // ADMIN WORKFLOW: Save addresses directly to database
+        console.log("Admin saving contact information directly...");
+        await handleSaveAddresses();
+
+        // Exit edit mode after successful save
+        onSave();
+      } else {
+        // CREW WORKFLOW: Submit for approval via parent component
+        console.log("Crew submitting contact information for approval...");
+        onSave();
+      }
+    } catch (error) {
+      console.error("Save operation failed:", error);
+
+      // Show appropriate error message based on user role
+      const currentUser = AuthService.getStoredUser();
+      const isAdmin = currentUser?.is_crew === false;
+
+      const errorMessage = isAdmin
+        ? "Failed to save contact information. Please try again."
+        : "Failed to submit update request. Please try again.";
+
+      toast.error(errorMessage);
+    }
+  };
+
   // Handle "same as permanent address" checkbox
   const handleSameAsPermanentChange = (checked: boolean) => {
     setSameAsPermanent(checked);
@@ -371,7 +402,11 @@ export default function ContactInformation({
     }
   };
 
-  // Function to save addresses and update user contacts
+  /**
+   * ADMIN ONLY: Save addresses directly to the database
+   * This function handles permanent and current address creation/updates
+   * and returns the address IDs for linking to the user's contact record
+   */
   const handleSaveAddresses = async () => {
     let permanentAddressId: number | undefined;
     let currentAddressId: number | undefined;
@@ -779,59 +814,14 @@ export default function ContactInformation({
                 <span className="sm:inline">Cancel</span>
               </button>
               <button
-                onClick={async () => {
-                  try {
-                    // Check user role to determine save behavior
-                    const currentUser = AuthService.getStoredUser();
-                    console.log("Current User:", currentUser);
-                    const isAdmin = currentUser?.is_crew === false;
-
-                    if (isAdmin) {
-                      // Admin can save addresses directly
-                      const addressResult = await handleSaveAddresses();
-
-                      toast.success(
-                        "Contact information updated successfully!"
-                      );
-                    } else {
-                      // Crew member: All changes go through pre-approval system
-                      onSave();
-                    }
-                  } catch (error) {
-                    // Address saving failed (for admin) or approval submission failed (for crew)
-                    console.error("Save operation failed:", error);
-                    const errorMessage =
-                      AuthService.getStoredUser()?.is_crew === false
-                        ? "Failed to save address information"
-                        : "Failed to submit update request";
-                    toast.error(errorMessage);
-                  }
-                }}
+                onClick={handleSaveClick}
                 disabled={saving}
                 className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] shadow-sm active:shadow-none"
               >
                 {saving ? (
-                  <>
-                    <i className="bi bi-arrow-clockwise animate-spin text-base"></i>
-                    <span>
-                      {(() => {
-                        const currentUser = AuthService.getStoredUser();
-                        const isAdmin = currentUser?.is_crew === false;
-                        return isAdmin ? "Saving..." : "Submitting...";
-                      })()}
-                    </span>
-                  </>
+                  <SaveButtonContent loading={true} />
                 ) : (
-                  <>
-                    <i className="bi bi-check-lg text-base"></i>
-                    <span>
-                      {(() => {
-                        const currentUser = AuthService.getStoredUser();
-                        const isAdmin = currentUser?.is_crew === false;
-                        return isAdmin ? "Save" : "Submit for Approval";
-                      })()}
-                    </span>
-                  </>
+                  <SaveButtonContent loading={false} />
                 )}
               </button>
             </div>
