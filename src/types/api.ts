@@ -125,7 +125,7 @@ export interface User {
   email_verified_at: string | null;
   last_login_at?: string | null;
   last_login_ip?: string;
-  is_crew: number; // 1 = crew, 0 = admin
+  is_crew: boolean; // 1 = crew, 0 = admin
   role?: string; // 'crew' or 'admin'
 
   // Organized nested data

@@ -129,7 +129,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
             const initializedProfile = {
               ...loadedProfile,
               profile: loadedProfile.profile || {},
-              physicalTraits: loadedProfile.physical_traits || {},
+              physical_traits: loadedProfile.physical_traits || {},
               contacts: loadedProfile.contacts || {},
               employment: loadedProfile.employment || {},
               education: loadedProfile.education || [],
@@ -165,7 +165,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
       const editableProfile = {
         ...profile,
         profile: profile.profile || {},
-        physicalTraits: profile.physical_traits || {},
+        physical_traits: profile.physical_traits || {},
         contacts: profile.contacts || {},
         employment: profile.employment || {},
         education: profile.education || [],
@@ -210,6 +210,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
       // Call the API to update the profile with specific 422 error handling
       let updateResponse;
       try {
+        console.log(editedProfile);
         updateResponse = await UserService.updateCrewProfile(id, editedProfile);
       } catch (apiError: any) {
         // Handle 422 validation errors specifically
@@ -307,7 +308,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         const initializedUpdatedProfile = {
           ...updateResponse.user,
           profile: updateResponse.user.profile || {},
-          physicalTraits: updateResponse.user.physical_traits || {},
+          physical_traits: updateResponse.user.physical_traits || {},
           contacts: updateResponse.user.contacts || {},
           employment: updateResponse.user.employment || {},
           education: updateResponse.user.education || [],

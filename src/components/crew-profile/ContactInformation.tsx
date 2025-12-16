@@ -62,6 +62,8 @@ export default function ContactInformation({
   const [currentBarangays, setCurrentBarangays] = useState<Barangay[]>([]);
   const [loadingGeography, setLoadingGeography] = useState(false);
   const [sameAsPermanent, setSameAsPermanent] = useState(false);
+  // Track if we're initializing edit mode to prevent clearing existing data
+  const [isInitializing, setIsInitializing] = useState(false);
 
   // Load regions on component mount
   useEffect(() => {
@@ -91,6 +93,9 @@ export default function ContactInformation({
       setCurrentProvinces([]);
       setCurrentCities([]);
       setCurrentBarangays([]);
+      setIsInitializing(false);
+    } else {
+      setIsInitializing(true);
     }
   }, [isEditing]);
 
@@ -108,6 +113,17 @@ export default function ContactInformation({
 
           if (response.success) {
             setPermanentProvinces(response.data);
+            // Only reset dependent dropdowns and fields if not initializing edit mode
+            if (!isInitializing) {
+              setPermanentCities([]);
+              setPermanentBarangays([]);
+              // Clear dependent fields in editedProfile only if user changed region
+              if (editedProfile) {
+                onInputChange("permanent_province", "");
+                onInputChange("permanent_city", "");
+                onInputChange("permanent_barangay", "");
+              }
+            }
           }
         } catch (error) {
           console.error("Error loading permanent provinces:", error);
@@ -136,6 +152,15 @@ export default function ContactInformation({
 
           if (response.success) {
             setPermanentCities(response.data);
+            // Only reset dependent dropdowns and fields if not initializing edit mode
+            if (!isInitializing) {
+              setPermanentBarangays([]);
+              // Clear dependent fields in editedProfile only if user changed province
+              if (editedProfile) {
+                onInputChange("permanent_city", "");
+                onInputChange("permanent_barangay", "");
+              }
+            }
           }
         } catch (error) {
           console.error("Error loading permanent cities:", error);
@@ -160,6 +185,10 @@ export default function ContactInformation({
 
           if (response.success) {
             setPermanentBarangays(response.data);
+            // Only clear dependent fields if not initializing edit mode
+            if (!isInitializing && editedProfile) {
+              onInputChange("permanent_barangay", "");
+            }
           }
         } catch (error) {
           console.error("Error loading permanent barangays:", error);
@@ -171,6 +200,36 @@ export default function ContactInformation({
 
     loadPermanentBarangays();
   }, [editedProfile?.permanent_city, profile.permanent_city]);
+
+  // Reset initialization flag after all geography data is loaded
+  useEffect(() => {
+    if (isInitializing && isEditing) {
+      const hasRegion =
+        editedProfile?.permanent_region || profile.permanent_region;
+      const hasProvince =
+        editedProfile?.permanent_province || profile.permanent_province;
+      const hasCity = editedProfile?.permanent_city || profile.permanent_city;
+
+      // If we have all the geography data loaded that we need, stop initializing
+      if (
+        hasRegion &&
+        permanentProvinces.length > 0 &&
+        (!hasProvince || (hasProvince && permanentCities.length > 0)) &&
+        (!hasCity || (hasCity && permanentBarangays.length > 0))
+      ) {
+        const timer = setTimeout(() => setIsInitializing(false), 100);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [
+    isInitializing,
+    isEditing,
+    permanentProvinces,
+    permanentCities,
+    permanentBarangays,
+    editedProfile,
+    profile,
+  ]);
 
   // Load provinces when current region changes
   useEffect(() => {
@@ -328,6 +387,13 @@ export default function ContactInformation({
 
     if (permRegion && permProvince && permCity && permBarangay) {
       try {
+        console.log("Saving permanent address with:", {
+          permRegion,
+          permProvince,
+          permCity,
+          permBarangay,
+          existingId: profile.contacts?.permanent_address_id,
+        });
         const addressData = {
           user_id: profile.id,
           street_address:
@@ -369,13 +435,16 @@ export default function ContactInformation({
           ),
         };
 
+        console.log("Sending address data:", addressData);
         const response = await AddressService.createOrUpdateFromGeography(
           addressData,
           profile.contacts?.permanent_address_id
         );
+        console.log("Permanent address response:", response);
 
         if (response.success) {
           permanentAddressId = response.data.id;
+          console.log("Permanent address saved with ID:", permanentAddressId);
         }
       } catch (error) {
         throw error;
@@ -419,6 +488,14 @@ export default function ContactInformation({
     // Always create/update a separate current address record
     if (currRegion && currProvince && currCity && currBarangay) {
       try {
+        console.log("Saving current address with:", {
+          currRegion,
+          currProvince,
+          currCity,
+          currBarangay,
+          existingId: profile.contacts?.current_address_id,
+          sameAsPermanent,
+        });
         const currentAddressData = {
           user_id: profile.id,
           street_address: currStreet,
@@ -471,14 +548,17 @@ export default function ContactInformation({
           ),
         };
 
+        console.log("Sending current address data:", currentAddressData);
         const currentResponse =
           await AddressService.createOrUpdateFromGeography(
             currentAddressData,
             sameAsPermanent ? undefined : profile.contacts?.current_address_id
           );
+        console.log("Current address response:", currentResponse);
 
         if (currentResponse.success) {
           currentAddressId = currentResponse.data.id;
+          console.log("Current address saved with ID:", currentAddressId);
         }
       } catch (error) {
         throw error;
@@ -703,30 +783,25 @@ export default function ContactInformation({
                   try {
                     // Check user role to determine save behavior
                     const currentUser = AuthService.getStoredUser();
-                    const isAdmin = currentUser?.is_crew === 0;
+                    console.log("Current User:", currentUser);
+                    const isAdmin = currentUser?.is_crew === false;
 
                     if (isAdmin) {
                       // Admin can save addresses directly
                       const addressResult = await handleSaveAddresses();
 
-                      // Call onSave to save other profile changes
-                      onSave();
-
-                      // Log success with address ID for debugging
-                      console.log("Address saved successfully:", {
-                        permanentAddressId: addressResult.permanentAddressId,
-                        currentAddressId: addressResult.currentAddressId,
-                      });
+                      toast.success(
+                        "Contact information updated successfully!"
+                      );
                     } else {
                       // Crew member: All changes go through pre-approval system
-                      // Don't save addresses directly, let the main profile page handle the approval workflow
                       onSave();
                     }
                   } catch (error) {
                     // Address saving failed (for admin) or approval submission failed (for crew)
                     console.error("Save operation failed:", error);
                     const errorMessage =
-                      AuthService.getStoredUser()?.is_crew === 0
+                      AuthService.getStoredUser()?.is_crew === false
                         ? "Failed to save address information"
                         : "Failed to submit update request";
                     toast.error(errorMessage);
@@ -741,7 +816,7 @@ export default function ContactInformation({
                     <span>
                       {(() => {
                         const currentUser = AuthService.getStoredUser();
-                        const isAdmin = currentUser?.is_crew === 0;
+                        const isAdmin = currentUser?.is_crew === false;
                         return isAdmin ? "Saving..." : "Submitting...";
                       })()}
                     </span>
@@ -752,7 +827,7 @@ export default function ContactInformation({
                     <span>
                       {(() => {
                         const currentUser = AuthService.getStoredUser();
-                        const isAdmin = currentUser?.is_crew === 0;
+                        const isAdmin = currentUser?.is_crew === false;
                         return isAdmin ? "Save" : "Submit for Approval";
                       })()}
                     </span>
