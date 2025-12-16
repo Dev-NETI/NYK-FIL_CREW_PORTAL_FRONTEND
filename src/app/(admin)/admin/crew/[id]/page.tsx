@@ -157,23 +157,50 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     loadData();
   }, [id]);
 
-  const handleEdit = () => {
+  const handleEdit = (section?: string) => {
+    if (!profile) return;
+
     setIsEditing(true);
-    setValidationErrors({}); // Clear validation errors when starting edit
-    if (profile) {
-      // Ensure all nested objects are properly initialized
-      const editableProfile = {
-        ...profile,
-        profile: profile.profile || {},
-        physical_traits: profile.physical_traits || {},
-        contacts: profile.contacts || {},
-        employment: profile.employment || {},
-        education: profile.education || [],
-      };
-      setEditedProfile(editableProfile);
+    setValidationErrors({});
+
+    // Create edited profile with address fields properly populated
+    const newEditedProfile = { ...profile };
+
+    // If editing contact section, populate address fields from relationships
+    if (section === "contact") {
+      // Populate permanent address fields
+      if (profile.permanent_address) {
+        newEditedProfile.permanent_region = profile.permanent_address.region_id;
+        newEditedProfile.permanent_province =
+          profile.permanent_address.province_id;
+        newEditedProfile.permanent_city = profile.permanent_address.city_id;
+        newEditedProfile.permanent_barangay = profile.permanent_address.brgy_id;
+        newEditedProfile.permanent_street =
+          profile.permanent_address.street_address;
+        newEditedProfile.permanent_postal_code =
+          profile.permanent_address.zip_code;
+      }
+
+      // Populate current address fields
+      if (profile.current_address) {
+        newEditedProfile.current_region = profile.current_address.region_id;
+        newEditedProfile.current_province = profile.current_address.province_id;
+        newEditedProfile.current_city = profile.current_address.city_id;
+        newEditedProfile.current_barangay = profile.current_address.brgy_id;
+        newEditedProfile.current_street =
+          profile.current_address.street_address;
+        newEditedProfile.current_postal_code = profile.current_address.zip_code;
+      }
     } else {
-      setEditedProfile(null);
+      // Ensure all nested objects are properly initialized
+      newEditedProfile.profile = newEditedProfile.profile || {};
+      newEditedProfile.physical_traits = newEditedProfile.physical_traits || {};
+      newEditedProfile.contacts = newEditedProfile.contacts || {};
+      newEditedProfile.employment = newEditedProfile.employment || {};
+      newEditedProfile.education = newEditedProfile.education || [];
     }
+
+    setEditedProfile(newEditedProfile);
   };
 
   const handleCancel = () => {
@@ -774,7 +801,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     isEditing={isEditing}
                     saving={saving}
                     canEdit={hasRole("Manage Crew Basic Info")}
-                    onEdit={handleEdit}
+                    onEdit={() => handleEdit("basic")}
                     onSave={handleSave}
                     onCancel={handleCancel}
                     onNestedInputChange={handleNestedInputChange}
@@ -790,7 +817,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     isEditing={isEditing}
                     saving={saving}
                     canEdit={hasRole("Manage Crew Physical Info")}
-                    onEdit={handleEdit}
+                    onEdit={() => handleEdit("physical")}
                     onSave={handleSave}
                     onCancel={handleCancel}
                     onNestedInputChange={handleNestedInputChange}
@@ -805,7 +832,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     isEditing={isEditing}
                     saving={saving}
                     canEdit={hasRole("Manage Crew Contact Info")}
-                    onEdit={handleEdit}
+                    onEdit={() => handleEdit("contact")}
                     onSave={handleSave}
                     onCancel={handleCancel}
                     onInputChange={handleInputChange}
