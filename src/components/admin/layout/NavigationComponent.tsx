@@ -33,6 +33,7 @@ export default function NavigationComponent({
     );
   };
 
+
   // Navigation links array for easy management
   const navigationLinks = [
     {
@@ -69,6 +70,13 @@ export default function NavigationComponent({
       label: "Reports",
       isActive: pathname.startsWith("/admin/reports"),
       requiredRole: "Reports",
+    },
+    {
+      href: "/admin/appointment",
+      icon: "bi-calendar-event",
+      label: "Appointments",
+      isActive: pathname.startsWith("/admin/appointment"),
+      requiredRole: 'Appointments',
     },
   ].filter((link) => hasRole(link.requiredRole));
 
