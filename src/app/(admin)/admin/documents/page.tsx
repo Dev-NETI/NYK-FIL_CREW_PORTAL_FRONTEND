@@ -9,15 +9,18 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Award,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { EmploymentDocumentApprovalService } from "@/services/employment-document-approval";
 import { TravelDocumentApprovalService } from "@/services/travel-document-approval";
+import { CrewCertificateApprovalService } from "@/services/crew-certificate-approval";
 
 export default function DocumentsPage() {
   const router = useRouter();
   const [pendingEmploymentCount, setPendingEmploymentCount] = useState(0);
   const [pendingTravelCount, setPendingTravelCount] = useState(0);
+  const [pendingCertificateCount, setPendingCertificateCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +37,10 @@ export default function DocumentsPage() {
       const travelUpdates =
         await TravelDocumentApprovalService.getPendingUpdates();
       setPendingTravelCount(travelUpdates.length);
+
+      const certificateUpdates =
+        await CrewCertificateApprovalService.getPendingUpdates();
+      setPendingCertificateCount(certificateUpdates.length);
     } catch (error) {
       console.error("Error loading pending counts:", error);
     } finally {
@@ -102,9 +109,8 @@ export default function DocumentsPage() {
 
   const documentCards = [
     {
-      title: "Employment Document Approvals",
-      description:
-        "Review and approve crew employment document update requests",
+      title: "Personal Document Approvals",
+      description: "Review and approve crew personal document update requests",
       icon: FileCheck,
       color: "blue",
       gradient: "from-blue-500 to-indigo-600",
@@ -123,6 +129,17 @@ export default function DocumentsPage() {
       hoverGradient: "from-purple-100 to-pink-100",
       route: "/admin/documents/travel-document-approvals",
       pendingCount: pendingTravelCount,
+    },
+    {
+      title: "Certificate Approvals",
+      description: "Review and approve crew certificate update requests",
+      icon: Award,
+      color: "green",
+      gradient: "from-green-500 to-emerald-600",
+      bgGradient: "from-green-50 to-emerald-50",
+      hoverGradient: "from-green-100 to-emerald-100",
+      route: "/admin/documents/certificate-approvals",
+      pendingCount: pendingCertificateCount,
     },
   ];
 
@@ -147,7 +164,9 @@ export default function DocumentsPage() {
               </div>
 
               {!loading &&
-                (pendingEmploymentCount > 0 || pendingTravelCount > 0) && (
+                (pendingEmploymentCount > 0 ||
+                  pendingTravelCount > 0 ||
+                  pendingCertificateCount > 0) && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -160,7 +179,9 @@ export default function DocumentsPage() {
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-gray-900">
-                          {pendingEmploymentCount + pendingTravelCount}
+                          {pendingEmploymentCount +
+                            pendingTravelCount +
+                            pendingCertificateCount}
                         </div>
                         <div className="text-sm text-gray-600">
                           Pending Requests
@@ -176,7 +197,7 @@ export default function DocumentsPage() {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
             {documentCards.map((card, index) => {
               const Icon = card.icon;
@@ -293,7 +314,7 @@ export default function DocumentsPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
                 Quick Overview
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200"
@@ -307,7 +328,7 @@ export default function DocumentsPage() {
                         {pendingEmploymentCount}
                       </div>
                       <div className="text-sm text-gray-600">
-                        Employment Pending
+                        Personal Pending
                       </div>
                     </div>
                   </div>
@@ -338,11 +359,32 @@ export default function DocumentsPage() {
                 >
                   <div className="flex items-center gap-4">
                     <div className="bg-green-500 p-3 rounded-lg">
+                      <Clock className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-3xl font-bold text-gray-900">
+                        {pendingCertificateCount}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Certificate Pending
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-amber-500 p-3 rounded-lg">
                       <CheckCircle className="w-6 h-6 text-white" />
                     </div>
                     <div>
                       <div className="text-3xl font-bold text-gray-900">
-                        {pendingEmploymentCount + pendingTravelCount}
+                        {pendingEmploymentCount +
+                          pendingTravelCount +
+                          pendingCertificateCount}
                       </div>
                       <div className="text-sm text-gray-600">Total Pending</div>
                     </div>

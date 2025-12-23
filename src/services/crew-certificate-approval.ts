@@ -20,40 +20,40 @@ export interface UserProfile {
   updated_at: string;
 }
 
-export interface TravelDocumentType {
+export interface Certificate {
   id: number;
+  certificate_type_id: number;
   name: string;
+  code: string;
+  stcw_type: string | null;
   description: string | null;
-  icon: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export interface TravelDocument {
+export interface CrewCertificate {
   id: number;
+  certificate_id: number;
   crew_id: string;
-  travel_document_type_id: number;
-  id_no: string;
-  place_of_issue: string;
-  date_of_issue: string;
-  expiration_date: string;
-  remaining_pages?: number;
-  visa_type?: string;
-  is_US_VISA: boolean;
+  grade: string | null;
+  rank_permitted: string | null;
+  certificate_no: string;
+  issued_by: string;
+  date_issued: string;
+  expiry_date: string | null;
   file_path: string | null;
   file_ext: string | null;
   created_at: string;
   updated_at: string;
   modified_by: string | null;
-  // Relationships are now in camelCase from API Resource
-  userProfile?: UserProfile;
-  travelDocumentType?: TravelDocumentType;
+  crew?: UserProfile;
+  certificate?: Certificate;
 }
 
-export interface TravelDocumentUpdate {
+export interface CrewCertificateUpdate {
   id: number;
-  travel_document_id: number;
-  crew_id: number;
+  crew_certificate_id: number | null;
+  crew_id: string;
   original_data: Record<string, any>;
   updated_data: Record<string, any>;
   status: "pending" | "approved" | "rejected";
@@ -63,53 +63,49 @@ export interface TravelDocumentUpdate {
   created_at: string;
   updated_at: string;
   modified_by: string | null;
-  travelDocument?: TravelDocument;
-  userProfile?: UserProfile;
+  crew_certificate?: CrewCertificate | null;
+  user_profile?: UserProfile;
 }
 
 export interface ApprovalResponse {
   success: boolean;
   message: string;
-  data?: TravelDocumentUpdate;
+  data?: CrewCertificateUpdate;
 }
 
 export interface RejectRequest {
   rejection_reason: string;
 }
 
-export class TravelDocumentApprovalService {
+export class CrewCertificateApprovalService {
   /**
    * Get all pending update requests
    */
-  static async getPendingUpdates(): Promise<TravelDocumentUpdate[]> {
-    const response = await api.get(
-      "/travel-document-updates"
+  static async getPendingUpdates(): Promise<CrewCertificateUpdate[]> {
+    const response = await api.get<CrewCertificateUpdate[]>(
+      "/crew-certificate-updates"
     );
-    // Laravel Resource Collections wrap data in { data: [...] }
-    const data = response.data;
-    return Array.isArray(data) ? data : (data.data || []);
+    return response.data;
   }
 
   /**
    * Get all update requests (pending, approved, rejected)
    */
-  static async getAllUpdates(): Promise<TravelDocumentUpdate[]> {
-    const response = await api.get(
-      "/travel-document-updates/all"
+  static async getAllUpdates(): Promise<CrewCertificateUpdate[]> {
+    const response = await api.get<CrewCertificateUpdate[]>(
+      "/crew-certificate-updates/all"
     );
-    // Laravel Resource Collections wrap data in { data: [...] }
-    const data = response.data;
-    return Array.isArray(data) ? data : (data.data || []);
+    return response.data;
   }
 
   /**
    * Get single update request
    */
-  static async getUpdate(id: number): Promise<TravelDocumentUpdate> {
-    const response = await api.get<{ data?: TravelDocumentUpdate } & TravelDocumentUpdate>(
-      `/travel-document-updates/${id}`
+  static async getUpdate(id: number): Promise<CrewCertificateUpdate> {
+    const response = await api.get<CrewCertificateUpdate>(
+      `/crew-certificate-updates/${id}`
     );
-    return (response.data as any).data || response.data;
+    return response.data;
   }
 
   /**
@@ -117,7 +113,7 @@ export class TravelDocumentApprovalService {
    */
   static async approve(id: number): Promise<ApprovalResponse> {
     const response = await api.post<ApprovalResponse>(
-      `/travel-document-updates/${id}/approve`
+      `/crew-certificate-updates/${id}/approve`
     );
     return response.data;
   }
@@ -130,20 +126,22 @@ export class TravelDocumentApprovalService {
     data: RejectRequest
   ): Promise<ApprovalResponse> {
     const response = await api.post<ApprovalResponse>(
-      `/travel-document-updates/${id}/reject`,
+      `/crew-certificate-updates/${id}/reject`,
       data
     );
     return response.data;
   }
 
   /**
-   * Get update history for a specific travel document
+   * Get update history for a specific crew certificate
    */
-  static async getHistory(documentId: number): Promise<TravelDocumentUpdate[]> {
+  static async getHistory(
+    certificateId: number
+  ): Promise<CrewCertificateUpdate[]> {
     const response = await api.get<{
       success: boolean;
-      data: TravelDocumentUpdate[];
-    }>(`/travel-document-updates/history/${documentId}`);
+      data: CrewCertificateUpdate[];
+    }>(`/crew-certificate-updates/history/${certificateId}`);
     return response.data.data;
   }
 }

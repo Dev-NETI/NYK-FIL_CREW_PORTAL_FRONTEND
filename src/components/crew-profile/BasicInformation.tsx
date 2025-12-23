@@ -32,7 +32,6 @@ interface BasicInformationProps {
 // Field option configurations
 const GENDER_OPTIONS = ["Male", "Female"];
 const CIVIL_STATUS_OPTIONS = ["Single", "Married", "Divorced", "Widowed"];
-const BLOOD_TYPE_OPTIONS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 export default function BasicInformation({
   profile,
@@ -420,7 +419,7 @@ export default function BasicInformation({
             <i className="bi bi-calendar-heart text-blue-600 mr-2"></i>
             Birth & Personal Details
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {isEditing ? (
               <>
                 <div>
@@ -489,42 +488,6 @@ export default function BasicInformation({
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700 block mb-2">
-                    Blood Type
-                  </label>
-                  <FormControl
-                    fullWidth
-                    variant="outlined"
-                    error={hasValidationError("physicalTraits.blood_type")}
-                  >
-                    <Select
-                      value={getEditedNestedFieldValue(
-                        "physicalTraits",
-                        "blood_type"
-                      )}
-                      onChange={(e: SelectChangeEvent) =>
-                        onNestedInputChange(
-                          "physicalTraits",
-                          "blood_type",
-                          e.target.value
-                        )
-                      }
-                      displayEmpty
-                      renderValue={(value) => value || "Select Blood Type"}
-                    >
-                      <MenuItem value="">Select Blood Type</MenuItem>
-                      {BLOOD_TYPE_OPTIONS.map((option) => (
-                        <MenuItem key={option} value={option}>
-                          {option}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <ValidationError
-                    errors={getValidationError("physicalTraits.blood_type")}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-2">
                     Religion
                   </label>
                   <TextField
@@ -553,10 +516,6 @@ export default function BasicInformation({
                 <DisplayField
                   label="Birth Place"
                   value={profile.profile?.birth_place as string}
-                />
-                <DisplayField
-                  label="Blood Type"
-                  value={profile.physical_traits?.blood_type as string}
                 />
                 <DisplayField
                   label="Religion"

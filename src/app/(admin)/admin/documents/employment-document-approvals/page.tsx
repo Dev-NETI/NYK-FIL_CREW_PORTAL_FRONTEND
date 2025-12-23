@@ -104,10 +104,10 @@ export default function EmploymentDocumentApprovalsPage() {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 flex items-center">
                   <FileCheck className="w-8 h-8 mr-3 text-blue-600" />
-                  Employment Document Approvals
+                  Personal Document Approvals
                 </h1>
                 <p className="mt-2 text-gray-600">
-                  Review and approve crew employment document update requests
+                  Review and approve crew personal document update requests
                 </p>
               </div>
               {pendingCount > 0 && (

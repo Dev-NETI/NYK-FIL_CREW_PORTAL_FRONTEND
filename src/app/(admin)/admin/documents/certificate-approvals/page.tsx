@@ -2,19 +2,19 @@
 
 import { useState, useEffect } from "react";
 import {
-  TravelDocumentApprovalService,
-  TravelDocumentUpdate,
-} from "@/services/travel-document-approval";
+  CrewCertificateApprovalService,
+  CrewCertificateUpdate,
+} from "@/services/crew-certificate-approval";
 import toast from "react-hot-toast";
-import { Plane, AlertCircle } from "lucide-react";
-import TravelDocumentPendingUpdatesTable from "@/components/admin/documents/travel-document-approvals/TravelDocumentPendingUpdatesTable";
-import TravelDocumentApprovalModal from "@/components/admin/documents/travel-document-approvals/TravelDocumentApprovalModal";
+import { Award, AlertCircle } from "lucide-react";
+import PendingUpdatesTable from "@/components/admin/documents/certificate-approvals/PendingUpdatesTable";
+import ApprovalModal from "@/components/admin/documents/certificate-approvals/ApprovalModal";
 
-export default function TravelDocumentApprovalsPage() {
-  const [updates, setUpdates] = useState<TravelDocumentUpdate[]>([]);
+export default function CertificateApprovalsPage() {
+  const [updates, setUpdates] = useState<CrewCertificateUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUpdate, setSelectedUpdate] =
-    useState<TravelDocumentUpdate | null>(null);
+    useState<CrewCertificateUpdate | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState<
     "all" | "pending" | "approved" | "rejected"
@@ -29,8 +29,8 @@ export default function TravelDocumentApprovalsPage() {
       setLoading(true);
       const data =
         filter === "pending"
-          ? await TravelDocumentApprovalService.getPendingUpdates()
-          : await TravelDocumentApprovalService.getAllUpdates();
+          ? await CrewCertificateApprovalService.getPendingUpdates()
+          : await CrewCertificateApprovalService.getAllUpdates();
 
       const filtered =
         filter === "all" ? data : data.filter((u) => u.status === filter);
@@ -44,19 +44,16 @@ export default function TravelDocumentApprovalsPage() {
     }
   };
 
-  const handleViewUpdate = (update: TravelDocumentUpdate) => {
+  const handleViewUpdate = (update: CrewCertificateUpdate) => {
     setSelectedUpdate(update);
     setShowModal(true);
   };
 
   const handleApprove = async (id: number) => {
     try {
-      const response = await TravelDocumentApprovalService.approve(id);
+      const response = await CrewCertificateApprovalService.approve(id);
       if (response.success) {
-        toast.success(
-          "Document approved successfully! An email notification has been sent to the crew member.",
-          { duration: 5000 }
-        );
+        toast.success(response.message);
         setShowModal(false);
         await loadUpdates();
       } else {
@@ -69,14 +66,11 @@ export default function TravelDocumentApprovalsPage() {
 
   const handleReject = async (id: number, reason: string) => {
     try {
-      const response = await TravelDocumentApprovalService.reject(id, {
+      const response = await CrewCertificateApprovalService.reject(id, {
         rejection_reason: reason,
       });
       if (response.success) {
-        toast.success(
-          "Document rejected. An email notification with the rejection reason has been sent to the crew member.",
-          { duration: 5000 }
-        );
+        toast.success(response.message);
         setShowModal(false);
         await loadUpdates();
       } else {
@@ -93,7 +87,7 @@ export default function TravelDocumentApprovalsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading approval requests...</p>
         </div>
       </div>
@@ -109,11 +103,11 @@ export default function TravelDocumentApprovalsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                  <Plane className="w-8 h-8 mr-3 text-purple-600" />
-                  Travel Document Approvals
+                  <Award className="w-8 h-8 mr-3 text-blue-600" />
+                  Certificate Approvals
                 </h1>
                 <p className="mt-2 text-gray-600">
-                  Review and approve crew travel document update requests
+                  Review and approve crew certificate update requests
                 </p>
               </div>
               {pendingCount > 0 && (
@@ -141,7 +135,7 @@ export default function TravelDocumentApprovalsPage() {
                     onClick={() => setFilter(tab.key as any)}
                     className={`${
                       filter === tab.key
-                        ? "border-purple-500 text-purple-600"
+                        ? "border-blue-500 text-blue-600"
                         : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                     } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                   >
@@ -153,7 +147,7 @@ export default function TravelDocumentApprovalsPage() {
           </div>
 
           {/* Updates Table */}
-          <TravelDocumentPendingUpdatesTable
+          <PendingUpdatesTable
             updates={updates}
             onViewUpdate={handleViewUpdate}
           />
@@ -162,7 +156,7 @@ export default function TravelDocumentApprovalsPage() {
 
       {/* Approval Modal */}
       {showModal && selectedUpdate && (
-        <TravelDocumentApprovalModal
+        <ApprovalModal
           update={selectedUpdate}
           onClose={() => setShowModal(false)}
           onApprove={handleApprove}

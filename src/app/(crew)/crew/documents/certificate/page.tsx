@@ -3,8 +3,10 @@
 import { useState } from "react";
 import CertificateListComponent from "@/components/crew/documents/certificate/CertificateListComponent";
 import CrewCertificateFormComponent from "@/components/crew/documents/certificate/CrewCertificateFormComponent";
+import { useUser } from "@/hooks/useUser";
 
 export default function CertificatePage() {
+  const { user } = useUser();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -36,8 +38,8 @@ export default function CertificatePage() {
     setRefreshKey((prev) => prev + 1); // Trigger refresh of certificate list
   };
 
-  // TODO: Get actual crew_id from auth context
-  const crewId = "CR-001"; // Replace with actual crew_id
+  // Get crew_id from authenticated user
+  const crewId = user?.profile?.crew_id;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 pb-20">

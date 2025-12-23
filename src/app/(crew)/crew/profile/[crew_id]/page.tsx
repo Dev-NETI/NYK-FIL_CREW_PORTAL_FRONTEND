@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { UserService, NationalityService } from "@/services";
 import { AuthService } from "@/services";
+import { ProfileUpdateRequestService } from "@/services/profile-update-request";
 import { User } from "@/types/api";
 import { Nationality } from "@/services/nationality";
 import toast from "react-hot-toast";
@@ -95,7 +96,40 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     if (!profile) return;
 
     setEditingSection(section);
-    setEditedProfile({ ...profile });
+
+    // Create edited profile with address fields properly populated
+    const newEditedProfile = { ...profile };
+
+    // If editing contact section, populate address fields from relationships
+    if (section === "contact") {
+      // Populate permanent address fields
+      if (profile.permanent_address) {
+        newEditedProfile.permanent_region = profile.permanent_address.region_id;
+        newEditedProfile.permanent_province =
+          profile.permanent_address.province_id;
+        newEditedProfile.permanent_city = profile.permanent_address.city_id;
+        newEditedProfile.permanent_barangay = profile.permanent_address.brgy_id;
+        newEditedProfile.permanent_street =
+          profile.permanent_address.street_address;
+        newEditedProfile.permanent_postal_code =
+          profile.permanent_address.zip_code;
+      }
+
+      // Populate current address fields
+      if (profile.current_address) {
+        newEditedProfile.current_region = profile.current_address.region_id;
+        newEditedProfile.current_province = profile.current_address.province_id;
+        newEditedProfile.current_city = profile.current_address.city_id;
+        newEditedProfile.current_barangay = profile.current_address.brgy_id;
+        newEditedProfile.current_street =
+          profile.current_address.street_address;
+        newEditedProfile.current_postal_code = profile.current_address.zip_code;
+      }
+    }
+
+    setEditedProfile(newEditedProfile);
+
+    console.log(newEditedProfile);
     setValidationErrors({});
   };
 
@@ -106,62 +140,86 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   };
 
   const handleSave = async () => {
-    if (!editedProfile || !editingSection) return;
+    if (!editedProfile || !editingSection || !currentUser) return;
 
     try {
       setSaving(true);
       setValidationErrors({});
 
-      let response;
+      let requestedData;
       switch (editingSection) {
         case "basic":
-          response = await UserService.updateUserProfile(
-            editedProfile.id.toString(),
-            {
-              profile: editedProfile.profile,
-              physical_traits: editedProfile.physical_traits,
-            }
-          );
+          requestedData = {
+            profile: editedProfile.profile,
+            physical_traits: editedProfile.physical_traits,
+          };
           break;
         case "contact":
-          response = await UserService.updateUserProfile(
-            editedProfile.id.toString(),
-            {
-              contacts: editedProfile.contacts,
-              permanent_region: editedProfile.permanent_region,
-              permanent_province: editedProfile.permanent_province,
-              permanent_city: editedProfile.permanent_city,
-              permanent_barangay: editedProfile.permanent_barangay,
-              permanent_street: editedProfile.permanent_street,
-              permanent_postal_code: editedProfile.permanent_postal_code,
-              current_region: editedProfile.current_region,
-              current_province: editedProfile.current_province,
-              current_city: editedProfile.current_city,
-              current_barangay: editedProfile.current_barangay,
-              current_street: editedProfile.current_street,
-              current_postal_code: editedProfile.current_postal_code,
-            }
-          );
+          requestedData = {
+            contacts: editedProfile.contacts,
+            permanent_region: editedProfile.permanent_region,
+            permanent_province: editedProfile.permanent_province,
+            permanent_city: editedProfile.permanent_city,
+            permanent_barangay: editedProfile.permanent_barangay,
+            permanent_street: editedProfile.permanent_street,
+            permanent_postal_code: editedProfile.permanent_postal_code,
+            current_region: editedProfile.current_region,
+            current_province: editedProfile.current_province,
+            current_city: editedProfile.current_city,
+            current_barangay: editedProfile.current_barangay,
+            current_street: editedProfile.current_street,
+            current_postal_code: editedProfile.current_postal_code,
+          };
           break;
         case "physical":
-          response = await UserService.updateUserProfile(
-            editedProfile.id.toString(),
-            {
-              physical_traits: editedProfile.physical_traits,
-            }
-          );
+          requestedData = {
+            physical_traits: editedProfile.physical_traits,
+          };
+          break;
+        case "education":
+          requestedData = {
+            education: editedProfile.education,
+          };
           break;
         default:
           throw new Error("Invalid section");
       }
 
-      if (response.success && response.user) {
-        setProfile(response.user);
-        setEditingSection(null);
-        setEditedProfile(null);
-        toast.success("Profile updated successfully!");
+      // Check if user is admin - if so, allow direct update
+      if (currentUser.is_crew === 0) {
+        // Admin can update directly - keep original logic
+        const response = await UserService.updateUserProfile(
+          editedProfile.id.toString(),
+          requestedData
+        );
+
+        if (response.success && response.user) {
+          setProfile(response.user);
+          setEditingSection(null);
+          setEditedProfile(null);
+          toast.success("Profile updated successfully!");
+        } else {
+          throw new Error(response.message || "Failed to update profile");
+        }
       } else {
-        throw new Error(response.message || "Failed to update profile");
+        // Crew member - submit update request for approval
+        const response = await ProfileUpdateRequestService.submitUpdateRequest(
+          editedProfile.id,
+          editingSection,
+          requestedData
+        );
+
+        if (response.success) {
+          setEditingSection(null);
+          setEditedProfile(null);
+          toast.success(
+            "Profile update request submitted! Please wait for admin approval."
+          );
+        } else {
+          throw new Error(
+            response.message || "Failed to submit update request"
+          );
+        }
       }
     } catch (error: any) {
       console.error("Error saving profile:", error);
@@ -173,7 +231,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         const errorMessage =
           error?.response?.data?.message ||
           error?.message ||
-          "Failed to update profile";
+          "Failed to save profile changes";
         toast.error(errorMessage);
       }
     } finally {
@@ -354,8 +412,8 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                     label: "Basic Info",
                     icon: "bi-person-lines-fill",
                   },
-                  { key: "contact", label: "Contact", icon: "bi-geo-alt" },
                   { key: "physical", label: "Physical", icon: "bi-body-text" },
+                  { key: "contact", label: "Contact", icon: "bi-geo-alt" },
                   {
                     key: "education",
                     label: "Education",
@@ -402,21 +460,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                   />
                 )}
 
-                {activeSection === "contact" && (
-                  <ContactInformation
-                    profile={profile}
-                    editedProfile={editedProfile}
-                    isEditing={editingSection === "contact"}
-                    saving={saving}
-                    canEdit={canEdit}
-                    onEdit={() => handleEdit("contact")}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    onInputChange={handleInputChange}
-                    validationErrors={validationErrors}
-                  />
-                )}
-
                 {activeSection === "physical" && (
                   <PhysicalTraits
                     profile={profile}
@@ -428,6 +471,21 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                     onSave={handleSave}
                     onCancel={handleCancel}
                     onNestedInputChange={handleNestedInputChange}
+                    validationErrors={validationErrors}
+                  />
+                )}
+
+                {activeSection === "contact" && (
+                  <ContactInformation
+                    profile={profile}
+                    editedProfile={editedProfile}
+                    isEditing={editingSection === "contact"}
+                    saving={saving}
+                    canEdit={canEdit}
+                    onEdit={() => handleEdit("contact")}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    onInputChange={handleInputChange}
                     validationErrors={validationErrors}
                   />
                 )}

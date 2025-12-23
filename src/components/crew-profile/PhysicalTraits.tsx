@@ -1,7 +1,13 @@
 "use client";
 
 import { User } from "@/types/api";
-import { TextField } from "@mui/material";
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  SelectChangeEvent,
+} from "@mui/material";
 import ValidationError from "@/components/ui/ValidationError";
 import { useValidation } from "@/hooks/useValidation";
 
@@ -18,6 +24,8 @@ interface PhysicalTraitsProps {
   validationErrors?: Record<string, string[]>;
 }
 
+const BLOOD_TYPE_OPTIONS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
 export default function PhysicalTraits({
   profile,
   editedProfile,
@@ -31,7 +39,9 @@ export default function PhysicalTraits({
   validationErrors = {},
 }: PhysicalTraitsProps) {
   // Use validation hook for cleaner validation logic
-  const { getValidationError, hasValidationError } = useValidation({ validationErrors });
+  const { getValidationError, hasValidationError } = useValidation({
+    validationErrors,
+  });
 
   // Utility function to get edited nested field value
   const getEditedNestedFieldValue = (parent: string, field: string): string => {
@@ -60,7 +70,6 @@ export default function PhysicalTraits({
     </div>
   );
 
-
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -86,7 +95,9 @@ export default function PhysicalTraits({
                   ? "hover:bg-purple-700 active:bg-purple-800 shadow-sm active:shadow-none"
                   : "opacity-50 cursor-not-allowed"
               }`}
-              title={!canEdit ? "You don't have permission to edit this section" : ""}
+              title={
+                !canEdit ? "You don't have permission to edit this section" : ""
+              }
             >
               <i className="bi bi-pencil text-base"></i>
               <span>Edit Physical</span>
@@ -130,12 +141,18 @@ export default function PhysicalTraits({
               <TextField
                 label="Height (cm)"
                 type="number"
-                value={getEditedNestedFieldValue("physicalTraits", "height")}
-                onChange={(e) => onNestedInputChange("physicalTraits", "height", e.target.value)}
+                value={getEditedNestedFieldValue("physical_traits", "height")}
+                onChange={(e) =>
+                  onNestedInputChange(
+                    "physical_traits",
+                    "height",
+                    e.target.value
+                  )
+                }
                 fullWidth
                 variant="outlined"
                 placeholder="Enter height in cm"
-                error={hasValidationError("physicalTraits.height")}
+                error={hasValidationError("physical_traits.height")}
                 slotProps={{
                   htmlInput: {
                     min: 0,
@@ -143,7 +160,9 @@ export default function PhysicalTraits({
                   },
                 }}
               />
-              <ValidationError errors={getValidationError("physicalTraits.height")} />
+              <ValidationError
+                errors={getValidationError("physical_traits.height")}
+              />
             </div>
           ) : (
             <DisplayField
@@ -163,12 +182,18 @@ export default function PhysicalTraits({
               <TextField
                 label="Weight (kg)"
                 type="number"
-                value={getEditedNestedFieldValue("physicalTraits", "weight")}
-                onChange={(e) => onNestedInputChange("physicalTraits", "weight", e.target.value)}
+                value={getEditedNestedFieldValue("physical_traits", "weight")}
+                onChange={(e) =>
+                  onNestedInputChange(
+                    "physical_traits",
+                    "weight",
+                    e.target.value
+                  )
+                }
                 fullWidth
                 variant="outlined"
                 placeholder="Enter weight in kg"
-                error={hasValidationError("physicalTraits.weight")}
+                error={hasValidationError("physical_traits.weight")}
                 slotProps={{
                   htmlInput: {
                     min: 0,
@@ -176,7 +201,9 @@ export default function PhysicalTraits({
                   },
                 }}
               />
-              <ValidationError errors={getValidationError("physicalTraits.weight")} />
+              <ValidationError
+                errors={getValidationError("physical_traits.weight")}
+              />
             </div>
           ) : (
             <DisplayField
@@ -195,14 +222,25 @@ export default function PhysicalTraits({
             <div>
               <TextField
                 label="Eye Color"
-                value={getEditedNestedFieldValue("physicalTraits", "eye_color")}
-                onChange={(e) => onNestedInputChange("physicalTraits", "eye_color", e.target.value)}
+                value={getEditedNestedFieldValue(
+                  "physical_traits",
+                  "eye_color"
+                )}
+                onChange={(e) =>
+                  onNestedInputChange(
+                    "physical_traits",
+                    "eye_color",
+                    e.target.value
+                  )
+                }
                 fullWidth
                 variant="outlined"
                 placeholder="Enter eye color"
-                error={hasValidationError("physicalTraits.eye_color")}
+                error={hasValidationError("physical_traits.eye_color")}
               />
-              <ValidationError errors={getValidationError("physicalTraits.eye_color")} />
+              <ValidationError
+                errors={getValidationError("physical_traits.eye_color")}
+              />
             </div>
           ) : (
             <DisplayField
@@ -217,19 +255,76 @@ export default function PhysicalTraits({
             <div>
               <TextField
                 label="Hair Color"
-                value={getEditedNestedFieldValue("physicalTraits", "hair_color")}
-                onChange={(e) => onNestedInputChange("physicalTraits", "hair_color", e.target.value)}
+                value={getEditedNestedFieldValue(
+                  "physical_traits",
+                  "hair_color"
+                )}
+                onChange={(e) =>
+                  onNestedInputChange(
+                    "physical_traits",
+                    "hair_color",
+                    e.target.value
+                  )
+                }
                 fullWidth
                 variant="outlined"
                 placeholder="Enter hair color"
-                error={hasValidationError("physicalTraits.hair_color")}
+                error={hasValidationError("physical_traits.hair_color")}
               />
-              <ValidationError errors={getValidationError("physicalTraits.hair_color")} />
+              <ValidationError
+                errors={getValidationError("physical_traits.hair_color")}
+              />
             </div>
           ) : (
             <DisplayField
               label="Hair Color"
               value={profile.physical_traits?.hair_color}
+            />
+          )}
+        </div>
+
+        <div>
+          {isEditing ? (
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Blood Type
+              </label>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                error={hasValidationError("physical_traits.blood_type")}
+              >
+                <Select
+                  value={getEditedNestedFieldValue(
+                    "physical_traits",
+                    "blood_type"
+                  )}
+                  onChange={(e: SelectChangeEvent) =>
+                    onNestedInputChange(
+                      "physical_traits",
+                      "blood_type",
+                      e.target.value
+                    )
+                  }
+                  displayEmpty
+                  renderValue={(value) => value || "Select Blood Type"}
+                >
+                  <MenuItem value="">Select Blood Type</MenuItem>
+                  {BLOOD_TYPE_OPTIONS.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <ValidationError
+                errors={getValidationError("physical_traits.blood_type")}
+              />
+            </div>
+          ) : (
+            <DisplayField
+              label="Blood Type"
+              value={profile.physical_traits?.blood_type}
             />
           )}
         </div>

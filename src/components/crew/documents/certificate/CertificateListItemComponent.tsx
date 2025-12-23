@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { CrewCertificate } from "@/services/crew-certificate";
+import CertificateViewModal from "./CertificateViewModal";
 
 interface Certificate {
   id: number;
@@ -13,7 +15,10 @@ interface Certificate {
 
 interface CertificateListItemComponentProps {
   certificate: Certificate;
+  certificateData?: CrewCertificate;
   onUpdate?: () => void;
+  onEditClick?: (certificate: CrewCertificate) => void;
+  onDeleteClick?: (certificate: CrewCertificate) => void;
 }
 
 // Helper functions
@@ -43,6 +48,14 @@ function getStatusColor(status: string) {
         icon: "text-red-600",
         bg: "bg-red-600",
       };
+    case "pending_approval":
+      return {
+        badge: "bg-orange-100 text-orange-800 border-orange-300",
+        card: "border-orange-200",
+        gradient: "from-orange-50 to-orange-100",
+        icon: "text-orange-600",
+        bg: "bg-orange-600",
+      };
     default:
       return {
         badge: "bg-gray-100 text-gray-800 border-gray-300",
@@ -62,6 +75,8 @@ function getStatusLabel(status: string) {
       return "Expiring Soon";
     case "expired":
       return "Expired";
+    case "pending_approval":
+      return "Pending Approval";
     default:
       return "Unknown";
   }
@@ -69,18 +84,24 @@ function getStatusLabel(status: string) {
 
 export default function CertificateListItemComponent({
   certificate,
+  certificateData,
   onUpdate,
+  onEditClick,
+  onDeleteClick,
 }: CertificateListItemComponentProps) {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
   const startOffsetRef = useRef(0);
 
   const colors = getStatusColor(certificate.status);
+  const isPending = certificate.status === "pending_approval";
 
   // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (isPending) return; // Disable swipe for pending certificates
     setIsDragging(true);
     startXRef.current = e.touches[0].clientX;
     startOffsetRef.current = swipeOffset;
@@ -102,9 +123,9 @@ export default function CertificateListItemComponent({
     if (!isDragging) return;
     setIsDragging(false);
 
-    // Snap to open (-150px) or closed (0) based on threshold
-    if (swipeOffset < -75) {
-      setSwipeOffset(-150);
+    // Snap to open (-120px for 2 buttons) or closed (0) based on threshold
+    if (swipeOffset < -60) {
+      setSwipeOffset(-120);
     } else {
       setSwipeOffset(0);
     }
@@ -112,6 +133,7 @@ export default function CertificateListItemComponent({
 
   // Mouse handlers
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (isPending) return; // Disable swipe for pending certificates
     setIsDragging(true);
     startXRef.current = e.clientX;
     startOffsetRef.current = swipeOffset;
@@ -134,9 +156,9 @@ export default function CertificateListItemComponent({
       if (!isDragging) return;
       setIsDragging(false);
 
-      // Snap to open (-150px) or closed (0) based on threshold
-      if (swipeOffset < -75) {
-        setSwipeOffset(-150);
+      // Snap to open (-120px for 2 buttons) or closed (0) based on threshold
+      if (swipeOffset < -60) {
+        setSwipeOffset(-120);
       } else {
         setSwipeOffset(0);
       }
@@ -152,107 +174,124 @@ export default function CertificateListItemComponent({
     }
   }, [isDragging, swipeOffset]);
 
-  const handleView = () => {
-    setSwipeOffset(0);
-    // TODO: Implement view functionality
-    console.log("View certificate:", certificate.id);
+  const handleCardClick = () => {
+    // Don't open modal if pending or currently swiping/dragging
+    if (isPending) return;
+    if (swipeOffset === 0 && !isDragging) {
+      setIsViewModalOpen(true);
+    }
   };
 
-  const handleEdit = () => {
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
     setSwipeOffset(0);
-    // TODO: Implement edit functionality
-    console.log("Edit certificate:", certificate.id);
+    if (certificateData && onEditClick) {
+      onEditClick(certificateData);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
     setSwipeOffset(0);
-    // TODO: Implement delete functionality
-    console.log("Delete certificate:", certificate.id);
+    if (certificateData && onDeleteClick) {
+      onDeleteClick(certificateData);
+    }
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
-      {/* Action buttons background (shown when swiped) */}
-      <div className="absolute inset-0 flex items-stretch justify-end bg-gray-100">
-        <button
-          onClick={handleView}
-          disabled={!certificate.hasFile}
-          className="w-16 flex items-center justify-center bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <i className="bi bi-eye text-xl"></i>
-        </button>
-        <button
-          onClick={handleEdit}
-          className="w-16 flex items-center justify-center bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-        >
-          <i className="bi bi-pencil-square text-xl"></i>
-        </button>
-        <button
-          onClick={handleDelete}
-          className="w-16 flex items-center justify-center bg-red-600 text-white hover:bg-red-700 transition-colors"
-        >
-          <i className="bi bi-trash text-xl"></i>
-        </button>
-      </div>
+    <>
+      <div className="relative overflow-hidden rounded-xl">
+        {/* Action buttons background (shown when swiped) */}
+        <div className="absolute inset-0 flex items-stretch justify-end bg-gray-100">
+          <button
+            onClick={handleEdit}
+            className="w-20 flex items-center justify-center bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          >
+            <i className="bi bi-pencil-square text-xl"></i>
+          </button>
+          <button
+            onClick={handleDelete}
+            className="w-20 flex items-center justify-center bg-red-600 text-white hover:bg-red-700 transition-colors"
+          >
+            <i className="bi bi-trash text-xl"></i>
+          </button>
+        </div>
 
-      {/* Main content (swipeable) */}
-      <div
-        ref={containerRef}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onMouseDown={handleMouseDown}
-        style={{
-          transform: `translateX(${swipeOffset}px)`,
-          transition: isDragging ? "none" : "transform 0.3s ease-out",
-        }}
-        className={`bg-gradient-to-r ${colors.gradient} rounded-xl p-5 border ${
-          colors.card
-        } hover:shadow-lg transition-all duration-300 ${
-          !isDragging && "cursor-grab active:cursor-grabbing"
-        } relative`}
-      >
-        <div className="flex items-center gap-4">
-          {/* Icon */}
-          <div className="flex-shrink-0">
-            <div
-              className={`w-12 h-12 sm:w-14 sm:h-14 ${colors.bg} rounded-xl flex items-center justify-center shadow-md`}
-            >
-              <i className="bi bi-award text-white text-xl sm:text-2xl"></i>
-            </div>
-          </div>
-
-          {/* Certificate name and status */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
-                {certificate.name}
-              </h3>
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${colors.badge}`}
+        {/* Main content (swipeable and clickable) */}
+        <div
+          ref={containerRef}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onClick={handleCardClick}
+          style={{
+            transform: `translateX(${swipeOffset}px)`,
+            transition: isDragging ? "none" : "transform 0.3s ease-out",
+          }}
+          className={`bg-gradient-to-r ${
+            colors.gradient
+          } rounded-xl p-3 border ${
+            colors.card
+          } transition-all duration-300 ${
+            isPending
+              ? "opacity-60 cursor-not-allowed"
+              : swipeOffset === 0
+              ? "cursor-pointer hover:shadow-lg"
+              : "cursor-grab active:cursor-grabbing"
+          } relative`}
+        >
+          <div className="flex items-center gap-3">
+            {/* Icon */}
+            <div className="flex-shrink-0">
+              <div
+                className={`w-10 h-10 sm:w-12 sm:h-12 ${colors.bg} rounded-lg flex items-center justify-center shadow-md`}
               >
-                {getStatusLabel(certificate.status)}
-              </span>
+                <i className="bi bi-award text-white text-base sm:text-lg"></i>
+              </div>
             </div>
-            {certificate.hasFile ? (
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                <i className="bi bi-paperclip mr-1"></i>
-                Document attached
-              </p>
-            ) : (
-              <p className="text-xs sm:text-sm text-red-600 mt-1 font-medium">
-                <i className="bi bi-exclamation-circle mr-1"></i>
-                No document attached
-              </p>
-            )}
-          </div>
 
-          {/* Chevron indicator */}
-          <div className="flex-shrink-0">
-            <i className="bi bi-chevron-right text-gray-400 text-xl"></i>
+            {/* Certificate name and status */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900">
+                  {certificate.name}
+                </h3>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${colors.badge}`}
+                >
+                  {getStatusLabel(certificate.status)}
+                </span>
+              </div>
+              {certificate.hasFile ? (
+                <p className="text-[10px] sm:text-xs text-gray-600 mt-0.5">
+                  <i className="bi bi-paperclip mr-1"></i>
+                  Document attached
+                </p>
+              ) : (
+                <p className="text-[10px] sm:text-xs text-red-600 mt-0.5 font-medium">
+                  <i className="bi bi-exclamation-circle mr-1"></i>
+                  No document attached
+                </p>
+              )}
+            </div>
+
+            {/* Chevron indicator */}
+            <div className="flex-shrink-0">
+              <i className="bi bi-chevron-right text-gray-400 text-lg"></i>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* View Modal */}
+      {certificateData && (
+        <CertificateViewModal
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          certificate={certificateData}
+        />
+      )}
+    </>
   );
 }

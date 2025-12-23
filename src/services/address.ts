@@ -16,6 +16,8 @@ export interface Address {
   province_id: string;
   region_id: string;
   zip_code: string | null;
+  type: 'permanent' | 'current';
+  full_address?: string;
   region?: Region;
   province?: Province;
   city?: City;
@@ -32,6 +34,8 @@ export interface CreateAddressRequest {
   province_id: string;
   region_id: string;
   zip_code?: string;
+  type: 'permanent' | 'current';
+  full_address?: string;
 }
 
 export interface UpdateAddressRequest extends CreateAddressRequest {}
@@ -45,6 +49,51 @@ export interface AddressListResponse extends BaseApiResponse {
 }
 
 export class AddressService {
+  /**
+   * Generate full address string from address components
+   */
+  private static generateFullAddress(
+    streetAddress: string | undefined,
+    barangayDesc: string,
+    cityDesc: string, 
+    provinceDesc: string,
+    regionDesc: string,
+    zipCode: string | undefined
+  ): string {
+    const parts: string[] = [];
+    
+    // Add street address if provided
+    if (streetAddress?.trim()) {
+      parts.push(streetAddress.trim());
+    }
+    
+    // Add barangay
+    if (barangayDesc?.trim()) {
+      parts.push(barangayDesc.trim());
+    }
+    
+    // Add city/municipality
+    if (cityDesc?.trim()) {
+      parts.push(cityDesc.trim());
+    }
+    
+    // Add province
+    if (provinceDesc?.trim()) {
+      parts.push(provinceDesc.trim());
+    }
+    
+    // Add region
+    if (regionDesc?.trim()) {
+      parts.push(regionDesc.trim());
+    }
+    
+    // Add zip code if provided
+    if (zipCode?.trim()) {
+      parts.push(zipCode.trim());
+    }
+    
+    return parts.join(', ');
+  }
   /**
    * Get all addresses for the authenticated user
    */
@@ -97,9 +146,29 @@ export class AddressService {
       city_code: string;
       barangay_code: string;
       zip_code?: string;
+      type: 'permanent' | 'current';
+      // Add descriptive fields for full address generation
+      region_desc?: string;
+      province_desc?: string;
+      city_desc?: string;
+      barangay_desc?: string;
     },
     existingAddressId?: number
   ): Promise<AddressResponse> {
+    // Generate full address if descriptive data is provided
+    let fullAddress: string | undefined;
+    if (addressData.region_desc && addressData.province_desc && 
+        addressData.city_desc && addressData.barangay_desc) {
+      fullAddress = this.generateFullAddress(
+        addressData.street_address,
+        addressData.barangay_desc,
+        addressData.city_desc,
+        addressData.province_desc,
+        addressData.region_desc,
+        addressData.zip_code
+      );
+    }
+
     const payload: CreateAddressRequest = {
       user_id: addressData.user_id,
       street_address: addressData.street_address,
@@ -108,6 +177,8 @@ export class AddressService {
       city_id: addressData.city_code,
       brgy_id: addressData.barangay_code,
       zip_code: addressData.zip_code,
+      type: addressData.type,
+      full_address: fullAddress,
     };
 
     if (existingAddressId) {

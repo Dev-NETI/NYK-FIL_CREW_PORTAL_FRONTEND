@@ -15,7 +15,7 @@ export default function DocumentsPage() {
   const documentCategories = [
     {
       id: "employment",
-      title: "Employment Documents",
+      title: "Personal Documents",
       description: "Contracts, COC, COE, and employment-related documents",
       icon: "💼",
       path: "/crew/documents/employment-document",
