@@ -17,10 +17,12 @@ export default function AppointmentModule() {
   ];
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Appointment Management</h1>
+    <div className="p-4 sm:p-6">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
+        Appointment Management
+      </h1>
 
-      <div className="flex space-x-4 border-b mb-6">
+      <div className="hidden md:flex space-x-4 border-b mb-6">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -34,6 +36,22 @@ export default function AppointmentModule() {
             {tab.label}
           </button>
         ))}
+      </div>
+      <div className="md:hidden mb-6">
+        <label className="text-xs font-medium text-gray-500 mb-1 block">
+          Select tab
+        </label>
+        <select
+          value={activeTab}
+          onChange={(e) => setActiveTab(e.target.value)}
+          className="w-full border rounded-lg px-3 py-2 text-sm bg-white"
+        >
+          {tabs.map((tab) => (
+            <option key={tab.key} value={tab.key}>
+              {tab.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {activeTab === "appointments" && <AppointmentList />}

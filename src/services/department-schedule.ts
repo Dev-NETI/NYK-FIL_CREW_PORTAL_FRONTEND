@@ -18,29 +18,54 @@ export interface DepartmentScheduleResponse extends BaseApiResponse {
   data: DepartmentSchedule;
 }
 
+export type DepartmentScheduleCreatePayload = {
+  date: string;
+  total_slots: number;
+  opening_time?: string | null;
+  closing_time?: string | null;
+  slot_duration_minutes?: number | null;
+};
+
+export type DepartmentScheduleUpdatePayload = {
+  total_slots?: number | null;
+  opening_time?: string | null;
+  closing_time?: string | null;
+  slot_duration_minutes?: number | null;
+};
+
 export class DepartmentScheduleService {
   static async getAll(): Promise<DepartmentScheduleListResponse> {
-    const response = await api.get("/admin/department-schedules");
+    const response = await api.get<DepartmentScheduleListResponse>(
+      "/admin/department-schedules"
+    );
     return response.data;
   }
 
   static async create(
-    data: Partial<DepartmentSchedule>
+    data: DepartmentScheduleCreatePayload
   ): Promise<DepartmentScheduleResponse> {
-    const response = await api.post("/admin/department-schedules", data);
+    const response = await api.post<DepartmentScheduleResponse>(
+      "/admin/department-schedules",
+      data
+    );
     return response.data;
   }
 
   static async update(
     id: number,
-    data: Partial<DepartmentSchedule>
+    data: DepartmentScheduleUpdatePayload
   ): Promise<DepartmentScheduleResponse> {
-    const response = await api.put(`/admin/department-schedules/${id}`, data);
+    const response = await api.put<DepartmentScheduleResponse>(
+      `/admin/department-schedules/${id}`,
+      data
+    );
     return response.data;
   }
 
   static async delete(id: number): Promise<BaseApiResponse> {
-    const response = await api.delete(`/admin/department-schedules/${id}`);
+    const response = await api.delete<BaseApiResponse>(
+      `/admin/department-schedules/${id}`
+    );
     return response.data;
   }
 }

@@ -39,7 +39,7 @@ export default function QuickAccess({ currentUser, isLoaded = true }: QuickAcces
     {
       icon: "calendar-check",
       title: "Appointments",
-      href: "/appointment-schedule",
+      href: "/crew/appointment-schedule",
       color: "from-purple-500 to-pink-500",
       delay: "delay-300",
     },

@@ -1,9 +1,7 @@
 "use client";
 
-import {
-  CrewAppointmentType,
-  TimeSlotApi,
-} from "@/services/crew-appointments";
+import ValidationError from "@/components/ui/ValidationError";
+import { CrewAppointmentType, TimeSlotApi } from "@/services/crew-appointments";
 
 interface Department {
   id: number;
@@ -38,6 +36,9 @@ export default function BookingForm({
   onChangeAppointmentType,
   onChangePurpose,
 }: Props) {
+  const purposeError =
+    selectedSlot && !purpose.trim() ? "Purpose is required." : "";
+
   return (
     <div className="bg-white rounded-xl p-4 shadow space-y-4">
       <h3 className="text-lg font-semibold">Appointment Details</h3>
@@ -76,14 +77,12 @@ export default function BookingForm({
         onChange={(e) => onChangePurpose(e.target.value)}
         placeholder="Purpose of appointment"
         className={`w-full border rounded-lg p-2 text-sm ${
-          !purpose.trim() && selectedSlot ? "border-red-500" : ""
+          purposeError ? "border-red-500" : ""
         }`}
         disabled={loading}
       />
 
-      {!purpose.trim() && selectedSlot && (
-        <p className="text-xs text-red-500">Purpose is required.</p>
-      )}
+      <ValidationError errors={purposeError} className="text-xs" />
     </div>
   );
 }

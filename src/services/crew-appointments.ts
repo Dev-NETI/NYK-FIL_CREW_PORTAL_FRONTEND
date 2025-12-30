@@ -1,14 +1,18 @@
 import api from "@/lib/axios";
 import { BaseApiResponse } from "@/types/api";
 
-/* ---------------- API TYPES ---------------- */
-
 export interface CalendarDayApi {
   date: string;
+  total_slots: number;
+  booked_slots: number;
+  cancelled_slots: number;
   available_slots: number;
 }
 
-export type TimeSlotApi = string;
+export interface TimeSlotApi {
+  time: string;
+  isAvailable: boolean;
+}
 
 export interface CalendarResponse extends BaseApiResponse {
   data: CalendarDayApi[];
@@ -29,13 +33,11 @@ export interface CrewAppointmentTypeListResponse extends BaseApiResponse {
   data: CrewAppointmentType[];
 }
 
-/* ---------------- SERVICE ---------------- */
-
 export class CrewAppointmentService {
   static async getCalendar(
     departmentId: number,
     month: string
-  ): Promise<CalendarResponse> {
+  ): Promise<CalendarDayApi[]> {
     const response = await api.get<CalendarResponse>(
       "/crew/appointments/calendar",
       {
@@ -46,21 +48,26 @@ export class CrewAppointmentService {
       }
     );
 
-    return response.data;
+    return response.data.data;
   }
 
   static async getTimeSlots(
     departmentId: number,
     date: string
-  ): Promise<string[]> {
+  ): Promise<TimeSlotApi[]> {
     const response = await api.get<TimeSlotResponse>(
       "/crew/appointments/slots",
       {
-        params: { department_id: departmentId, date },
+        params: {
+          department_id: departmentId,
+          date,
+        },
       }
     );
 
-    return Array.isArray(response.data.data) ? response.data.data : [];
+    return Array.isArray(response.data.data)
+      ? response.data.data
+      : [];
   }
 
   static async create(payload: {

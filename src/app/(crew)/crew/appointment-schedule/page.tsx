@@ -1,240 +1,119 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import {
-  format,
-  addMonths,
-  subMonths,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-} from "date-fns";
-
-import AppointmentCalendar from "@/components/crew/appointment/AppointmentCalendar";
-import TimeSlotList from "@/components/crew/appointment/TimeSlotList";
-import BookingForm from "@/components/crew/appointment/BookingForm";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Navigation from "@/components/Navigation";
 
-import {
-  CrewAppointmentService,
-  TimeSlotApi,
-  CrewAppointmentType,
-} from "@/services/crew-appointments";
-import { DepartmentService } from "@/services/department";
-
-interface CalendarDay {
-  date: string;
-  isAvailable: boolean;
-  availableSlots: number;
-}
-
-export type CalendarDayCell = CalendarDay | null;
-
-interface Department {
-  id: number;
-  name: string;
-}
-
-export default function CrewAppointmentsPage() {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [calendarDays, setCalendarDays] = useState<CalendarDayCell[]>([]);
-  const [timeSlots, setTimeSlots] = useState<TimeSlotApi[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [appointmentTypes, setAppointmentTypes] = useState<CrewAppointmentType[]>([]);
-
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
-  const [selectedAppointmentTypeId, setSelectedAppointmentTypeId] = useState<number | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlotApi | null>(null);
-  const [purpose, setPurpose] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const currentMonthLabel = useMemo(() => format(currentMonth, "MMMM yyyy"), [currentMonth]);
-  const monthParam = useMemo(() => format(currentMonth, "yyyy-MM"), [currentMonth]);
-
-  const formatTime = (time?: string) => {
-    if (!time) return "-";
-    const [hourStr, minute] = time.split(":");
-    const hour = Number(hourStr);
-    const period = hour < 12 ? "AM" : "PM";
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minute} ${period}`;
-  };
+export default function CrewAppointmentsLandingPage() {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    DepartmentService.getAllDepartments().then(setDepartments);
+    setIsLoaded(true);
   }, []);
 
-  useEffect(() => {
-    if (!selectedDepartmentId) {
-      setAppointmentTypes([]);
-      return;
-    }
-    CrewAppointmentService.getAppointmentTypesByDepartment(selectedDepartmentId).then((types) => {
-      setAppointmentTypes(types.filter((t) => t.is_active));
-    });
-  }, [selectedDepartmentId]);
-
-  useEffect(() => {
-    if (!selectedDepartmentId) {
-      setCalendarDays([]);
-      return;
-    }
-
-    setLoading(true);
-
-    CrewAppointmentService.getCalendar(selectedDepartmentId, monthParam)
-      .then((res) => {
-        const apiDays = Array.isArray(res) ? res : [];
-        const availabilityMap = new Map<string, number>();
-
-        apiDays.forEach((d) => {
-          const normalizedDate = d.date.split(" ")[0];
-          availabilityMap.set(normalizedDate, Number(d.available_slots ?? 0));
-        });
-
-        const monthStart = startOfMonth(currentMonth);
-        const monthEnd = endOfMonth(currentMonth);
-        const startWeekday = monthStart.getDay();
-
-        const leadingEmptyDays = Array.from({ length: startWeekday }).map(() => null);
-
-        const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd }).map((date) => {
-          const key = format(date, "yyyy-MM-dd");
-          const slots = availabilityMap.get(key) ?? 0;
-          return {
-            date: key,
-            isAvailable: slots > 0,
-            availableSlots: slots,
-          };
-        });
-
-        setCalendarDays([...leadingEmptyDays, ...daysInMonth]);
-      })
-      .catch((err) => {
-        console.error("Calendar API failed", err);
-        setCalendarDays([]);
-      })
-      .finally(() => setLoading(false));
-  }, [selectedDepartmentId, monthParam, currentMonth]);
-
-  useEffect(() => {
-    if (!selectedDepartmentId || !selectedDate) {
-      setTimeSlots([]);
-      return;
-    }
-
-    setLoading(true);
-
-    CrewAppointmentService.getTimeSlots(selectedDepartmentId, selectedDate)
-      .then(setTimeSlots)
-      .finally(() => setLoading(false));
-  }, [selectedDepartmentId, selectedDate]);
-
-  const handleSubmit = async () => {
-    if (!selectedDepartmentId || !selectedAppointmentTypeId || !selectedDate || !selectedSlot || !purpose.trim()) return;
-
-    await CrewAppointmentService.create({
-      department_id: selectedDepartmentId,
-      appointment_type_id: selectedAppointmentTypeId,
-      appointment_date: selectedDate,
-      time: selectedSlot,
-      purpose,
-    });
-
-    toast.success("Appointment booked");
-
-    setSelectedDate(null);
-    setSelectedSlot(null);
-    setPurpose("");
+  const handleNavigate = (path: string) => {
+    router.push(path);
   };
 
-  const isDisabled =
-    loading ||
-    !selectedDepartmentId ||
-    !selectedAppointmentTypeId ||
-    !selectedDate ||
-    !selectedSlot ||
-    !purpose.trim();
+  const appointmentActions = [
+    {
+      id: "book",
+      title: "Book an Appointment",
+      description: "Schedule a new appointment with your selected department",
+      icon: "📅",
+      path: "/crew/appointment-schedule/book",
+      color: "from-blue-500 to-blue-700",
+      hoverColor: "hover:from-blue-600 hover:to-blue-800",
+      actionLabel: "Book Now",
+    },
+    {
+      id: "view",
+      title: "View Appointments",
+      description: "View and track your upcoming and past appointments",
+      icon: "📋",
+      path: "/crew/appointment-schedule/list",
+      color: "from-green-500 to-green-700",
+      hoverColor: "hover:from-green-600 hover:to-green-800",
+      actionLabel: "View Appointments",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Navigation currentPath="/crew/documents" />
+      <Navigation currentPath="/crew/appointments" />
 
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Book an Appointment</h1>
-          <p className="text-gray-600">
-            Schedule an appointment with your selected department
-          </p>
+      <div className="px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div className="max-w-7xl mx-auto">
+          <div
+            className={`text-center mb-14 transition-all duration-1000 ${
+              isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+            }`}
+          >
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+              Appointments
+            </h1>
+            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+              Book new appointments or view your existing schedules
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {appointmentActions.map((item, index) => (
+              <div
+                key={item.id}
+                className={`transition-all duration-1000 ${
+                  isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+                }`}
+                style={{ transitionDelay: `${(index + 1) * 150}ms` }}
+              >
+                <button
+                  onClick={() => handleNavigate(item.path)}
+                  className="w-full h-full group"
+                >
+                  <div className="relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden h-full">
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${item.color} ${item.hoverColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                    />
+
+                    <div className="relative z-10 p-10 flex flex-col items-center text-center h-full">
+                      <div className="text-6xl mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                        {item.icon}
+                      </div>
+
+                      <h2 className="text-2xl font-bold text-gray-900 group-hover:text-white transition-colors duration-300 mb-3">
+                        {item.title}
+                      </h2>
+
+                      <p className="text-gray-600 group-hover:text-white/90 transition-colors duration-300 mb-8">
+                        {item.description}
+                      </p>
+
+                      <div className="flex items-center space-x-2 font-medium text-gray-900 group-hover:text-white transition-colors duration-300">
+                        <span>{item.actionLabel}</span>
+                        <svg
+                          className="w-5 h-5 transform group-hover:translate-x-2 transition-transform duration-300"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div className="absolute inset-0 border-2 border-transparent group-hover:border-white/30 rounded-2xl transition-all duration-300" />
+                  </div>
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
-
-        <BookingForm
-          departments={departments}
-          appointmentTypes={appointmentTypes}
-          selectedDepartmentId={selectedDepartmentId}
-          selectedAppointmentTypeId={selectedAppointmentTypeId}
-          selectedDate={selectedDate}
-          selectedSlot={selectedSlot}
-          purpose={purpose}
-          loading={loading}
-          onChangeDepartment={(id) => {
-            setSelectedDepartmentId(id);
-            setSelectedAppointmentTypeId(null);
-            setSelectedDate(null);
-            setSelectedSlot(null);
-          }}
-          onChangeAppointmentType={setSelectedAppointmentTypeId}
-          onChangePurpose={setPurpose}
-          onSubmit={handleSubmit}
-        />
-
-        {selectedDepartmentId && selectedAppointmentTypeId && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <AppointmentCalendar
-                days={calendarDays}
-                selectedDate={selectedDate}
-                currentMonthLabel={currentMonthLabel}
-                onSelectDate={(date) => {
-                  setSelectedDate(date);
-                  setSelectedSlot(null);
-                }}
-                onPrevMonth={() => setCurrentMonth((prev) => subMonths(prev, 1))}
-                onNextMonth={() => setCurrentMonth((prev) => addMonths(prev, 1))}
-              />
-            </div>
-
-            <TimeSlotList slots={timeSlots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} />
-          </div>
-        )}
-
-        {selectedDate && selectedSlot && (
-          <div className="bg-white rounded-xl p-6 shadow space-y-2">
-            <p>
-              <strong>Date:</strong> {selectedDate}
-            </p>
-            <p>
-              <strong>Time:</strong> {formatTime(selectedSlot)}
-            </p>
-            <p>
-              <strong>Purpose:</strong> {purpose}
-            </p>
-
-            <button
-              onClick={handleSubmit}
-              disabled={isDisabled}
-              className={`w-full py-2 rounded-lg font-medium ${
-                isDisabled
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
-            >
-              Confirm Appointment
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

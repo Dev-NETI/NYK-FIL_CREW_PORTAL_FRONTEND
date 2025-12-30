@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AppointmentService, AppointmentType } from "@/services/appointment";
 import CreateAppointmentTypeModal from "./modals/CreateAppointmentTypeModal";
+import TableSkeleton from "@/components/TableSkeleton";
 
 export default function AppointmentTypeList() {
   const [types, setTypes] = useState<AppointmentType[]>([]);
@@ -26,29 +27,24 @@ export default function AppointmentTypeList() {
   }, []);
 
   const toggleType = async (id: number) => {
-  setTypes((prev) =>
-    prev.map((type) =>
-      type.id === id
-        ? { ...type, is_active: !type.is_active }
-        : type
-    )
-  );
-
-  try {
-    await AppointmentService.toggleAppointmentType(id);
-  } catch (error) {
     setTypes((prev) =>
       prev.map((type) =>
-        type.id === id
-          ? { ...type, is_active: !type.is_active }
-          : type
+        type.id === id ? { ...type, is_active: !type.is_active } : type
       )
     );
 
-    console.error("Failed to toggle appointment type", error);
-  }
-};
+    try {
+      await AppointmentService.toggleAppointmentType(id);
+    } catch (error) {
+      setTypes((prev) =>
+        prev.map((type) =>
+          type.id === id ? { ...type, is_active: !type.is_active } : type
+        )
+      );
 
+      console.error("Failed to toggle appointment type", error);
+    }
+  };
 
   return (
     <div className="bg-white p-6 rounded-xl shadow">
@@ -63,8 +59,9 @@ export default function AppointmentTypeList() {
         </button>
       </div>
 
+      {/* ✅ Skeleton while loading */}
       {loading ? (
-        <p className="text-sm text-gray-500">Loading...</p>
+        <TableSkeleton columns={3} rows={6} />
       ) : (
         <table className="w-full text-sm">
           <thead className="bg-gray-100">
@@ -74,10 +71,12 @@ export default function AppointmentTypeList() {
               <th className="p-3 text-right">Action</th>
             </tr>
           </thead>
+
           <tbody>
             {types.map((type) => (
               <tr key={type.id} className="border-b">
                 <td className="p-3">{type.name}</td>
+
                 <td className="p-3">
                   <span
                     className={`px-3 py-1 rounded-full text-xs ${
@@ -89,21 +88,21 @@ export default function AppointmentTypeList() {
                     {type.is_active ? "Active" : "Inactive"}
                   </span>
                 </td>
+
                 <td className="p-3 text-right">
                   <button
                     onClick={() => toggleType(type.id)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition
-                      ${type.is_active ? "bg-green-500" : "bg-gray-300"}
-                    `}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                      type.is_active ? "bg-green-500" : "bg-gray-300"
+                    }`}
                     aria-label="Toggle appointment type"
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition
-                        ${type.is_active ? "translate-x-6" : "translate-x-1"}
-                      `}
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                        type.is_active ? "translate-x-6" : "translate-x-1"
+                      }`}
                     />
                   </button>
-
                 </td>
               </tr>
             ))}
