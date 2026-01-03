@@ -1,13 +1,5 @@
 import api from "@/lib/axios";
-import { BaseApiResponse } from "@/types/api";
-
-export interface CalendarDayApi {
-  date: string;
-  total_slots: number;
-  booked_slots: number;
-  cancelled_slots: number;
-  available_slots: number;
-}
+import { BaseApiResponse, CalendarDayApi } from "@/types/api";
 
 export interface TimeSlotApi {
   time: string;
@@ -27,6 +19,11 @@ export interface CrewAppointmentType {
   id: number;
   name: string;
   is_active: boolean;
+}
+
+export interface CrewAppointmentListResponse {
+  success: boolean;
+  data: any[];
 }
 
 export interface CrewAppointmentTypeListResponse extends BaseApiResponse {
@@ -82,6 +79,24 @@ export class CrewAppointmentService {
       payload
     );
 
+    return response.data;
+  }
+
+  static async getAppointments(): Promise<CrewAppointmentListResponse> {
+    const response = await api.get<CrewAppointmentListResponse>(
+      "/crew/appointments"
+    );
+    return response.data;
+  }
+
+  static async cancelAppointment(
+    id: number,
+    remarks: string
+  ): Promise<BaseApiResponse> {
+    const response = await api.post<BaseApiResponse>(
+      `/crew/appointments/${id}/cancel`,
+      { remarks }
+    );
     return response.data;
   }
 

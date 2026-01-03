@@ -3,15 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import CalendarHeader from "./calendar/CalendarHeader";
 import CalendarGrid from "./calendar/CalendarGrid";
-import api from "@/lib/axios";
 import CalendarSkeleton from "@/components/CalendarSkeleton";
-
-interface DayInfo {
-  totalSlots: number;
-  bookedSlots: number;
-  cancelledSlots: number;
-  availableSlots: number;
-}
+import { DayInfo } from "./calendar/CalendarDayCell";
+import { AdminAppointmentService } from "@/services/admin-appointment";
+import { CalendarDayApi } from "@/types/api";
 
 export default function AppointmentCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -25,42 +20,48 @@ export default function AppointmentCalendar() {
   }, [currentMonth]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const fetchCalendarData = async () => {
+      setLoading(true);
+
+      try {
+        const items = await AdminAppointmentService.getCalendar(monthKey);
+
+        const formatted: Record<string, DayInfo> = {};
+
+        (items || []).forEach((item: CalendarDayApi) => {
+          formatted[item.date] = {
+            totalSlots: item.total_slots ?? 0,
+            bookedSlots: item.booked_slots ?? 0,
+            cancelledSlots: item.cancelled_slots ?? 0,
+            availableSlots: item.available_slots ?? 0,
+          };
+        });
+
+        if (!isMounted) return;
+        setData(formatted);
+      } catch (e) {
+        console.error("Calendar fetch failed:", e);
+
+        if (!isMounted) return;
+        setData({});
+      } finally {
+        if (!isMounted) return;
+        setLoading(false);
+      }
+    };
+
     fetchCalendarData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    return () => {
+      isMounted = false;
+    };
   }, [monthKey]);
-
-  const fetchCalendarData = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/admin/appointments/calendar", {
-        params: { month: monthKey },
-      });
-
-      const formatted: Record<string, DayInfo> = {};
-      (res.data.data || []).forEach((item: any) => {
-        formatted[item.date] = {
-          totalSlots: item.total_slots ?? 0,
-          bookedSlots: item.booked_slots ?? 0,
-          cancelledSlots: item.cancelled_slots ?? 0,
-          availableSlots: item.available_slots ?? 0,
-        };
-      });
-
-      setData(formatted);
-    } catch (e) {
-      console.error("Calendar fetch failed:", e);
-      setData({});
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="bg-white p-8 rounded-xl shadow-lg">
-      <CalendarHeader
-        currentMonth={currentMonth}
-        setCurrentMonth={setCurrentMonth}
-      />
+      <CalendarHeader currentMonth={currentMonth} setCurrentMonth={setCurrentMonth} />
 
       {loading ? (
         <CalendarSkeleton showHeader={false} className="mt-6" />

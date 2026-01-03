@@ -3,49 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
-
 import { formatTime, formatDate } from "@/lib/utils";
-import { AdminAppointmentService, AppointmentService } from "@/services/appointment";
-
+import { AdminAppointmentService, AppointmentService, Appointment, AppointmentStatus } from "@/services/admin-appointment";
+import { AppointmentTypeOption, Filters } from "./AppointmentListFilter";
 import CancelReasonModal from "@/components/CancelReasonModal";
 import ConfirmActionModal from "@/components/ConfirmActionModal";
 import AppointmentFilters from "./AppointmentListFilter";
 import Pagination from "@/components/Pagination";
 import TableSkeleton from "@/components/TableSkeleton";
 
-type AppointmentStatus = "pending" | "confirmed" | "cancelled";
-type FilterStatus = "all" | AppointmentStatus;
-
-interface Appointment {
-  id: number;
-  user_id: number;
-  date: string;
-  time: string;
-  status: AppointmentStatus;
-  type?: {
-    id?: number;
-    name?: string;
-  };
-  user?: {
-    profile?: {
-      first_name: string;
-      middle_name?: string | null;
-      last_name: string;
-    };
-  };
-}
-
-interface AppointmentTypeOption {
-  id: number;
-  name: string;
-}
-
-interface Filters {
-  status: FilterStatus;
-  name: string;
-  typeId: string;
-  date: string;
-}
 
 const PAGE_SIZE = 10;
 
@@ -127,8 +93,7 @@ export default function AdminAppointmentList() {
             .toLowerCase()
             .replace(/\s+/g, " ")
             .trim()
-        : "";
-
+        : "";        
       const matchStatus = status === "all" || appt.status === status;
       const matchName = !name || fullName.includes(name.toLowerCase().trim());
       const matchType = typeId === "all" || String(appt.type?.id ?? "") === String(typeId);
@@ -216,6 +181,7 @@ export default function AdminAppointmentList() {
                 <tr>
                   <th className="px-4 py-3 text-left">Crew</th>
                   <th className="px-4 py-3 text-left">Appointment Type</th>
+                  <th className="px-4 py-3 text-left">Purpose</th>
                   <th className="px-4 py-3 text-left">Date</th>
                   <th className="px-4 py-3 text-left">Time</th>
                   <th className="px-4 py-3 text-left">Status</th>
@@ -237,6 +203,7 @@ export default function AdminAppointmentList() {
                     <tr key={appt.id} className="border-t hover:bg-gray-50">
                       <td className="px-4 py-3">{getCrewName(appt)}</td>
                       <td className="px-4 py-3">{appt.type?.name ?? "-"}</td>
+                      <td className="px-4 py-3">{appt.purpose}</td>
                       <td className="px-4 py-3">{formatDate(appt.date)}</td>
                       <td className="px-4 py-3">{formatTime(appt.time)}</td>
 

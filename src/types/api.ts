@@ -255,3 +255,13 @@ export interface ApiErrorResponse {
   errors?: Record<string, string[]>;
   retry_after?: number;
 }
+
+// appointment calendar
+export interface CalendarDayApi {
+  date: string;
+  total_slots: number;
+  booked_slots: number;
+  cancelled_slots: number;
+  available_slots: number;
+}
+

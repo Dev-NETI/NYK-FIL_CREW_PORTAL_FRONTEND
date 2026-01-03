@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-interface DayInfo {
+export interface DayInfo {
   totalSlots: number;
   bookedSlots: number;
   cancelledSlots: number;
@@ -81,7 +81,7 @@ export default function CalendarDayCell({ date, data }: Props) {
         <div className="absolute top-0 left-0 z-50 -translate-y-2 w-48 bg-gray-900 text-white text-xs p-2 rounded-lg shadow-lg">
           <p className="font-semibold">{date.toDateString()}</p>
           <p>Total Slots: {info.totalSlots}</p>
-          <p>Booked (Pending+Confirmed): {info.bookedSlots}</p>
+          <p>Booked (Confirmed): {info.bookedSlots}</p>
           <p>Cancelled: {info.cancelledSlots}</p>
           <p className="text-green-300">
             Available: {remaining}

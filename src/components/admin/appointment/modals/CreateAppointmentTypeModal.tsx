@@ -3,7 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import ValidationError from "@/components/ui/ValidationError";
-import { AppointmentService } from "@/services/appointment";
+import { AppointmentService } from "@/services/admin-appointment";
 
 interface Props {
   onClose: () => void;

@@ -2,13 +2,7 @@
 
 import CalendarDayCell from "./CalendarDayCell";
 import { generateCalendar } from "./calendarUtils";
-
-interface DayInfo {
-  totalSlots: number;
-  bookedSlots: number;
-  cancelledSlots: number;
-  availableSlots: number;
-}
+import { DayInfo } from "./CalendarDayCell";
 
 interface Props {
   currentMonth: Date;

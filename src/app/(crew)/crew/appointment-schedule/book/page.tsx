@@ -23,20 +23,8 @@ import {
   TimeSlotApi,
   CrewAppointmentType,
 } from "@/services/crew-appointments";
-import { DepartmentService } from "@/services/department";
-
-interface CalendarDay {
-  date: string;
-  isAvailable: boolean;
-  availableSlots: number;
-}
-
-export type CalendarDayCell = CalendarDay | null;
-
-interface Department {
-  id: number;
-  name: string;
-}
+import { DepartmentService, Department } from "@/services/department";
+import { CalendarDayCell } from "@/components/crew/appointment/AppointmentCalendar";
 
 export default function CrewAppointmentsPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -93,7 +81,7 @@ export default function CrewAppointmentsPage() {
 
         apiDays.forEach((d) => {
           const dateKey = String(d.date).split("T")[0].split(" ")[0];
-          const available = d.available_slots ?? d.available_slots ?? 0;
+          const available = d.available_slots ?? 0;
           availabilityMap.set(dateKey, Number(available));
         });
 
@@ -160,13 +148,18 @@ export default function CrewAppointmentsPage() {
         purpose,
       });
 
-      toast.success("Appointment booked");
+      toast.success("Appointment submitted. Status: Pending (awaiting confirmation).");
       setSelectedDate(null);
       setSelectedSlot(null);
       setPurpose("");
       router.push("/crew/appointment-schedule/list");
-    } catch {
-      toast.error("Failed to book appointment");
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.errors
+          ? Object.values(err.response.data.errors).flat()?.[0]
+          : err?.response?.data?.message;
+
+      toast.error(message || "Failed to book appointment");
     }
   };
 
@@ -254,8 +247,8 @@ export default function CrewAppointmentsPage() {
               onClick={handleSubmit}
               disabled={isDisabled}
               className={`w-full py-2 rounded-lg font-medium ${isDisabled
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
                 }`}
             >
               Confirm Appointment

@@ -5,19 +5,18 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
+import { AppointmentStatus } from "@/services/admin-appointment";
 
-type AppointmentStatus = "all" | "pending" | "confirmed" | "cancelled";
-
-interface AppointmentTypeOption {
-  id: number;
-  name: string;
-}
-
+type FilterStatus = "all" | AppointmentStatus;
 export interface Filters {
-  status: AppointmentStatus;
+  status: FilterStatus;
   name: string;
   typeId: string;
   date: string;
+}
+export interface AppointmentTypeOption {
+  id: number;
+  name: string;
 }
 
 interface Props {

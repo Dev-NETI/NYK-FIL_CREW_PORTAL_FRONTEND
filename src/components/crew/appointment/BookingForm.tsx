@@ -2,11 +2,7 @@
 
 import ValidationError from "@/components/ui/ValidationError";
 import { CrewAppointmentType, TimeSlotApi } from "@/services/crew-appointments";
-
-interface Department {
-  id: number;
-  name: string;
-}
+import { Department } from "@/services/department";
 
 interface Props {
   departments: Department[];

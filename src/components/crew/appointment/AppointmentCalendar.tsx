@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { CalendarDayCell } from "@/app/(crew)/crew/appointment-schedule/book/page";
+
+export interface CalendarDay {
+  date: string;
+  isAvailable: boolean;
+  availableSlots: number;
+}
+
+export type CalendarDayCell = CalendarDay | null;
 
 interface Props {
   days: CalendarDayCell[];

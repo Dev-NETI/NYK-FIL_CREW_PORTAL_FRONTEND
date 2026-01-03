@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AppointmentService, AppointmentType } from "@/services/appointment";
+import { AppointmentService, AppointmentType } from "@/services/admin-appointment";
 import CreateAppointmentTypeModal from "./modals/CreateAppointmentTypeModal";
 import TableSkeleton from "@/components/TableSkeleton";
 
@@ -58,8 +58,6 @@ export default function AppointmentTypeList() {
           + Add Type
         </button>
       </div>
-
-      {/* ✅ Skeleton while loading */}
       {loading ? (
         <TableSkeleton columns={3} rows={6} />
       ) : (

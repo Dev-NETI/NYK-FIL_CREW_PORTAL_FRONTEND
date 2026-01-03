@@ -3,14 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { XCircle } from "lucide-react";
-
 import CancelReasonModal from "@/components/CancelReasonModal";
 import ConfirmActionModal from "@/components/ConfirmActionModal";
 import Pagination from "@/components/Pagination";
 import TableSkeleton from "@/components/TableSkeleton";
-
 import { formatTime, formatDate } from "@/lib/utils";
-import { AppointmentService, Appointment } from "@/services/appointment";
+import { Appointment } from "@/services/admin-appointment";
+import { CrewAppointmentService } from "@/services/crew-appointments";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -30,7 +29,7 @@ export default function CrewAppointmentList() {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const res = await AppointmentService.getAppointments();
+      const res = await CrewAppointmentService.getAppointments();
       setAppointments(res.data);
       setCurrentPage(1);
     } catch {
@@ -69,7 +68,7 @@ export default function CrewAppointmentList() {
     if (!selectedAppointment) return;
 
     try {
-      await AppointmentService.cancelAppointment(
+      await CrewAppointmentService.cancelAppointment(
         selectedAppointment.id,
         cancelReason
       );
@@ -95,14 +94,12 @@ export default function CrewAppointmentList() {
 
   return (
     <>
-      {/* ✅ Skeleton while loading */}
       {loading ? (
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-lg">
           <TableSkeleton columns={7} rows={10} />
         </div>
       ) : (
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-lg">
-          {/* ---------------- Desktop Table View ---------------- */}
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full border-collapse">
               <thead className="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -179,8 +176,6 @@ export default function CrewAppointmentList() {
               </tbody>
             </table>
           </div>
-
-          {/* ---------------- Mobile Card View ---------------- */}
           <div className="lg:hidden">
             <div className="space-y-3 p-4">
               {totalItems === 0 && (
@@ -253,7 +248,6 @@ export default function CrewAppointmentList() {
             </div>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
@@ -266,7 +260,6 @@ export default function CrewAppointmentList() {
         </div>
       )}
 
-      {/* Modals */}
       {showCancelModal && (
         <CancelReasonModal
           reason={cancelReason}
