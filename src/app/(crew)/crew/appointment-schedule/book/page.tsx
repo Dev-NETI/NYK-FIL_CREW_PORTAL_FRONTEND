@@ -38,6 +38,7 @@ export default function CrewAppointmentsPage() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlotApi | null>(null);
   const [purpose, setPurpose] = useState("");
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const router = useRouter();
   const currentMonthLabel = useMemo(
@@ -130,6 +131,7 @@ export default function CrewAppointmentsPage() {
 
   const handleSubmit = async () => {
     if (
+      submitting ||
       !selectedDepartmentId ||
       !selectedAppointmentTypeId ||
       !selectedDate ||
@@ -140,6 +142,8 @@ export default function CrewAppointmentsPage() {
     }
 
     try {
+      setSubmitting(true);
+
       await CrewAppointmentService.create({
         department_id: selectedDepartmentId,
         appointment_type_id: selectedAppointmentTypeId,
@@ -160,16 +164,23 @@ export default function CrewAppointmentsPage() {
           : err?.response?.data?.message;
 
       toast.error(message || "Failed to book appointment");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const isDisabled =
     loading ||
+    submitting ||
     !selectedDepartmentId ||
     !selectedAppointmentTypeId ||
     !selectedDate ||
     !selectedSlot ||
     !purpose.trim();
+
+  const Spinner = () => (
+    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white" />
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -246,12 +257,13 @@ export default function CrewAppointmentsPage() {
             <button
               onClick={handleSubmit}
               disabled={isDisabled}
-              className={`w-full py-2 rounded-lg font-medium ${isDisabled
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
+              className={`w-full py-2 rounded-lg font-medium inline-flex items-center justify-center gap-2 ${isDisabled
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
                 }`}
             >
-              Confirm Appointment
+              {submitting && <Spinner />}
+              {submitting ? "Submitting..." : "Confirm Appointment"}
             </button>
           </div>
         )}

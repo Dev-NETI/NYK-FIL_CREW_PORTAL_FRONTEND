@@ -1,18 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Edit, Trash2 } from "lucide-react";
-
 import AddSlotModal from "./modals/AddSlotModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import DepartmentSettingsFilter from "./filters/DepartmentSettingsFilter";
 import TableSkeleton from "@/components/TableSkeleton";
-
 import {
   DepartmentSchedule,
   DepartmentScheduleService,
 } from "@/services/department-schedule";
-
 import { formatTime, formatDate } from "@/lib/utils";
 
 type ServerErrors = Record<string, string[]>;
@@ -20,11 +18,10 @@ type ServerErrors = Record<string, string[]>;
 export default function DepartmentSettings() {
   const [slots, setSlots] = useState<DepartmentSchedule[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [showModal, setShowModal] = useState<boolean | DepartmentSchedule>(false);
   const [deleteTarget, setDeleteTarget] = useState<DepartmentSchedule | null>(null);
-
   const [formErrors, setFormErrors] = useState<ServerErrors | null>(null);
+  const [dateFilter, setDateFilter] = useState("");
 
   const fetchSlots = async () => {
     try {
@@ -41,6 +38,21 @@ export default function DepartmentSettings() {
   useEffect(() => {
     fetchSlots();
   }, []);
+
+  const visibleSlots = useMemo(() => {
+    const filtered = dateFilter
+      ? slots.filter((s) => (s.date ?? "").startsWith(dateFilter))
+      : slots;
+
+    return [...filtered].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, [slots, dateFilter]);
+
+
+  const disabledDates = useMemo(() => {
+    return new Set(slots.map((s) => String(s.date).split("T")[0]));
+  }, [slots]);
 
   const handleSaveSlot = async (slot: any) => {
     try {
@@ -95,26 +107,34 @@ export default function DepartmentSettings() {
 
   const deleteMessage = deleteTarget
     ? `Are you sure you want to delete the schedule for ${formatDate(
-        deleteTarget.date
-      )} (${formatTime(deleteTarget.opening_time)} - ${formatTime(
-        deleteTarget.closing_time
-      )})? This action cannot be undone.`
+      deleteTarget.date
+    )} (${formatTime(deleteTarget.opening_time)} - ${formatTime(
+      deleteTarget.closing_time
+    )})? This action cannot be undone.`
     : "";
 
   return (
     <div className="bg-white p-4 sm:p-6 rounded-xl shadow space-y-6">
-      <div className="flex items-start sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-lg sm:text-xl font-semibold">Department Daily Schedules</h2>
 
-        <button
-          onClick={() => {
-            setFormErrors(null);
-            setShowModal(true);
-          }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm sm:text-base"
-        >
-          + Add Daily Slot
-        </button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-end">
+          <DepartmentSettingsFilter
+            value={dateFilter}
+            onChange={(v) => setDateFilter(v)}
+            onClear={() => setDateFilter("")}
+          />
+
+          <button
+            onClick={() => {
+              setFormErrors(null);
+              setShowModal(true);
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm sm:text-base"
+          >
+            + Add Daily Slot
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -134,7 +154,7 @@ export default function DepartmentSettings() {
               </thead>
 
               <tbody>
-                {slots.map((slot) => (
+                {visibleSlots.map((slot) => (
                   <tr key={slot.id} className="border-b">
                     <td className="p-3">{formatDate(slot.date)}</td>
                     <td className="p-3">{formatTime(slot.opening_time)}</td>
@@ -164,7 +184,7 @@ export default function DepartmentSettings() {
                   </tr>
                 ))}
 
-                {slots.length === 0 && (
+                {visibleSlots.length === 0 && (
                   <tr>
                     <td colSpan={5} className="p-4 text-center text-gray-500">
                       No schedules added.
@@ -177,13 +197,13 @@ export default function DepartmentSettings() {
 
           {/* Mobile Cards */}
           <div className="lg:hidden p-4 space-y-3">
-            {slots.length === 0 && (
+            {visibleSlots.length === 0 && (
               <div className="py-10 text-center text-gray-500 text-sm">
                 No schedules added.
               </div>
             )}
 
-            {slots.map((slot) => (
+            {visibleSlots.map((slot) => (
               <div
                 key={slot.id}
                 className="border rounded-xl p-4 bg-white shadow-sm"
@@ -233,6 +253,7 @@ export default function DepartmentSettings() {
         <AddSlotModal
           initialData={typeof showModal === "object" ? showModal : null}
           serverErrors={formErrors ?? undefined}
+          disabledDates={disabledDates}
           onClose={() => {
             setFormErrors(null);
             setShowModal(false);

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 type ConfirmType = "confirm" | "cancel";
 
 interface ConfirmActionModalProps {
@@ -8,7 +10,13 @@ interface ConfirmActionModalProps {
   message?: string;
   confirmLabel?: string;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
+}
+
+function Spinner() {
+  return (
+    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white" />
+  );
 }
 
 export default function ConfirmActionModal({
@@ -19,6 +27,8 @@ export default function ConfirmActionModal({
   onClose,
   onConfirm,
 }: ConfirmActionModalProps) {
+  const [submitting, setSubmitting] = useState(false);
+
   const isCancel = type === "cancel";
 
   const resolvedTitle =
@@ -34,11 +44,25 @@ export default function ConfirmActionModal({
     confirmLabel ??
     (isCancel ? "Yes, Cancel Appointment" : "Confirm Appointment");
 
+  const handleConfirm = async () => {
+    if (submitting) return;
+
+    try {
+      setSubmitting(true);
+      await onConfirm();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={() => {
+          if (submitting) return;
+          onClose();
+        }}
       />
 
       <div className="relative bg-white w-full max-w-md rounded-2xl p-6 shadow-xl animate-fade-in">
@@ -55,20 +79,29 @@ export default function ConfirmActionModal({
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-100 transition"
+            disabled={submitting}
+            className={`px-4 py-2 rounded-lg border border-gray-300 text-sm transition ${
+              submitting ? "opacity-60 cursor-not-allowed" : "hover:bg-gray-100"
+            }`}
           >
             No
           </button>
 
           <button
-            onClick={onConfirm}
-            className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition ${
+            onClick={handleConfirm}
+            disabled={submitting}
+            className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition inline-flex items-center gap-2 ${
               isCancel
-                ? "bg-red-600 hover:bg-red-700"
+                ? submitting
+                  ? "bg-red-600/80 cursor-not-allowed"
+                  : "bg-red-600 hover:bg-red-700"
+                : submitting
+                ? "bg-green-600/80 cursor-not-allowed"
                 : "bg-green-600 hover:bg-green-700"
             }`}
           >
-            {resolvedConfirmLabel}
+            {submitting && <Spinner />}
+            {submitting ? "Processing..." : resolvedConfirmLabel}
           </button>
         </div>
       </div>

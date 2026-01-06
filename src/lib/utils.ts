@@ -24,10 +24,17 @@ export const formatTime = (time?: string): string => {
 };
 
 /**
- * Format ISO date string to YYYY-MM-DD
- * Example: "2025-12-29T00:00:00.000000Z" → "2025-12-29"
+ * Format ISO date string to Text
+ * Example: "2025-12-29T00:00:00.000000Z" → "January 12, 2026"
  */
-export const formatDate = (date?: string): string => {
-  if (!date) return "-";
-  return date.split("T")[0];
+export const formatDate = (dateStr: string) => {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
+
+  return d.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 };

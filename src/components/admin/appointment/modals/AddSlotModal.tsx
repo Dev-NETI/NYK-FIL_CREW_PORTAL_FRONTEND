@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import * as Popover from "@radix-ui/react-popover";
+import { useEffect, useMemo, useState } from "react";
 import ValidationError from "@/components/ui/ValidationError";
+import dayjs, { Dayjs } from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+
+dayjs.extend(customParseFormat);
 
 type ServerErrors = Record<string, string[]>;
 type FieldErrors = Record<string, string>;
@@ -11,41 +18,62 @@ const normalizeDate = (date?: string) => (date ? date.split("T")[0] : "");
 const normalizeTime = (time?: string | null) => (time ? time.slice(0, 5) : "");
 
 const toMinutes = (time: string) => {
-  const [h, m] = time.split(":").map(Number);
+  const match = time.match(/^(\d{2}):(\d{2})$/);
+  if (!match) return NaN;
+
+  const h = Number(match[1]);
+  const m = Number(match[2]);
   return h * 60 + m;
 };
 
-const generateTimes = () => {
-  const times: { value: string; label: string }[] = [];
+const DEFAULT_SLOT_DURATION = 30;
 
-  for (let h = 0; h < 24; h++) {
-    for (let m of [0, 30]) {
-      const value = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-      const hour = h % 12 || 12;
-      const suffix = h < 12 ? "AM" : "PM";
+const computeMaxSlots = (
+  openingTime: string,
+  closingTime: string,
+  durationMinutes: number
+) => {
+  if (!openingTime || !closingTime) return 0;
 
-      times.push({
-        value,
-        label: `${hour}:${String(m).padStart(2, "0")} ${suffix}`,
-      });
-    }
-  }
+  const open = toMinutes(openingTime);
+  const close = toMinutes(closingTime);
 
-  return times;
+  if (!Number.isFinite(open) || !Number.isFinite(close)) return 0;
+
+  const totalMinutes = close - open;
+  if (totalMinutes <= 0) return 0;
+
+  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) return 0;
+
+  return Math.floor(totalMinutes / durationMinutes);
 };
 
-const TIME_OPTIONS = generateTimes();
+const toDayjsTime = (value: string): Dayjs | null => {
+  if (!value) return null;
+
+  const hhmm = dayjs(value, "HH:mm", true);
+  if (hhmm.isValid()) return hhmm;
+
+  const ampm = dayjs(value, "hh:mm A", true);
+  return ampm.isValid() ? ampm : null;
+};
+
+const fromDayjsTime = (value: Dayjs | null) => {
+  return value ? value.format("HH:mm") : "";
+};
 
 export default function AddSlotModal({
   initialData,
   onClose,
   onSave,
   serverErrors,
+  disabledDates,
 }: {
   initialData?: any;
   onClose: () => void;
   onSave: (data: any) => void;
   serverErrors?: ServerErrors;
+  disabledDates: Set<string>;
 }) {
   const [date, setDate] = useState("");
   const [openingTime, setOpeningTime] = useState("");
@@ -96,72 +124,19 @@ export default function AddSlotModal({
     setErrors((prev) => ({ ...prev, ...mapped }));
   }, [serverErrors]);
 
-  const TimePicker = ({
-    label,
-    value,
-    onChange,
-    errorKey,
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    errorKey: string;
-  }) => {
-    const [open, setOpen] = useState(false);
-
-    const selectedLabel =
-      TIME_OPTIONS.find((t) => t.value === value)?.label ?? "Select time";
-
-    const hasError = !!errors[errorKey];
-
-    return (
-      <div>
-        <label className="text-sm font-medium">{label}</label>
-
-        <Popover.Root open={open} onOpenChange={setOpen}>
-          <Popover.Trigger asChild>
-            <button
-              type="button"
-              className={`border rounded-lg p-2 w-full text-left ${
-                hasError ? "border-red-500" : ""
-              }`}
-            >
-              {selectedLabel}
-            </button>
-          </Popover.Trigger>
-
-          <Popover.Content
-            sideOffset={6}
-            className="bg-white shadow-lg rounded-xl w-48 max-h-64 overflow-y-auto p-1 z-50"
-          >
-            {TIME_OPTIONS.map((t) => (
-              <button
-                type="button"
-                key={t.value}
-                onClick={() => {
-                  onChange(t.value);
-                  clearError(errorKey);
-                  setOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 ${
-                  value === t.value ? "bg-gray-100 font-semibold" : ""
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </Popover.Content>
-        </Popover.Root>
-
-        <ValidationError errors={errors[errorKey] ?? ""} className="text-xs" />
-      </div>
-    );
-  };
+  const shouldDisableDate = useMemo(() => {
+    return (value: Dayjs) => disabledDates.has(value.format("YYYY-MM-DD"));
+  }, [disabledDates]);
 
   const validate = () => {
     const nextErrors: FieldErrors = {};
 
-    if (!initialData?.id && !date) nextErrors.date = "Date is required.";
+    if (!initialData?.id) {
+      if (!date) nextErrors.date = "Date is required.";
+      if (date && disabledDates.has(date)) {
+        nextErrors.date = "A schedule already exists for this date.";
+      }
+    }
 
     if (!capacity.trim()) {
       nextErrors.total_slots = "Daily capacity is required.";
@@ -184,8 +159,24 @@ export default function AddSlotModal({
     if (slotDuration.trim()) {
       const dur = Number(slotDuration);
       if (!Number.isFinite(dur) || dur < 5) {
-        nextErrors.slot_duration_minutes =
-          "Slot duration must be at least 5 minutes.";
+        nextErrors.slot_duration_minutes = "Slot duration must be at least 5 minutes.";
+      }
+    }
+
+    const durationForValidation = slotDuration.trim()
+      ? Number(slotDuration)
+      : DEFAULT_SLOT_DURATION;
+
+    if (openingTime && closingTime && Number.isFinite(durationForValidation)) {
+      const maxSlots = computeMaxSlots(openingTime, closingTime, durationForValidation);
+
+      if (maxSlots <= 0) {
+        nextErrors.total_slots = "Invalid time range or slot duration.";
+      } else if (capacity.trim()) {
+        const cap = Number(capacity);
+        if (Number.isFinite(cap) && cap > maxSlots) {
+          nextErrors.total_slots = `Daily capacity cannot exceed ${maxSlots} based on the selected time range and slot duration.`;
+        }
       }
     }
 
@@ -206,6 +197,15 @@ export default function AddSlotModal({
     });
   };
 
+  const maxCapacity =
+    openingTime && closingTime
+      ? computeMaxSlots(
+        openingTime,
+        closingTime,
+        slotDuration.trim() ? Number(slotDuration) : DEFAULT_SLOT_DURATION
+      )
+      : 0;
+
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-md bg-black/10 z-50">
       <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-lg">
@@ -213,87 +213,138 @@ export default function AddSlotModal({
           {initialData ? "Edit Slot" : "Add Slot"}
         </h2>
 
-        <div className="space-y-4">
-          {!initialData?.id && (
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <div className="space-y-4">
+            {!initialData?.id && (
+              <div>
+                <label className="text-sm font-medium">Date</label>
+
+                <div className={errors.date ? "rounded-lg ring-1 ring-red-500" : ""}>
+                  <DatePicker
+                    value={date ? dayjs(date, "YYYY-MM-DD") : null}
+                    onChange={(value) => {
+                      const next = value ? value.format("YYYY-MM-DD") : "";
+                      setDate(next);
+                      clearError("date");
+                    }}
+                    shouldDisableDate={shouldDisableDate}
+                    disablePast
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        fullWidth: true,
+                        placeholder: "Select date",
+                      } as any,
+                    }}
+                  />
+                </div>
+
+                <ValidationError errors={errors.date ?? ""} className="text-xs" />
+              </div>
+            )}
+
             <div>
-              <label className="text-sm font-medium">Date</label>
+              <label className="text-sm font-medium">Opening Time</label>
+
+              <div
+                className={errors.opening_time ? "rounded-lg ring-1 ring-red-500" : ""}
+              >
+                <TimePicker
+                  value={toDayjsTime(openingTime)}
+                  onChange={(val) => {
+                    setOpeningTime(fromDayjsTime(val));
+                    clearError("opening_time");
+                  }}
+                  ampm
+                  minutesStep={5}
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      fullWidth: true,
+                      placeholder: "Select time",
+                    } as any,
+                  }}
+                />
+              </div>
+
+              <ValidationError errors={errors.opening_time ?? ""} className="text-xs" />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Closing Time</label>
+
+              <div
+                className={errors.closing_time ? "rounded-lg ring-1 ring-red-500" : ""}
+              >
+                <TimePicker
+                  value={toDayjsTime(closingTime)}
+                  onChange={(val) => {
+                    setClosingTime(fromDayjsTime(val));
+                    clearError("closing_time");
+                  }}
+                  ampm
+                  minutesStep={5}
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      fullWidth: true,
+                      placeholder: "Select time",
+                    } as any,
+                  }}
+                />
+              </div>
+
+              <ValidationError errors={errors.closing_time ?? ""} className="text-xs" />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Daily Capacity</label>
               <input
-                type="date"
-                value={date}
+                type="number"
+                min={1}
+                value={capacity}
                 onChange={(e) => {
-                  setDate(e.target.value);
-                  clearError("date");
+                  setCapacity(e.target.value);
+                  clearError("total_slots");
                 }}
-                className={`border rounded-lg p-2 w-full ${
-                  errors.date ? "border-red-500" : ""
-                }`}
+                className={`border rounded-lg p-2 w-full ${errors.total_slots ? "border-red-500" : ""
+                  }`}
               />
 
-              <ValidationError errors={errors.date ?? ""} className="text-xs" />
+              {openingTime && closingTime && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Max capacity: {maxCapacity} slots
+                  {!slotDuration.trim()
+                    ? ` (default duration: ${DEFAULT_SLOT_DURATION} mins)`
+                    : ""}
+                </p>
+              )}
+
+              <ValidationError errors={errors.total_slots ?? ""} className="text-xs" />
             </div>
-          )}
 
-          <TimePicker
-            label="Opening Time"
-            value={openingTime}
-            onChange={setOpeningTime}
-            errorKey="opening_time"
-          />
+            <div>
+              <label className="text-sm font-medium">
+                Slot Duration (minutes) <span className="text-gray-500">(optional)</span>
+              </label>
 
-          <TimePicker
-            label="Closing Time"
-            value={closingTime}
-            onChange={setClosingTime}
-            errorKey="closing_time"
-          />
+              <input
+                type="number"
+                min={5}
+                value={slotDuration}
+                onChange={(e) => {
+                  setSlotDuration(e.target.value);
+                  clearError("slot_duration_minutes");
+                }}
+                className={`border rounded-lg p-2 w-full ${errors.slot_duration_minutes ? "border-red-500" : ""
+                  }`}
+                placeholder="e.g. 30"
+              />
 
-          <div>
-            <label className="text-sm font-medium">Daily Capacity</label>
-            <input
-              type="number"
-              min={1}
-              value={capacity}
-              onChange={(e) => {
-                setCapacity(e.target.value);
-                clearError("total_slots");
-              }}
-              className={`border rounded-lg p-2 w-full ${
-                errors.total_slots ? "border-red-500" : ""
-              }`}
-            />
-
-            <ValidationError
-              errors={errors.total_slots ?? ""}
-              className="text-xs"
-            />
+              <ValidationError errors={errors.slot_duration_minutes ?? ""} className="text-xs" />
+            </div>
           </div>
-
-          <div>
-            <label className="text-sm font-medium">
-              Slot Duration (minutes){" "}
-              <span className="text-gray-500">(optional)</span>
-            </label>
-
-            <input
-              type="number"
-              min={5}
-              value={slotDuration}
-              onChange={(e) => {
-                setSlotDuration(e.target.value);
-                clearError("slot_duration_minutes");
-              }}
-              className={`border rounded-lg p-2 w-full ${
-                errors.slot_duration_minutes ? "border-red-500" : ""
-              }`}
-              placeholder="e.g. 30"
-            />
-
-            <ValidationError
-              errors={errors.slot_duration_minutes ?? ""}
-              className="text-xs"
-            />
-          </div>
-        </div>
+        </LocalizationProvider>
 
         <div className="flex justify-end gap-2 mt-6">
           <button

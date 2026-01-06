@@ -90,10 +90,10 @@ export default function AdminAppointmentList() {
       const profile = appt.user?.profile;
       const fullName = profile
         ? `${profile.first_name} ${profile.middle_name ?? ""} ${profile.last_name}`
-            .toLowerCase()
-            .replace(/\s+/g, " ")
-            .trim()
-        : "";        
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim()
+        : "";
       const matchStatus = status === "all" || appt.status === status;
       const matchName = !name || fullName.includes(name.toLowerCase().trim());
       const matchType = typeId === "all" || String(appt.type?.id ?? "") === String(typeId);
@@ -125,8 +125,14 @@ export default function AdminAppointmentList() {
       await AppointmentService.confirmAppointment(selectedAppointment.id);
       toast.success("Appointment confirmed");
       fetchAppointments();
-    } catch {
-      toast.error("Failed to confirm appointment");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.errors?.date?.[0] ||
+        error?.response?.data?.errors?.status?.[0] ||
+        "Failed to confirm appointment";
+
+      toast.error(message);
     } finally {
       resetModalState();
     }
@@ -356,8 +362,12 @@ export default function AdminAppointmentList() {
         <ConfirmActionModal
           type={confirmType}
           onClose={resetModalState}
-          onConfirm={() => {
-            confirmType === "confirm" ? confirmAppointment() : finalizeCancellation();
+          onConfirm={async () => {
+            if (confirmType === "confirm") {
+              await confirmAppointment();
+            } else {
+              await finalizeCancellation();
+            }
           }}
         />
       )}
