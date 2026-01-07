@@ -3,12 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
-import { formatTime, formatDate } from "@/lib/utils";
+import { formatTime, formatDate, getStatusBadge, getCancellationReason } from "@/lib/utils";
 import { AdminAppointmentService, AppointmentService, Appointment, AppointmentStatus } from "@/services/admin-appointment";
-import { AppointmentTypeOption, Filters } from "./AppointmentListFilter";
+import { AppointmentTypeOption, Filters } from "./filters/AppointmentListFilter";
 import CancelReasonModal from "@/components/CancelReasonModal";
 import ConfirmActionModal from "@/components/ConfirmActionModal";
-import AppointmentFilters from "./AppointmentListFilter";
+import AppointmentFilters from "./filters/AppointmentListFilter";
 import Pagination from "@/components/Pagination";
 import TableSkeleton from "@/components/TableSkeleton";
 
@@ -66,16 +66,6 @@ export default function AdminAppointmentList() {
     fetchTypes();
   }, []);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return "bg-green-100 text-green-700";
-      case "cancelled":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-yellow-100 text-yellow-700";
-    }
-  };
 
   const getCrewName = (appt: Appointment) => {
     const profile = appt.user?.profile;
@@ -177,7 +167,7 @@ export default function AdminAppointmentList() {
 
       {loading ? (
         <div className="bg-white rounded-xl shadow overflow-hidden">
-          <TableSkeleton columns={6} rows={10} />
+          <TableSkeleton columns={8} rows={10} />
         </div>
       ) : (
         <div className="bg-white rounded-xl shadow overflow-hidden">
@@ -191,6 +181,7 @@ export default function AdminAppointmentList() {
                   <th className="px-4 py-3 text-left">Date</th>
                   <th className="px-4 py-3 text-left">Time</th>
                   <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-left">Reason</th>
                   <th className="px-4 py-3 text-center">Action</th>
                 </tr>
               </thead>
@@ -221,6 +212,14 @@ export default function AdminAppointmentList() {
                         >
                           {appt.status}
                         </span>
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {appt.status === "cancelled" ? (
+                          <span className="text-gray-700">{getCancellationReason(appt)}</span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
                       </td>
 
                       <td className="px-4 py-3 text-center">
@@ -277,6 +276,7 @@ export default function AdminAppointmentList() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                     <div className="flex flex-col items-end leading-tight">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadge(
                           appt.status
@@ -284,6 +284,16 @@ export default function AdminAppointmentList() {
                       >
                         {appt.status}
                       </span>
+
+                      {appt.status === "cancelled" && (
+                        <div className="mt-1 text-right">
+                          <p className="text-[11px] text-gray-500">Reason</p>
+                          <p className="text-xs font-medium text-gray-900 break-words max-w-[160px]">
+                            {getCancellationReason(appt)}
+                          </p>
+                        </div>
+                        )}
+                      </div>
 
                       {canAct(appt.status) && (
                         <div className="flex items-center gap-2">

@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
 import { BaseApiResponse, CalendarDayApi } from "@/types/api";
+import { Appointment } from "./admin-appointment";
 
 export interface TimeSlotApi {
   time: string;
@@ -23,7 +24,7 @@ export interface CrewAppointmentType {
 
 export interface CrewAppointmentListResponse {
   success: boolean;
-  data: any[];
+  data: Appointment[];
 }
 
 export interface CrewAppointmentTypeListResponse extends BaseApiResponse {
