@@ -46,6 +46,7 @@ export interface Appointment {
     cancelled_by_type: Role;
     reason: string;
     cancelled_at: string;
+    created_at: string;
   }[];
 }
 
