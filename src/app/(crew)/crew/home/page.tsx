@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AuthService } from "@/services";
 import { User } from "@/types/api";
 import {
@@ -33,6 +33,77 @@ export default function Dashboard() {
 
     console.log(user);
   }, []);
+
+  const quickLinks = useMemo(
+    () => [
+      {
+        icon: "person-badge",
+        title: "My Profile",
+        href: currentUser?.profile?.crew_id
+          ? `/crew/profile/${currentUser.profile.crew_id}`
+          : "/crew/profile",
+        color: "from-blue-500 to-purple-600",
+        delay: "delay-100",
+      },
+      {
+        icon: "file-earmark-text",
+        title: "Documents",
+        href: "/crew/documents",
+        color: "from-green-500 to-blue-500",
+        delay: "delay-200",
+      },
+      {
+        icon: "calendar-check",
+        title: "Appointments",
+        href: "/crew/appointment-schedule",
+        color: "from-purple-500 to-pink-500",
+        delay: "delay-300",
+      },
+      {
+        icon: "megaphone",
+        title: "Reports",
+        href: "/crew/reports",
+        color: "from-orange-500 to-red-500",
+        delay: "delay-400",
+      },
+      {
+        icon: "currency-dollar",
+        title: "Finance",
+        href: "/crew/finance",
+        color: "from-teal-500 to-green-500",
+        delay: "delay-500",
+      },
+      {
+        icon: "bell",
+        title: "Notifications",
+        href: "/crew/notifications",
+        color: "from-yellow-500 to-orange-500",
+        delay: "delay-600",
+      },
+    ],
+    [currentUser]
+  );
+
+  const recentActivities = [
+    {
+      icon: "file-earmark-check",
+      title: "Certificate uploaded",
+      description: "STCW Basic Safety Training - Valid until 2026",
+      time: "2 hours ago",
+    },
+    {
+      icon: "person-badge",
+      title: "Profile updated",
+      description: "Emergency contact information updated",
+      time: "1 day ago",
+    },
+    {
+      icon: "megaphone",
+      title: "Briefing completed",
+      description: "Port safety briefing - Singapore",
+      time: "2 days ago",
+    },
+  ];
 
   return (
     <>
