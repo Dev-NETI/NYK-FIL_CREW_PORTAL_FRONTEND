@@ -76,9 +76,9 @@ export default function NavigationComponent({
       icon: "bi-calendar-event",
       label: "Appointments",
       isActive: pathname.startsWith("/admin/appointment"),
-      requiredRole: null,
+      requiredRole: 'Appointments',
     },
-  ].filter((link) => !link.requiredRole || hasRole(link.requiredRole));
+  ].filter((link) => hasRole(link.requiredRole));
 
   // General Settings sub-items
   const generalSettingsItems = [
