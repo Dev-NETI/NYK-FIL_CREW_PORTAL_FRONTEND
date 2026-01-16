@@ -1,59 +1,58 @@
 "use client";
 
-import { TimeSlotApi } from "@/services/crew-appointments";
-import { formatTime } from "@/lib/utils";
+export type SessionSlot = {
+  value: "AM" | "PM";
+  isAvailable: boolean;
+};
 
 interface Props {
-  slots: TimeSlotApi[];
-  selectedSlot: TimeSlotApi | null;
-  onSelectSlot: (slot: TimeSlotApi) => void;
+  sessions: SessionSlot[];
+  selectedSession: SessionSlot | null;
+  onSelectSession: (slot: SessionSlot) => void;
   loading?: boolean;
 }
 
-export default function TimeSlotList({
-  slots,
-  selectedSlot,
-  onSelectSlot,
+export default function SessionSlotList({
+  sessions,
+  selectedSession,
+  onSelectSession,
   loading = false,
 }: Props) {
   if (loading) {
     return (
       <div className="bg-white rounded-xl p-4 shadow">
-        <h3 className="text-lg font-semibold mb-4">Available Time Slots</h3>
+        <h3 className="text-lg font-semibold mb-4">Select AM / PM</h3>
 
         <div className="grid grid-cols-2 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-9 rounded-lg bg-gray-200 animate-pulse"
-            />
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="h-9 rounded-lg bg-gray-200 animate-pulse" />
           ))}
         </div>
       </div>
     );
   }
 
-  if (!slots.length) {
+  if (!sessions.length) {
     return (
       <div className="bg-white rounded-xl p-4 shadow text-gray-500 text-sm">
-        No available time slots for this date.
+        No available sessions for this date.
       </div>
     );
   }
 
   return (
     <div className="bg-white rounded-xl p-4 shadow">
-      <h3 className="text-lg font-semibold mb-4">Available Time Slots</h3>
+      <h3 className="text-lg font-semibold mb-4">Select AM / PM</h3>
 
       <div className="grid grid-cols-2 gap-3">
-        {slots.map((slot) => {
-          const isSelected = selectedSlot?.time === slot.time;
+        {sessions.map((slot) => {
+          const isSelected = selectedSession?.value === slot.value;
 
           return (
             <button
-              key={slot.time}
+              key={slot.value}
               disabled={!slot.isAvailable}
-              onClick={() => onSelectSlot(slot)}
+              onClick={() => onSelectSession(slot)}
               className={`
                 py-2 rounded-lg border text-sm font-medium transition
                 ${
@@ -65,7 +64,7 @@ export default function TimeSlotList({
                 }
               `}
             >
-              {formatTime(slot.time)}
+              {slot.value}
             </button>
           );
         })}

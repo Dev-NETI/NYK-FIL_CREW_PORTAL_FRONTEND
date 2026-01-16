@@ -24,6 +24,7 @@ export interface Appointment {
   schedule_id: number;
   date: string;
   time: string;
+  session: string;
   status: AppointmentStatus
   purpose: string;
   created_by: number;
@@ -46,6 +47,7 @@ export interface Appointment {
     cancelled_by_type: Role;
     reason: string;
     cancelled_at: string;
+    created_at: string;
   }[];
 }
 
@@ -59,7 +61,7 @@ export interface AppointmentTypeListResponse extends BaseApiResponse {
 
 export interface AdminAppointmentListResponse {
   success: boolean;
-  data: any[];
+  data: Appointment[];
 }
 
 export interface AdminCalendarResponse extends BaseApiResponse {

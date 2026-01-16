@@ -1,7 +1,7 @@
 "use client";
 
 import ValidationError from "@/components/ui/ValidationError";
-import { CrewAppointmentType, TimeSlotApi } from "@/services/crew-appointments";
+import { CrewAppointmentType, AppointmentSession } from "@/services/crew-appointments";
 import { Department } from "@/services/department";
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   selectedDepartmentId: number | null;
   selectedAppointmentTypeId: number | null;
   selectedDate: string | null;
-  selectedSlot: TimeSlotApi | null;
+  selectedSession: AppointmentSession | null;
   purpose: string;
   loading?: boolean;
 
@@ -25,7 +25,7 @@ export default function BookingForm({
   appointmentTypes,
   selectedDepartmentId,
   selectedAppointmentTypeId,
-  selectedSlot,
+  selectedSession,
   purpose,
   loading = false,
   onChangeDepartment,
@@ -33,7 +33,7 @@ export default function BookingForm({
   onChangePurpose,
 }: Props) {
   const purposeError =
-    selectedSlot && !purpose.trim() ? "Purpose is required." : "";
+    selectedSession && !purpose.trim() ? "Purpose is required." : "";
 
   return (
     <div className="bg-white rounded-xl p-4 shadow space-y-4">

@@ -5,9 +5,6 @@ export interface DepartmentSchedule {
   id: number;
   date: string;
   total_slots: number;
-  opening_time: string;
-  closing_time: string;
-  slot_duration_minutes: number | null;
 }
 
 export interface DepartmentScheduleListResponse extends BaseApiResponse {
@@ -18,19 +15,13 @@ export interface DepartmentScheduleResponse extends BaseApiResponse {
   data: DepartmentSchedule;
 }
 
-export type DepartmentScheduleCreatePayload = {
-  date: string;
-  total_slots: number;
-  opening_time?: string | null;
-  closing_time?: string | null;
-  slot_duration_minutes?: number | null;
-};
+export type DepartmentScheduleCreatePayload =
+  | { total_slots: number; date: string }
+  | { total_slots: number; dates: string[] }
+  | { total_slots: number; start_date: string; end_date: string };
 
 export type DepartmentScheduleUpdatePayload = {
-  total_slots?: number | null;
-  opening_time?: string | null;
-  closing_time?: string | null;
-  slot_duration_minutes?: number | null;
+  total_slots: number;
 };
 
 export class DepartmentScheduleService {
@@ -43,8 +34,9 @@ export class DepartmentScheduleService {
 
   static async create(
     data: DepartmentScheduleCreatePayload
-  ): Promise<DepartmentScheduleResponse> {
-    const response = await api.post<DepartmentScheduleResponse>(
+  ): Promise<DepartmentScheduleListResponse> {
+    // controller returns array (saved schedules)
+    const response = await api.post<DepartmentScheduleListResponse>(
       "/admin/department-schedules",
       data
     );
