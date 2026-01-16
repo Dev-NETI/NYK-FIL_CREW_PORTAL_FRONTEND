@@ -12,6 +12,7 @@ export interface DayInfo {
 interface Props {
   date: Date | null;
   data: Record<string, DayInfo>;
+  onDayClick?: (dateKey: string) => void;
 }
 
 function formatLocalDateKey(date: Date) {
@@ -21,7 +22,7 @@ function formatLocalDateKey(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-export default function CalendarDayCell({ date, data }: Props) {
+export default function CalendarDayCell({ date, data, onDayClick }: Props) {
   const [hover, setHover] = useState(false);
 
   if (!date) {
@@ -45,11 +46,9 @@ export default function CalendarDayCell({ date, data }: Props) {
   const hasSlots = info.totalSlots > 0;
   const isFull = hasSlots && remaining <= 0;
 
-  const bgClass = !hasSlots
-    ? "bg-white"
-    : isFull
-    ? "bg-red-100"
-    : "bg-green-50";
+  const bgClass = !hasSlots ? "bg-white" : isFull ? "bg-red-100" : "bg-green-50";
+
+  const isClickable = Boolean(onDayClick) && hasSlots;
 
   return (
     <div
@@ -57,35 +56,43 @@ export default function CalendarDayCell({ date, data }: Props) {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <div
-        className={`border p-2 rounded-md h-24 flex flex-col justify-between transition ${bgClass}`}
+      <button
+        type="button"
+        disabled={!isClickable}
+        onClick={() => {
+          if (!isClickable) return;
+          onDayClick?.(key);
+        }}
+        className={`w-full text-left ${isClickable ? "cursor-pointer" : "cursor-default"}`}
       >
-        <span className="text-sm font-medium">{date.getDate()}</span>
+        <div
+          className={`
+            border p-2 rounded-md h-24 flex flex-col justify-between transition
+            ${bgClass}
+            ${isClickable ? "hover:ring-2 hover:ring-blue-300" : ""}
+          `}
+        >
+          <span className="text-sm font-medium">{date.getDate()}</span>
 
-        <div className="text-xs text-gray-600">
-          {!hasSlots ? (
-            <span className="text-gray-400">No slots</span>
-          ) : isFull ? (
-            <span className="text-red-600 font-semibold">
-              Fully booked
-            </span>
-          ) : (
-            <span className="text-green-700">
-              {remaining} slots
-            </span>
-          )}
+          <div className="text-xs text-gray-600">
+            {!hasSlots ? (
+              <span className="text-gray-400">No slots</span>
+            ) : isFull ? (
+              <span className="text-red-600 font-semibold">Fully booked</span>
+            ) : (
+              <span className="text-green-700">{remaining} slots</span>
+            )}
+          </div>
         </div>
-      </div>
+      </button>
 
       {hover && hasSlots && (
-        <div className="absolute top-0 left-0 z-50 -translate-y-2 w-48 bg-gray-900 text-white text-xs p-2 rounded-lg shadow-lg">
+        <div className="absolute top-0 left-0 z-50 -translate-y-2 w-48 bg-gray-900 text-white text-xs p-2 rounded-lg shadow-lg pointer-events-none">
           <p className="font-semibold">{date.toDateString()}</p>
           <p>Total Slots: {info.totalSlots}</p>
           <p>Booked (Confirmed): {info.bookedSlots}</p>
           <p>Cancelled: {info.cancelledSlots}</p>
-          <p className="text-green-300">
-            Available: {remaining}
-          </p>
+          <p className="text-green-300">Available: {remaining}</p>
         </div>
       )}
     </div>

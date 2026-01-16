@@ -24,6 +24,7 @@ export interface Appointment {
   schedule_id: number;
   date: string;
   time: string;
+  session: string;
   status: AppointmentStatus
   purpose: string;
   created_by: number;
@@ -60,7 +61,7 @@ export interface AppointmentTypeListResponse extends BaseApiResponse {
 
 export interface AdminAppointmentListResponse {
   success: boolean;
-  data: any[];
+  data: Appointment[];
 }
 
 export interface AdminCalendarResponse extends BaseApiResponse {

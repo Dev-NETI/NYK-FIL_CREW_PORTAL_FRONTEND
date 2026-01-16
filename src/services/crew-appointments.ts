@@ -2,18 +2,39 @@ import api from "@/lib/axios";
 import { BaseApiResponse, CalendarDayApi } from "@/types/api";
 import { Appointment } from "./admin-appointment";
 
-export interface TimeSlotApi {
-  time: string;
-  isAvailable: boolean;
+export type AppointmentSession = "AM" | "PM";
+
+export interface VerifiedAppointment {
+  id: number;
+  user_id: number;
+  date: string;
+  session: AppointmentSession;
+  status: string;
+  purpose?: string | null;
+  type?: {
+    id: number;
+    name: string;
+  };
+  department?: {
+    id: number;
+    name: string;
+  };
+  user?: {
+    profile?: {
+      first_name?: string | null;
+      middle_name?: string | null;
+      last_name?: string | null;
+      crew_id?: string | null;
+    };
+  };
+}
+
+export interface VerifyQrResponse extends BaseApiResponse {
+  data: VerifiedAppointment;
 }
 
 export interface CalendarResponse extends BaseApiResponse {
   data: CalendarDayApi[];
-}
-
-export interface TimeSlotResponse extends BaseApiResponse {
-  success: boolean;
-  data: TimeSlotApi[];
 }
 
 export interface CrewAppointmentType {
@@ -30,6 +51,18 @@ export interface CrewAppointmentListResponse {
 export interface CrewAppointmentTypeListResponse extends BaseApiResponse {
   data: CrewAppointmentType[];
 }
+
+export interface QrTokenResponse extends BaseApiResponse {
+  data: { token: string };
+}
+
+export type CrewAppointmentCreatePayload = {
+  department_id: number;
+  appointment_type_id: number;
+  appointment_date: string;
+  session: AppointmentSession;
+  purpose: string;
+};
 
 export class CrewAppointmentService {
   static async getCalendar(
@@ -49,32 +82,7 @@ export class CrewAppointmentService {
     return response.data.data;
   }
 
-  static async getTimeSlots(
-    departmentId: number,
-    date: string
-  ): Promise<TimeSlotApi[]> {
-    const response = await api.get<TimeSlotResponse>(
-      "/crew/appointments/slots",
-      {
-        params: {
-          department_id: departmentId,
-          date,
-        },
-      }
-    );
-
-    return Array.isArray(response.data.data)
-      ? response.data.data
-      : [];
-  }
-
-  static async create(payload: {
-    department_id: number;
-    appointment_type_id: number;
-    appointment_date: string;
-    time: string;
-    purpose: string;
-  }): Promise<BaseApiResponse> {
+  static async create(payload: CrewAppointmentCreatePayload): Promise<BaseApiResponse> {
     const response = await api.post<BaseApiResponse>(
       "/crew/appointments",
       payload
@@ -109,5 +117,21 @@ export class CrewAppointmentService {
     );
 
     return response.data.data;
+  }
+
+  static async getQrToken(appointmentId: number): Promise<string> {
+    const res = await api.get<QrTokenResponse>(
+      `/crew/appointments/${appointmentId}/qr`
+    );
+    return res.data.data.token;
+  }
+
+  static async verifyQrToken(token: string): Promise<VerifiedAppointment> {
+    const res = await api.post<VerifyQrResponse>(
+      "/guard/appointments/verify",
+      { token }
+    );
+
+    return res.data.data;
   }
 }

@@ -17,13 +17,14 @@ import AppointmentCalendar, {
   CalendarDayCell,
   CalendarDayStatus,
 } from "@/components/crew/appointment/AppointmentCalendar";
-import TimeSlotList from "@/components/crew/appointment/TimeSlotList";
+import SessionSlotList, {
+  SessionSlot,
+} from "@/components/crew/appointment/SessionSlotList";
 import BookingForm from "@/components/crew/appointment/BookingForm";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 import {
   CrewAppointmentService,
-  TimeSlotApi,
   CrewAppointmentType,
 } from "@/services/crew-appointments";
 import { DepartmentService, Department } from "@/services/department";
@@ -32,13 +33,13 @@ import { CalendarDayApi } from "@/types/api";
 export default function CrewAppointmentsPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [calendarDays, setCalendarDays] = useState<CalendarDayCell[]>([]);
-  const [timeSlots, setTimeSlots] = useState<TimeSlotApi[]>([]);
+  const [sessions, setSessions] = useState<SessionSlot[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [appointmentTypes, setAppointmentTypes] = useState<CrewAppointmentType[]>([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
   const [selectedAppointmentTypeId, setSelectedAppointmentTypeId] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlotApi | null>(null);
+  const [selectedSession, setSelectedSession] = useState<SessionSlot | null>(null);
   const [purpose, setPurpose] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -144,17 +145,16 @@ export default function CrewAppointmentsPage() {
   }, [selectedDepartmentId, monthParam, currentMonth]);
 
   useEffect(() => {
-    if (!selectedDepartmentId || !selectedDate) {
-      setTimeSlots([]);
+    if (!selectedDate) {
+      setSessions([]);
       return;
     }
 
-    setLoading(true);
-
-    CrewAppointmentService.getTimeSlots(selectedDepartmentId, selectedDate)
-      .then(setTimeSlots)
-      .finally(() => setLoading(false));
-  }, [selectedDepartmentId, selectedDate]);
+    setSessions([
+      { value: "AM", isAvailable: true },
+      { value: "PM", isAvailable: true },
+    ]);
+  }, [selectedDate]);
 
   const handleSubmit = async () => {
     if (
@@ -162,7 +162,7 @@ export default function CrewAppointmentsPage() {
       !selectedDepartmentId ||
       !selectedAppointmentTypeId ||
       !selectedDate ||
-      !selectedSlot ||
+      !selectedSession ||
       !purpose.trim()
     ) {
       return;
@@ -175,13 +175,13 @@ export default function CrewAppointmentsPage() {
         department_id: selectedDepartmentId,
         appointment_type_id: selectedAppointmentTypeId,
         appointment_date: selectedDate,
-        time: selectedSlot.time,
+        session: selectedSession.value,
         purpose,
       });
 
       toast.success("Appointment submitted. Status: Pending (awaiting confirmation).");
       setSelectedDate(null);
-      setSelectedSlot(null);
+      setSelectedSession(null);
       setPurpose("");
       router.push("/crew/appointment-schedule/list");
     } catch (err: any) {
@@ -202,7 +202,7 @@ export default function CrewAppointmentsPage() {
     !selectedDepartmentId ||
     !selectedAppointmentTypeId ||
     !selectedDate ||
-    !selectedSlot ||
+    !selectedSession ||
     !purpose.trim();
 
   const Spinner = () => (
@@ -227,14 +227,14 @@ export default function CrewAppointmentsPage() {
           selectedDepartmentId={selectedDepartmentId}
           selectedAppointmentTypeId={selectedAppointmentTypeId}
           selectedDate={selectedDate}
-          selectedSlot={selectedSlot}
+          selectedSession={selectedSession ? selectedSession.value : null}
           purpose={purpose}
           loading={loading}
           onChangeDepartment={(id) => {
             setSelectedDepartmentId(id);
             setSelectedAppointmentTypeId(null);
             setSelectedDate(null);
-            setSelectedSlot(null);
+            setSelectedSession(null);
           }}
           onChangeAppointmentType={setSelectedAppointmentTypeId}
           onChangePurpose={setPurpose}
@@ -250,7 +250,7 @@ export default function CrewAppointmentsPage() {
                 currentMonthLabel={currentMonthLabel}
                 onSelectDate={(date) => {
                   setSelectedDate(date);
-                  setSelectedSlot(null);
+                  setSelectedSession(null);
                 }}
                 onPrevMonth={() =>
                   setCurrentMonth((prev) => subMonths(prev, 1))
@@ -261,21 +261,22 @@ export default function CrewAppointmentsPage() {
               />
             </div>
 
-            <TimeSlotList
-              slots={timeSlots}
-              selectedSlot={selectedSlot}
-              onSelectSlot={setSelectedSlot}
+            <SessionSlotList
+              sessions={sessions}
+              selectedSession={selectedSession}
+              onSelectSession={setSelectedSession}
+              loading={loading}
             />
           </div>
         )}
 
-        {selectedDate && selectedSlot && (
+        {selectedDate && selectedSession && (
           <div className="bg-white rounded-xl p-6 shadow space-y-2">
             <p>
               <strong>Date:</strong> {formatDate(selectedDate)}
             </p>
             <p>
-              <strong>Time:</strong> {formatTime(selectedSlot.time)}
+              <strong>Session:</strong> {selectedSession.value}
             </p>
             <p>
               <strong>Purpose:</strong> {purpose}
