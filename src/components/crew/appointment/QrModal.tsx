@@ -61,7 +61,7 @@ export default function QrModal({
   const qrValue = useMemo(() => {
     if (!token) return "";
     const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    return `${base}/guard/verify?token=${encodeURIComponent(token)}`;
+    return `${base}/admin/qr-scanner?token=${encodeURIComponent(token)}`;
   }, [token]);
 
   return (

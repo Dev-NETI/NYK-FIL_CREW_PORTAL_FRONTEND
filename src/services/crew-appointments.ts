@@ -4,35 +4,6 @@ import { Appointment } from "./admin-appointment";
 
 export type AppointmentSession = "AM" | "PM";
 
-export interface VerifiedAppointment {
-  id: number;
-  user_id: number;
-  date: string;
-  session: AppointmentSession;
-  status: string;
-  purpose?: string | null;
-  type?: {
-    id: number;
-    name: string;
-  };
-  department?: {
-    id: number;
-    name: string;
-  };
-  user?: {
-    profile?: {
-      first_name?: string | null;
-      middle_name?: string | null;
-      last_name?: string | null;
-      crew_id?: string | null;
-    };
-  };
-}
-
-export interface VerifyQrResponse extends BaseApiResponse {
-  data: VerifiedAppointment;
-}
-
 export interface CalendarResponse extends BaseApiResponse {
   data: CalendarDayApi[];
 }
@@ -124,14 +95,5 @@ export class CrewAppointmentService {
       `/crew/appointments/${appointmentId}/qr`
     );
     return res.data.data.token;
-  }
-
-  static async verifyQrToken(token: string): Promise<VerifiedAppointment> {
-    const res = await api.post<VerifyQrResponse>(
-      "/guard/appointments/verify",
-      { token }
-    );
-
-    return res.data.data;
   }
 }

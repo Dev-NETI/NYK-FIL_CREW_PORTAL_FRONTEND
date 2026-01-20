@@ -78,6 +78,13 @@ export default function NavigationComponent({
       isActive: pathname.startsWith("/admin/appointment"),
       requiredRole: 'Appointments',
     },
+    {
+      href: "/admin/qr-scanner",
+      icon: "bi-qr-code-scan",
+      label: "Qr Scanner",
+      isActive: pathname.startsWith("/admin/qr-scanner"),
+      requiredRole: 'Qr Scanner',
+    },
   ].filter((link) => hasRole(link.requiredRole));
 
   // General Settings sub-items
