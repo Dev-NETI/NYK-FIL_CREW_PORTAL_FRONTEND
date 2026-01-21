@@ -464,6 +464,7 @@ export default function DebriefingFormList() {
 
       <DebriefingReadOnlyModal
         isOpen={viewOpen}
+        allowOverride={true}
         onClose={closeViewModal}
         formId={activeId}
         fetchForm={(id) => AdminDebriefingService.getForm(id)}
