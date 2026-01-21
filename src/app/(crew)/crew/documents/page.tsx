@@ -35,6 +35,15 @@ export default function DocumentsPage() {
       color: "from-purple-500 to-purple-700",
       hoverColor: "hover:from-purple-600 hover:to-purple-800",
     },
+    {
+      id: "debriefing",
+      title: "Debriefing",
+      description: "Fill out and track your debriefing form.",
+      icon: "📝",
+      path: "/crew/documents/debriefing",
+      color: "from-amber-500 to-orange-700",
+      hoverColor: "hover:from-amber-600 hover:to-orange-800",
+    },
   ];
 
   const handleNavigate = (path: string) => {

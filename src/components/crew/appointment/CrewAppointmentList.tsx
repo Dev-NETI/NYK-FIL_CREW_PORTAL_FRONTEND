@@ -66,8 +66,6 @@ export default function CrewAppointmentList() {
     return appointments.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [appointments, currentPage]);
 
-  console.log('paginatedAppointments', paginatedAppointments)
-
   const canCancel = (status: string) =>
     status === "confirmed" || status === "pending";
 

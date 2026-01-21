@@ -49,6 +49,10 @@ export const getStatusBadge = (status: string) => {
       return "bg-green-100 text-green-700";
     case "cancelled":
       return "bg-red-100 text-red-700";
+    case "submitted":
+      return "bg-blue-100 text-blue-700";
+    case "draft":
+      return "bg-gray-100 text-orange-700";
     default:
       return "bg-yellow-100 text-yellow-700";
   }
@@ -71,3 +75,20 @@ export const getCancellationReason = (appt: Appointment) => {
 
   return latest?.reason?.trim() || "-";
 };
+
+
+export const getDisplayFormId = (id: number) => {
+  // stable pseudo-random looking number
+  return 100000 + (id * 73) % 900000;
+};
+
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}
