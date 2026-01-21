@@ -1,20 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppointmentList from "@/components/admin/appointment/AppointmentList";
 import AppointmentTypes from "@/components/admin/appointment/AppointmentTypes";
 import DepartmentSettings from "@/components/admin/appointment/DepartmentSettings";
 import AppointmentCalendar from "@/components/admin/appointment/AppointmentCalendar";
+import { Filters } from "@/components/admin/appointment/filters/AppointmentListFilter";
 
 export default function AppointmentModule() {
   const [activeTab, setActiveTab] = useState("appointments");
 
-  const tabs = [
-    { key: "appointments", label: "Appointments" },
-    { key: "types", label: "Appointment Types" },
-    { key: "settings", label: "Department Settings" },
-    { key: "calendar", label: "Calendar" },
-  ];
+  const [filters, setFilters] = useState<Filters>({
+    status: "all",
+    name: "",
+    typeId: "all",
+    date: "",
+  });
+
+  const tabs = useMemo(
+    () => [
+      { key: "appointments", label: "Appointments" },
+      { key: "types", label: "Appointment Types" },
+      { key: "settings", label: "Department Settings" },
+      { key: "calendar", label: "Calendar" },
+    ],
+    []
+  );
+
+  useEffect(() => {
+    if (activeTab !== "appointments") return;
+
+    const el = document.getElementById("appointment-list");
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [activeTab]);
 
   return (
     <div className="p-4 sm:p-6">
@@ -54,10 +74,24 @@ export default function AppointmentModule() {
         </select>
       </div>
 
-      {activeTab === "appointments" && <AppointmentList />}
+      {activeTab === "appointments" && (
+        <div id="appointment-list">
+          <AppointmentList filters={filters} onChangeFilters={setFilters} />
+        </div>
+      )}
+
       {activeTab === "types" && <AppointmentTypes />}
+
       {activeTab === "settings" && <DepartmentSettings />}
-      {activeTab === "calendar" && <AppointmentCalendar />}
+
+      {activeTab === "calendar" && (
+        <AppointmentCalendar
+          onSelectDate={(dateKey) => {
+            setFilters((prev) => ({ ...prev, date: dateKey }));
+            setActiveTab("appointments");
+          }}
+        />
+      )}
     </div>
   );
 }

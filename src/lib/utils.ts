@@ -1,3 +1,4 @@
+import { Appointment } from "@/services/admin-appointment";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -37,4 +38,36 @@ export const formatDate = (dateStr: string) => {
     day: "numeric",
     year: "numeric",
   });
+};
+
+/**
+ * status badge for appointment list
+ */
+export const getStatusBadge = (status: string) => {
+  switch (status) {
+    case "confirmed":
+      return "bg-green-100 text-green-700";
+    case "cancelled":
+      return "bg-red-100 text-red-700";
+    default:
+      return "bg-yellow-100 text-yellow-700";
+  }
+};
+
+/**
+ * cancellation reason for appointment list crew and admin
+ */
+export const getCancellationReason = (appt: Appointment) => {
+  if (appt.status !== "cancelled") return "";
+
+  const list = appt.cancellations ?? [];
+  if (list.length === 0) return "-";
+
+  const latest = [...list].sort((a, b) => {
+    const da = new Date(a.cancelled_at ?? a.created_at).getTime();
+    const db = new Date(b.cancelled_at ?? b.created_at).getTime();
+    return db - da;
+  })[0];
+
+  return latest?.reason?.trim() || "-";
 };

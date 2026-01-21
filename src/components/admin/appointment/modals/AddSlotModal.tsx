@@ -6,7 +6,6 @@ import dayjs, { Dayjs } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 dayjs.extend(customParseFormat);
@@ -14,52 +13,24 @@ dayjs.extend(customParseFormat);
 type ServerErrors = Record<string, string[]>;
 type FieldErrors = Record<string, string>;
 
-const normalizeDate = (date?: string) => (date ? date.split("T")[0] : "");
-const normalizeTime = (time?: string | null) => (time ? time.slice(0, 5) : "");
+const normalizeDate = (date?: string) => (date ? String(date).split("T")[0] : "");
 
-const toMinutes = (time: string) => {
-  const match = time.match(/^(\d{2}):(\d{2})$/);
-  if (!match) return NaN;
+type CreateMode = "range" | "multiple";
 
-  const h = Number(match[1]);
-  const m = Number(match[2]);
-  return h * 60 + m;
-};
+const expandRange = (start: string, end: string) => {
+  const s = dayjs(start, "YYYY-MM-DD", true);
+  const e = dayjs(end, "YYYY-MM-DD", true);
+  if (!s.isValid() || !e.isValid()) return [];
 
-const DEFAULT_SLOT_DURATION = 30;
+  if (e.isBefore(s, "day")) return [];
 
-const computeMaxSlots = (
-  openingTime: string,
-  closingTime: string,
-  durationMinutes: number
-) => {
-  if (!openingTime || !closingTime) return 0;
-
-  const open = toMinutes(openingTime);
-  const close = toMinutes(closingTime);
-
-  if (!Number.isFinite(open) || !Number.isFinite(close)) return 0;
-
-  const totalMinutes = close - open;
-  if (totalMinutes <= 0) return 0;
-
-  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) return 0;
-
-  return Math.floor(totalMinutes / durationMinutes);
-};
-
-const toDayjsTime = (value: string): Dayjs | null => {
-  if (!value) return null;
-
-  const hhmm = dayjs(value, "HH:mm", true);
-  if (hhmm.isValid()) return hhmm;
-
-  const ampm = dayjs(value, "hh:mm A", true);
-  return ampm.isValid() ? ampm : null;
-};
-
-const fromDayjsTime = (value: Dayjs | null) => {
-  return value ? value.format("HH:mm") : "";
+  const out: string[] = [];
+  let d = s.clone();
+  while (d.isSame(e, "day") || d.isBefore(e, "day")) {
+    out.push(d.format("YYYY-MM-DD"));
+    d = d.add(1, "day");
+  }
+  return out;
 };
 
 export default function AddSlotModal({
@@ -75,11 +46,21 @@ export default function AddSlotModal({
   serverErrors?: ServerErrors;
   disabledDates: Set<string>;
 }) {
-  const [date, setDate] = useState("");
-  const [openingTime, setOpeningTime] = useState("");
-  const [closingTime, setClosingTime] = useState("");
+  const isEdit = !!initialData?.id;
+
+  // create mode
+  const [mode, setMode] = useState<CreateMode>("range");
+
+  // range
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // multiple
+  const [multiDate, setMultiDate] = useState("");
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+
+  // common
   const [capacity, setCapacity] = useState("");
-  const [slotDuration, setSlotDuration] = useState("");
 
   const [errors, setErrors] = useState<FieldErrors>({});
 
@@ -92,26 +73,19 @@ export default function AddSlotModal({
   };
 
   useEffect(() => {
-    if (initialData) {
-      setDate(normalizeDate(initialData.date));
-      setOpeningTime(normalizeTime(initialData.opening_time));
-      setClosingTime(normalizeTime(initialData.closing_time));
+    if (isEdit) {
       setCapacity(initialData.total_slots?.toString() ?? "");
-      setSlotDuration(
-        initialData.slot_duration_minutes != null
-          ? String(initialData.slot_duration_minutes)
-          : ""
-      );
     } else {
-      setDate("");
-      setOpeningTime("");
-      setClosingTime("");
+      setMode("range");
+      setStartDate("");
+      setEndDate("");
+      setMultiDate("");
+      setSelectedDates([]);
       setCapacity("");
-      setSlotDuration("");
     }
 
     setErrors({});
-  }, [initialData]);
+  }, [initialData, isEdit]);
 
   useEffect(() => {
     if (!serverErrors) return;
@@ -131,13 +105,7 @@ export default function AddSlotModal({
   const validate = () => {
     const nextErrors: FieldErrors = {};
 
-    if (!initialData?.id) {
-      if (!date) nextErrors.date = "Date is required.";
-      if (date && disabledDates.has(date)) {
-        nextErrors.date = "A schedule already exists for this date.";
-      }
-    }
-
+    // capacity
     if (!capacity.trim()) {
       nextErrors.total_slots = "Daily capacity is required.";
     } else {
@@ -147,35 +115,39 @@ export default function AddSlotModal({
       }
     }
 
-    if (!openingTime) nextErrors.opening_time = "Opening time is required.";
-    if (!closingTime) nextErrors.closing_time = "Closing time is required.";
+    if (!isEdit) {
+      if (mode === "range") {
+        if (!startDate) nextErrors.start_date = "Start date is required.";
+        if (!endDate) nextErrors.end_date = "End date is required.";
 
-    if (openingTime && closingTime) {
-      if (toMinutes(closingTime) <= toMinutes(openingTime)) {
-        nextErrors.closing_time = "Closing time must be later than opening time.";
+        if (startDate && disabledDates.has(startDate)) {
+          nextErrors.start_date = "A schedule already exists for this date.";
+        }
+        if (endDate && disabledDates.has(endDate)) {
+          nextErrors.end_date = "A schedule already exists for this date.";
+        }
+
+        if (startDate && endDate) {
+          const rangeDates = expandRange(startDate, endDate);
+          if (rangeDates.length === 0) {
+            nextErrors.end_date = "End date must be the same as or later than start date.";
+          } else {
+            const conflict = rangeDates.find((d) => disabledDates.has(d));
+            if (conflict) {
+              nextErrors.start_date = "Some dates in this range already have schedules.";
+            }
+          }
+        }
       }
-    }
 
-    if (slotDuration.trim()) {
-      const dur = Number(slotDuration);
-      if (!Number.isFinite(dur) || dur < 5) {
-        nextErrors.slot_duration_minutes = "Slot duration must be at least 5 minutes.";
-      }
-    }
-
-    const durationForValidation = slotDuration.trim()
-      ? Number(slotDuration)
-      : DEFAULT_SLOT_DURATION;
-
-    if (openingTime && closingTime && Number.isFinite(durationForValidation)) {
-      const maxSlots = computeMaxSlots(openingTime, closingTime, durationForValidation);
-
-      if (maxSlots <= 0) {
-        nextErrors.total_slots = "Invalid time range or slot duration.";
-      } else if (capacity.trim()) {
-        const cap = Number(capacity);
-        if (Number.isFinite(cap) && cap > maxSlots) {
-          nextErrors.total_slots = `Daily capacity cannot exceed ${maxSlots} based on the selected time range and slot duration.`;
+      if (mode === "multiple") {
+        if (selectedDates.length === 0) {
+          nextErrors.dates = "Please select at least one date.";
+        } else {
+          const conflict = selectedDates.find((d) => disabledDates.has(d));
+          if (conflict) {
+            nextErrors.dates = "Some selected dates already have schedules.";
+          }
         }
       }
     }
@@ -184,118 +156,212 @@ export default function AddSlotModal({
     return Object.keys(nextErrors).length === 0;
   };
 
+  const handleAddMultiDate = () => {
+    if (!multiDate) return;
+
+    if (disabledDates.has(multiDate)) {
+      setErrors((prev) => ({ ...prev, dates: "A schedule already exists for one of the selected dates." }));
+      return;
+    }
+
+    setSelectedDates((prev) => {
+      if (prev.includes(multiDate)) return prev;
+      return [...prev, multiDate].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    });
+
+    setMultiDate("");
+    clearError("dates");
+  };
+
+  const handleRemoveMultiDate = (date: string) => {
+    setSelectedDates((prev) => prev.filter((d) => d !== date));
+  };
+
   const handleSave = () => {
     if (!validate()) return;
 
+    if (isEdit) {
+      onSave({
+        id: initialData.id,
+        total_slots: Number(capacity),
+      });
+      return;
+    }
+
+    if (mode === "multiple") {
+      onSave({
+        total_slots: Number(capacity),
+        dates: selectedDates,
+      });
+      return;
+    }
+
+    // range
     onSave({
-      id: initialData?.id,
-      date,
-      opening_time: openingTime || null,
-      closing_time: closingTime || null,
       total_slots: Number(capacity),
-      slot_duration_minutes: slotDuration.trim() ? Number(slotDuration) : null,
+      start_date: startDate,
+      end_date: endDate,
     });
   };
-
-  const maxCapacity =
-    openingTime && closingTime
-      ? computeMaxSlots(
-        openingTime,
-        closingTime,
-        slotDuration.trim() ? Number(slotDuration) : DEFAULT_SLOT_DURATION
-      )
-      : 0;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-md bg-black/10 z-50">
       <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-lg">
         <h2 className="text-xl font-semibold mb-4">
-          {initialData ? "Edit Slot" : "Add Slot"}
+          {isEdit ? "Edit Capacity" : "Add Schedule"}
         </h2>
 
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <div className="space-y-4">
-            {!initialData?.id && (
+            {!isEdit && (
               <div>
-                <label className="text-sm font-medium">Date</label>
+                <label className="text-sm font-medium">Selection Type</label>
 
-                <div className={errors.date ? "rounded-lg ring-1 ring-red-500" : ""}>
-                  <DatePicker
-                    value={date ? dayjs(date, "YYYY-MM-DD") : null}
-                    onChange={(value) => {
-                      const next = value ? value.format("YYYY-MM-DD") : "";
-                      setDate(next);
-                      clearError("date");
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("range");
+                      setErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.dates;
+                        delete copy.start_date;
+                        delete copy.end_date;
+                        return copy;
+                      });
                     }}
-                    shouldDisableDate={shouldDisableDate}
-                    disablePast
-                    slotProps={{
-                      textField: {
-                        size: "small",
-                        fullWidth: true,
-                        placeholder: "Select date",
-                      } as any,
+                    className={`px-3 py-2 rounded-lg text-sm border ${
+                      mode === "range" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700"
+                    }`}
+                  >
+                    Date Range
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("multiple");
+                      setErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.dates;
+                        delete copy.start_date;
+                        delete copy.end_date;
+                        return copy;
+                      });
                     }}
-                  />
+                    className={`px-3 py-2 rounded-lg text-sm border ${
+                      mode === "multiple" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700"
+                    }`}
+                  >
+                    Multiple Days
+                  </button>
                 </div>
-
-                <ValidationError errors={errors.date ?? ""} className="text-xs" />
               </div>
             )}
 
-            <div>
-              <label className="text-sm font-medium">Opening Time</label>
+            {!isEdit && mode === "range" && (
+              <>
+                <div>
+                  <label className="text-sm font-medium">Start Date</label>
+                  <div className={errors.start_date ? "rounded-lg ring-1 ring-red-500" : ""}>
+                    <DatePicker
+                      value={startDate ? dayjs(startDate, "YYYY-MM-DD") : null}
+                      onChange={(value) => {
+                        const next = value ? value.format("YYYY-MM-DD") : "";
+                        setStartDate(next);
+                        clearError("start_date");
+                      }}
+                      shouldDisableDate={shouldDisableDate}
+                      disablePast
+                      slotProps={{
+                        textField: { size: "small", fullWidth: true, placeholder: "Select start date" } as any,
+                      }}
+                    />
+                  </div>
+                  <ValidationError errors={errors.start_date ?? ""} className="text-xs" />
+                </div>
 
-              <div
-                className={errors.opening_time ? "rounded-lg ring-1 ring-red-500" : ""}
-              >
-                <TimePicker
-                  value={toDayjsTime(openingTime)}
-                  onChange={(val) => {
-                    setOpeningTime(fromDayjsTime(val));
-                    clearError("opening_time");
-                  }}
-                  ampm
-                  minutesStep={5}
-                  slotProps={{
-                    textField: {
-                      size: "small",
-                      fullWidth: true,
-                      placeholder: "Select time",
-                    } as any,
-                  }}
-                />
-              </div>
+                <div>
+                  <label className="text-sm font-medium">End Date</label>
+                  <div className={errors.end_date ? "rounded-lg ring-1 ring-red-500" : ""}>
+                    <DatePicker
+                      value={endDate ? dayjs(endDate, "YYYY-MM-DD") : null}
+                      onChange={(value) => {
+                        const next = value ? value.format("YYYY-MM-DD") : "";
+                        setEndDate(next);
+                        clearError("end_date");
+                      }}
+                      shouldDisableDate={shouldDisableDate}
+                      disablePast
+                      slotProps={{
+                        textField: { size: "small", fullWidth: true, placeholder: "Select end date" } as any,
+                      }}
+                    />
+                  </div>
+                  <ValidationError errors={errors.end_date ?? ""} className="text-xs" />
+                </div>
+              </>
+            )}
 
-              <ValidationError errors={errors.opening_time ?? ""} className="text-xs" />
-            </div>
+            {!isEdit && mode === "multiple" && (
+              <>
+                <div>
+                  <label className="text-sm font-medium">Pick a Date</label>
+                  <div className={errors.dates ? "rounded-lg ring-1 ring-red-500" : ""}>
+                    <DatePicker
+                      value={multiDate ? dayjs(multiDate, "YYYY-MM-DD") : null}
+                      onChange={(value) => {
+                        const next = value ? value.format("YYYY-MM-DD") : "";
+                        setMultiDate(next);
+                        clearError("dates");
+                      }}
+                      shouldDisableDate={shouldDisableDate}
+                      disablePast
+                      slotProps={{
+                        textField: { size: "small", fullWidth: true, placeholder: "Select date" } as any,
+                      }}
+                    />
+                  </div>
 
-            <div>
-              <label className="text-sm font-medium">Closing Time</label>
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleAddMultiDate}
+                      className="px-3 py-2 rounded-lg bg-gray-900 text-white text-sm"
+                      disabled={!multiDate}
+                    >
+                      Add Date
+                    </button>
+                  </div>
 
-              <div
-                className={errors.closing_time ? "rounded-lg ring-1 ring-red-500" : ""}
-              >
-                <TimePicker
-                  value={toDayjsTime(closingTime)}
-                  onChange={(val) => {
-                    setClosingTime(fromDayjsTime(val));
-                    clearError("closing_time");
-                  }}
-                  ampm
-                  minutesStep={5}
-                  slotProps={{
-                    textField: {
-                      size: "small",
-                      fullWidth: true,
-                      placeholder: "Select time",
-                    } as any,
-                  }}
-                />
-              </div>
+                  <ValidationError errors={errors.dates ?? ""} className="text-xs" />
 
-              <ValidationError errors={errors.closing_time ?? ""} className="text-xs" />
-            </div>
+                  {selectedDates.length > 0 && (
+                    <div className="mt-3 border rounded-lg p-3 space-y-2">
+                      <p className="text-xs text-gray-600">Selected dates:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedDates.map((d) => (
+                          <span
+                            key={d}
+                            className="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800"
+                          >
+                            {d}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMultiDate(d)}
+                              className="text-gray-500 hover:text-gray-800"
+                              aria-label={`Remove ${d}`}
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
 
             <div>
               <label className="text-sm font-medium">Daily Capacity</label>
@@ -307,41 +373,11 @@ export default function AddSlotModal({
                   setCapacity(e.target.value);
                   clearError("total_slots");
                 }}
-                className={`border rounded-lg p-2 w-full ${errors.total_slots ? "border-red-500" : ""
-                  }`}
+                className={`border rounded-lg p-2 w-full ${
+                  errors.total_slots ? "border-red-500" : ""
+                }`}
               />
-
-              {openingTime && closingTime && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Max capacity: {maxCapacity} slots
-                  {!slotDuration.trim()
-                    ? ` (default duration: ${DEFAULT_SLOT_DURATION} mins)`
-                    : ""}
-                </p>
-              )}
-
               <ValidationError errors={errors.total_slots ?? ""} className="text-xs" />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">
-                Slot Duration (minutes) <span className="text-gray-500">(optional)</span>
-              </label>
-
-              <input
-                type="number"
-                min={5}
-                value={slotDuration}
-                onChange={(e) => {
-                  setSlotDuration(e.target.value);
-                  clearError("slot_duration_minutes");
-                }}
-                className={`border rounded-lg p-2 w-full ${errors.slot_duration_minutes ? "border-red-500" : ""
-                  }`}
-                placeholder="e.g. 30"
-              />
-
-              <ValidationError errors={errors.slot_duration_minutes ?? ""} className="text-xs" />
             </div>
           </div>
         </LocalizationProvider>
@@ -360,7 +396,7 @@ export default function AddSlotModal({
             className="px-4 py-2 rounded-lg bg-blue-600 text-white"
             type="button"
           >
-            {initialData ? "Save Changes" : "Add Slot"}
+            {isEdit ? "Save Changes" : "Save Schedule"}
           </button>
         </div>
       </div>

@@ -8,7 +8,11 @@ import { DayInfo } from "./calendar/CalendarDayCell";
 import { AdminAppointmentService } from "@/services/admin-appointment";
 import { CalendarDayApi } from "@/types/api";
 
-export default function AppointmentCalendar() {
+export default function AppointmentCalendar({
+  onSelectDate,
+}: {
+  onSelectDate?: (dateKey: string) => void;
+}) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [data, setData] = useState<Record<string, DayInfo>>({});
   const [loading, setLoading] = useState(true);
@@ -66,7 +70,7 @@ export default function AppointmentCalendar() {
       {loading ? (
         <CalendarSkeleton showHeader={false} className="mt-6" />
       ) : (
-        <CalendarGrid currentMonth={currentMonth} data={data} />
+        <CalendarGrid currentMonth={currentMonth} data={data} onDayClick={(dateKey) => onSelectDate?.(dateKey)}/>
       )}
     </div>
   );

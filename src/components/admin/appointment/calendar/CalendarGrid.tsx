@@ -1,15 +1,15 @@
 "use client";
 
-import CalendarDayCell from "./CalendarDayCell";
+import CalendarDayCell, { DayInfo } from "./CalendarDayCell";
 import { generateCalendar } from "./calendarUtils";
-import { DayInfo } from "./CalendarDayCell";
 
 interface Props {
   currentMonth: Date;
   data: Record<string, DayInfo>;
+  onDayClick?: (dateKey: string) => void;
 }
 
-export default function CalendarGrid({ currentMonth, data }: Props) {
+export default function CalendarGrid({ currentMonth, data, onDayClick }: Props) {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
   const days = generateCalendar(year, month);
@@ -24,11 +24,7 @@ export default function CalendarGrid({ currentMonth, data }: Props) {
 
       <div className="grid grid-cols-7 gap-2">
         {days.map((day, index) => (
-          <CalendarDayCell
-            key={index}
-            date={day}
-            data={data}
-          />
+          <CalendarDayCell key={index} date={day} data={data} onDayClick={onDayClick} />
         ))}
       </div>
     </div>

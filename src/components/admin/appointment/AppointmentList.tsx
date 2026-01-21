@@ -3,19 +3,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
-import { formatTime, formatDate } from "@/lib/utils";
+import { formatDate, getStatusBadge, getCancellationReason } from "@/lib/utils";
 import { AdminAppointmentService, AppointmentService, Appointment, AppointmentStatus } from "@/services/admin-appointment";
-import { AppointmentTypeOption, Filters } from "./AppointmentListFilter";
+import { AppointmentTypeOption, Filters } from "./filters/AppointmentListFilter";
 import CancelReasonModal from "@/components/CancelReasonModal";
 import ConfirmActionModal from "@/components/ConfirmActionModal";
-import AppointmentFilters from "./AppointmentListFilter";
+import AppointmentFilters from "./filters/AppointmentListFilter";
 import Pagination from "@/components/Pagination";
 import TableSkeleton from "@/components/TableSkeleton";
 
-
 const PAGE_SIZE = 10;
 
-export default function AdminAppointmentList() {
+export default function AdminAppointmentList({
+  filters,
+  onChangeFilters,
+}: {
+  filters: Filters;
+  onChangeFilters: (v: Filters) => void;
+}) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,13 +32,6 @@ export default function AdminAppointmentList() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmType, setConfirmType] = useState<"confirm" | "cancel" | null>(null);
-
-  const [filters, setFilters] = useState<Filters>({
-    status: "all",
-    name: "",
-    typeId: "all",
-    date: "",
-  });
 
   const [page, setPage] = useState(1);
 
@@ -66,16 +64,9 @@ export default function AdminAppointmentList() {
     fetchTypes();
   }, []);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return "bg-green-100 text-green-700";
-      case "cancelled":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-yellow-100 text-yellow-700";
-    }
-  };
+  useEffect(() => {
+    setPage(1);
+  }, [filters.status, filters.name, filters.typeId, filters.date]);
 
   const getCrewName = (appt: Appointment) => {
     const profile = appt.user?.profile;
@@ -90,14 +81,15 @@ export default function AdminAppointmentList() {
       const profile = appt.user?.profile;
       const fullName = profile
         ? `${profile.first_name} ${profile.middle_name ?? ""} ${profile.last_name}`
-          .toLowerCase()
-          .replace(/\s+/g, " ")
-          .trim()
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim()
         : "";
+
       const matchStatus = status === "all" || appt.status === status;
       const matchName = !name || fullName.includes(name.toLowerCase().trim());
       const matchType = typeId === "all" || String(appt.type?.id ?? "") === String(typeId);
-      const matchDate = !date || (appt.date ?? "").startsWith(date);
+      const matchDate = !date || (String(appt.date ?? "")).startsWith(date);
 
       return matchStatus && matchName && matchType && matchDate;
     });
@@ -161,11 +153,11 @@ export default function AdminAppointmentList() {
         types={types}
         typesLoading={typesLoading}
         onChange={(v) => {
-          setFilters(v);
+          onChangeFilters(v);
           setPage(1);
         }}
         onClear={() => {
-          setFilters({
+          onChangeFilters({
             status: "all",
             name: "",
             typeId: "all",
@@ -177,7 +169,7 @@ export default function AdminAppointmentList() {
 
       {loading ? (
         <div className="bg-white rounded-xl shadow overflow-hidden">
-          <TableSkeleton columns={6} rows={10} />
+          <TableSkeleton columns={8} rows={10} />
         </div>
       ) : (
         <div className="bg-white rounded-xl shadow overflow-hidden">
@@ -189,8 +181,9 @@ export default function AdminAppointmentList() {
                   <th className="px-4 py-3 text-left">Appointment Type</th>
                   <th className="px-4 py-3 text-left">Purpose</th>
                   <th className="px-4 py-3 text-left">Date</th>
-                  <th className="px-4 py-3 text-left">Time</th>
+                  <th className="px-4 py-3 text-left">Session</th>
                   <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-left">Reason</th>
                   <th className="px-4 py-3 text-center">Action</th>
                 </tr>
               </thead>
@@ -198,7 +191,7 @@ export default function AdminAppointmentList() {
               <tbody className="text-sm">
                 {total === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
+                    <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
                       No appointments found
                     </td>
                   </tr>
@@ -209,9 +202,9 @@ export default function AdminAppointmentList() {
                     <tr key={appt.id} className="border-t hover:bg-gray-50">
                       <td className="px-4 py-3">{getCrewName(appt)}</td>
                       <td className="px-4 py-3">{appt.type?.name ?? "-"}</td>
-                      <td className="px-4 py-3">{appt.purpose}</td>
+                      <td className="px-4 py-3">{appt.purpose ?? "-"}</td>
                       <td className="px-4 py-3">{formatDate(appt.date)}</td>
-                      <td className="px-4 py-3">{formatTime(appt.time)}</td>
+                      <td className="px-4 py-3">{appt.session ?? "-"}</td>
 
                       <td className="px-4 py-3">
                         <span
@@ -221,6 +214,14 @@ export default function AdminAppointmentList() {
                         >
                           {appt.status}
                         </span>
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {appt.status === "cancelled" ? (
+                          <span className="text-gray-700">{getCancellationReason(appt)}</span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
                       </td>
 
                       <td className="px-4 py-3 text-center">
@@ -277,6 +278,7 @@ export default function AdminAppointmentList() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                     <div className="flex flex-col items-end leading-tight">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadge(
                           appt.status
@@ -284,6 +286,16 @@ export default function AdminAppointmentList() {
                       >
                         {appt.status}
                       </span>
+
+                      {appt.status === "cancelled" && (
+                        <div className="mt-1 text-right">
+                          <p className="text-[11px] text-gray-500">Reason</p>
+                          <p className="text-xs font-medium text-gray-900 break-words max-w-[160px]">
+                            {getCancellationReason(appt)}
+                          </p>
+                        </div>
+                        )}
+                      </div>
 
                       {canAct(appt.status) && (
                         <div className="flex items-center gap-2">
@@ -321,8 +333,8 @@ export default function AdminAppointmentList() {
                       <p className="font-medium text-gray-900">{formatDate(appt.date)}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500">Time</p>
-                      <p className="font-medium text-gray-900">{formatTime(appt.time)}</p>
+                      <p className="text-gray-500">Session</p>
+                      <p className="font-medium text-gray-900">{appt.session ?? "-"}</p>
                     </div>
                   </div>
                 </div>

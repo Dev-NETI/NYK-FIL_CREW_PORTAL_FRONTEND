@@ -11,7 +11,7 @@ import {
   DepartmentSchedule,
   DepartmentScheduleService,
 } from "@/services/department-schedule";
-import { formatTime, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 type ServerErrors = Record<string, string[]>;
 
@@ -49,7 +49,6 @@ export default function DepartmentSettings() {
     );
   }, [slots, dateFilter]);
 
-
   const disabledDates = useMemo(() => {
     return new Set(slots.map((s) => String(s.date).split("T")[0]));
   }, [slots]);
@@ -61,19 +60,26 @@ export default function DepartmentSettings() {
       if (slot.id) {
         await DepartmentScheduleService.update(slot.id, {
           total_slots: slot.total_slots,
-          opening_time: slot.opening_time,
-          closing_time: slot.closing_time,
-          slot_duration_minutes: slot.slot_duration_minutes,
         });
         toast.success("Schedule updated");
       } else {
-        await DepartmentScheduleService.create({
-          date: slot.date,
+        // - slot.date (single)
+        // - slot.dates (multiple)
+        // - slot.start_date + slot.end_date (range)
+        const payload: any = {
           total_slots: slot.total_slots,
-          opening_time: slot.opening_time,
-          closing_time: slot.closing_time,
-          slot_duration_minutes: slot.slot_duration_minutes,
-        });
+        };
+
+        if (slot.dates?.length) {
+          payload.dates = slot.dates;
+        } else if (slot.start_date && slot.end_date) {
+          payload.start_date = slot.start_date;
+          payload.end_date = slot.end_date;
+        } else {
+          payload.date = slot.date;
+        }
+
+        await DepartmentScheduleService.create(payload);
         toast.success("Schedule saved");
       }
 
@@ -107,10 +113,8 @@ export default function DepartmentSettings() {
 
   const deleteMessage = deleteTarget
     ? `Are you sure you want to delete the schedule for ${formatDate(
-      deleteTarget.date
-    )} (${formatTime(deleteTarget.opening_time)} - ${formatTime(
-      deleteTarget.closing_time
-    )})? This action cannot be undone.`
+        deleteTarget.date
+      )}? This action cannot be undone.`
     : "";
 
   return (
@@ -138,7 +142,7 @@ export default function DepartmentSettings() {
       </div>
 
       {loading ? (
-        <TableSkeleton columns={5} rows={6} />
+        <TableSkeleton columns={3} rows={6} />
       ) : (
         <div className="bg-white rounded-xl border overflow-hidden">
           <div className="hidden lg:block overflow-x-auto">
@@ -146,8 +150,6 @@ export default function DepartmentSettings() {
               <thead className="bg-gray-100">
                 <tr>
                   <th className="p-3 text-left">Date</th>
-                  <th className="p-3 text-left">Opening</th>
-                  <th className="p-3 text-left">Closing</th>
                   <th className="p-3 text-left">Capacity</th>
                   <th className="p-3 text-left">Actions</th>
                 </tr>
@@ -157,8 +159,6 @@ export default function DepartmentSettings() {
                 {visibleSlots.map((slot) => (
                   <tr key={slot.id} className="border-b">
                     <td className="p-3">{formatDate(slot.date)}</td>
-                    <td className="p-3">{formatTime(slot.opening_time)}</td>
-                    <td className="p-3">{formatTime(slot.closing_time)}</td>
                     <td className="p-3">{slot.total_slots}</td>
 
                     <td className="p-3">
@@ -186,7 +186,7 @@ export default function DepartmentSettings() {
 
                 {visibleSlots.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="p-4 text-center text-gray-500">
+                    <td colSpan={3} className="p-4 text-center text-gray-500">
                       No schedules added.
                     </td>
                   </tr>
@@ -213,16 +213,11 @@ export default function DepartmentSettings() {
                     <p className="font-semibold text-gray-900 text-sm">
                       {formatDate(slot.date)}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {formatTime(slot.opening_time)} - {formatTime(slot.closing_time)}
-                    </p>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                      Capacity: {slot.total_slots}
-                    </span>
-                  </div>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                    Capacity: {slot.total_slots}
+                  </span>
                 </div>
 
                 <div className="mt-4 flex justify-end gap-3">

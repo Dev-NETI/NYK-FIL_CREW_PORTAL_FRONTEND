@@ -14,7 +14,9 @@ export interface AppointmentType {
 
 type Role = "crew" | "department";
 
-export type AppointmentStatus = "pending" | "confirmed" | "cancelled";
+export type AppointmentStatus = "pending" | "confirmed" | "cancelled" | "attended" | "No show";
+
+export type AppointmentSession = "AM" | "PM";
 
 export interface Appointment {
   id: number;
@@ -24,6 +26,7 @@ export interface Appointment {
   schedule_id: number;
   date: string;
   time: string;
+  session: string;
   status: AppointmentStatus
   purpose: string;
   created_by: number;
@@ -34,8 +37,8 @@ export interface Appointment {
   type?: AppointmentType;
   user?: {
     profile?: {
-    first_name: string;
-    middle_name?: string | null;
+      first_name: string;
+      middle_name?: string | null;
       last_name: string;
     };
   };
@@ -46,7 +49,37 @@ export interface Appointment {
     cancelled_by_type: Role;
     reason: string;
     cancelled_at: string;
+    created_at: string;
   }[];
+}
+
+export interface VerifiedAppointment {
+  id: number;
+  user_id: number;
+  date: string;
+  session: AppointmentSession;
+  status: string;
+  purpose?: string | null;
+  type?: {
+    id: number;
+    name: string;
+  };
+  department?: {
+    id: number;
+    name: string;
+  };
+  user?: {
+    profile?: {
+      first_name?: string | null;
+      middle_name?: string | null;
+      last_name?: string | null;
+      crew_id?: string | null;
+    };
+  };
+}
+
+export interface VerifyQrResponse extends BaseApiResponse {
+  data: VerifiedAppointment;
 }
 
 export interface AppointmentListResponse extends BaseApiResponse {
@@ -59,7 +92,7 @@ export interface AppointmentTypeListResponse extends BaseApiResponse {
 
 export interface AdminAppointmentListResponse {
   success: boolean;
-  data: any[];
+  data: Appointment[];
 }
 
 export interface AdminCalendarResponse extends BaseApiResponse {
@@ -128,11 +161,20 @@ export class AdminAppointmentService {
   }
 
   static async getCalendar(month: string): Promise<CalendarDayApi[]> {
-  const response = await api.get<AdminCalendarResponse>(
-    "/admin/appointments/calendar",
-    { params: { month } }
-  );
+    const response = await api.get<AdminCalendarResponse>(
+      "/admin/appointments/calendar",
+      { params: { month } }
+    );
 
-  return Array.isArray(response.data.data) ? response.data.data : [];
-}
+    return Array.isArray(response.data.data) ? response.data.data : [];
+  }
+  
+  static async verifyQrToken(token: string): Promise<VerifiedAppointment> {
+    const res = await api.post<VerifyQrResponse>(
+      "/qr/appointments/verify",
+      { token }
+    );
+
+    return res.data.data;
+  }
 }
