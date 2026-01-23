@@ -85,6 +85,13 @@ export default function NavigationComponent({
       isActive: pathname.startsWith("/admin/qr-scanner"),
       requiredRole: 'Qr Scanner',
     },
+    {
+      href: "/admin/debriefing-form",
+      icon: "bi-file-earmark-text",
+      label: "Debriefing Form",
+      isActive: pathname.startsWith("/admin/debriefing-form"),
+      requiredRole: 'Debriefing Form',
+    },
   ].filter((link) => hasRole(link.requiredRole));
 
   // General Settings sub-items
