@@ -200,7 +200,10 @@ export default function EditTravelDocumentModal({
       );
 
       if (response.success) {
-        toast.success(response.message);
+        toast.success(
+          "Update request submitted! An email notification has been sent to the admin for approval.",
+          { duration: 5000 }
+        );
         handleClose();
         onSuccess();
       }

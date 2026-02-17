@@ -34,6 +34,7 @@ export default function DocumentViewerModalComponent({
 
   const getPendingDocumentUrl = () => {
     if (!pendingDocumentPath) return null;
+    console.log(`${backendUrl}/storage/${pendingDocumentPath}`);
     return `${backendUrl}/storage/${pendingDocumentPath}`;
   };
 

@@ -33,6 +33,7 @@ export default function NavigationComponent({
     );
   };
 
+
   // Navigation links array for easy management
   const navigationLinks = [
     {
@@ -69,6 +70,27 @@ export default function NavigationComponent({
       label: "Reports",
       isActive: pathname.startsWith("/admin/reports"),
       requiredRole: "Reports",
+    },
+    {
+      href: "/admin/appointment",
+      icon: "bi-calendar-event",
+      label: "Appointments",
+      isActive: pathname.startsWith("/admin/appointment"),
+      requiredRole: 'Appointments',
+    },
+    {
+      href: "/admin/qr-scanner",
+      icon: "bi-qr-code-scan",
+      label: "Qr Scanner",
+      isActive: pathname.startsWith("/admin/qr-scanner"),
+      requiredRole: 'Qr Scanner',
+    },
+    {
+      href: "/admin/debriefing-form",
+      icon: "bi-file-earmark-text",
+      label: "Debriefing Form",
+      isActive: pathname.startsWith("/admin/debriefing-form"),
+      requiredRole: 'Debriefing Form',
     },
   ].filter((link) => hasRole(link.requiredRole));
 

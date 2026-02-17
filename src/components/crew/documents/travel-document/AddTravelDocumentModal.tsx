@@ -214,7 +214,10 @@ export default function AddTravelDocumentModal({
         requestData
       );
 
-      toast.success(response.message);
+      toast.success(
+        "Document submitted successfully! An email notification has been sent to the admin for approval.",
+        { duration: 5000 }
+      );
 
       // Reset form and close modal
       setFormData({

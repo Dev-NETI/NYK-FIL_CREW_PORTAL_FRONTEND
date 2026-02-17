@@ -82,16 +82,19 @@ export default function EmploymentDocumentListItemComponent({
     fetchPendingUpdates();
   }, [document.id]);
 
+  // Check if item has pending approval
+  const hasPendingApproval = pendingUpdates.length > 0;
+
   // Swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (isEditing) return;
+    if (isEditing || hasPendingApproval) return;
     setIsDragging(true);
     startXRef.current = e.touches[0].clientX;
     startOffsetRef.current = swipeOffset;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || isEditing) return;
+    if (!isDragging || isEditing || hasPendingApproval) return;
     const currentX = e.touches[0].clientX;
     const diff = currentX - startXRef.current;
     const newOffset = startOffsetRef.current + diff;
@@ -103,7 +106,7 @@ export default function EmploymentDocumentListItemComponent({
   };
 
   const handleTouchEnd = () => {
-    if (!isDragging || isEditing) return;
+    if (!isDragging || isEditing || hasPendingApproval) return;
     setIsDragging(false);
 
     // Snap to open (-150px) or closed (0) based on threshold
@@ -115,7 +118,7 @@ export default function EmploymentDocumentListItemComponent({
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isEditing) return;
+    if (isEditing || hasPendingApproval) return;
     setIsDragging(true);
     startXRef.current = e.clientX;
     startOffsetRef.current = swipeOffset;
@@ -123,7 +126,7 @@ export default function EmploymentDocumentListItemComponent({
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || isEditing) return;
+      if (!isDragging || isEditing || hasPendingApproval) return;
       const currentX = e.clientX;
       const diff = currentX - startXRef.current;
       const newOffset = startOffsetRef.current + diff;
@@ -135,7 +138,7 @@ export default function EmploymentDocumentListItemComponent({
     };
 
     const handleMouseUp = () => {
-      if (!isDragging || isEditing) return;
+      if (!isDragging || isEditing || hasPendingApproval) return;
       setIsDragging(false);
 
       // Snap to open (-150px) or closed (0) based on threshold
@@ -154,7 +157,7 @@ export default function EmploymentDocumentListItemComponent({
         window.removeEventListener("mouseup", handleMouseUp);
       };
     }
-  }, [isDragging, isEditing, swipeOffset]);
+  }, [isDragging, isEditing, swipeOffset, hasPendingApproval]);
 
   // Reset swipe when editing mode changes
   useEffect(() => {
@@ -450,15 +453,25 @@ export default function EmploymentDocumentListItemComponent({
         }}
         className={`bg-gradient-to-r ${colors.gradient} rounded-xl p-5 border ${
           colors.border
-        } hover:shadow-lg transition-all duration-300 ${
-          !isEditing && !isDragging && "cursor-grab active:cursor-grabbing"
+        } ${
+          hasPendingApproval
+            ? "opacity-75"
+            : "hover:shadow-lg"
+        } transition-all duration-300 ${
+          !isEditing && !isDragging && !hasPendingApproval && "cursor-grab active:cursor-grabbing"
+        } ${
+          hasPendingApproval && "cursor-not-allowed"
         } relative`}
       >
         {!isEditing ? (
           // Simple view - only document name
           <div
             className="flex items-center gap-4"
-            onClick={() => setIsViewModalOpen(true)}
+            onClick={() => {
+              if (!hasPendingApproval) {
+                setIsViewModalOpen(true);
+              }
+            }}
           >
             {/* Icon */}
             <div className="flex-shrink-0">
