@@ -1,9 +1,36 @@
 import { useState, useRef, useEffect } from "react";
+import { motion } from "motion/react";
 import toast from "react-hot-toast";
 import * as Yup from "yup";
 import { EmploymentDocumentService } from "@/services/employment-document";
-import { EmploymentDocumentApprovalService, EmploymentDocumentUpdate } from "@/services/employment-document-approval";
+import {
+  EmploymentDocumentApprovalService,
+  EmploymentDocumentUpdate,
+} from "@/services/employment-document-approval";
 import ViewEmploymentDocumentModal from "./ViewEmploymentDocumentModal";
+
+// Map document types to their logo images
+const documentLogos: Record<string, string> = {
+  TIN: "/BIR.png",
+  SSS: "/SSS.png",
+  "PAG-IBIG": "/PAGIBIG.svg",
+  PHILHEALTH: "/PHILHEALTH.png",
+  SRN: "/MARINA.svg",
+  "DMW e-REG": "/DMW.svg",
+  "MARCO PAY": "/MARCOPAY.png",
+};
+
+// Map document types to their full descriptions
+const documentDescriptions: Record<string, string> = {
+  TIN: "Tax Identification Number",
+  SSS: "Social Security System",
+  "PAG-IBIG": "Home Development Mutual Fund",
+  PAGIBIG: "Home Development Mutual Fund",
+  PHILHEALTH: "Philippine Health Insurance",
+  SRN: "Seafarer Registration Number",
+  "DMW e-REG": "Department of Migrant Workers Registration",
+  "MARCO PAY": "Maritime Crew Online Payment",
+};
 
 interface EmploymentDocument {
   id: number;
@@ -21,6 +48,7 @@ interface EmploymentDocument {
 interface EmploymentDocumentListItemComponentProps {
   document: EmploymentDocument;
   onUpdate?: () => void;
+  index?: number;
 }
 
 // Yup validation schema
@@ -33,10 +61,11 @@ const documentNumberSchema = Yup.string()
 export default function EmploymentDocumentListItemComponent({
   document,
   onUpdate,
+  index = 0,
 }: EmploymentDocumentListItemComponentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedDocumentNumber, setEditedDocumentNumber] = useState(
-    document.documentNumber
+    document.documentNumber,
   );
   const [validationError, setValidationError] = useState("");
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -45,7 +74,9 @@ export default function EmploymentDocumentListItemComponent({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [pendingUpdates, setPendingUpdates] = useState<EmploymentDocumentUpdate[]>([]);
+  const [pendingUpdates, setPendingUpdates] = useState<
+    EmploymentDocumentUpdate[]
+  >([]);
   const [loadingPending, setLoadingPending] = useState(true);
 
   // Swipe state
@@ -68,12 +99,14 @@ export default function EmploymentDocumentListItemComponent({
     const fetchPendingUpdates = async () => {
       try {
         setLoadingPending(true);
-        const history = await EmploymentDocumentApprovalService.getHistory(document.id);
+        const history = await EmploymentDocumentApprovalService.getHistory(
+          document.id,
+        );
         // Filter for pending updates only
-        const pending = history.filter(update => update.status === 'pending');
+        const pending = history.filter((update) => update.status === "pending");
         setPendingUpdates(pending);
       } catch (error) {
-        console.error('Error fetching pending updates:', error);
+        console.error("Error fetching pending updates:", error);
       } finally {
         setLoadingPending(false);
       }
@@ -199,7 +232,7 @@ export default function EmploymentDocumentListItemComponent({
     // Check file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       setFileError(
-        "Only PDF and image files (JPEG, PNG, GIF, WebP) are allowed"
+        "Only PDF and image files (JPEG, PNG, GIF, WebP) are allowed",
       );
       return false;
     }
@@ -258,7 +291,8 @@ export default function EmploymentDocumentListItemComponent({
       }
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Failed to delete employment document"
+        error?.response?.data?.message ||
+          "Failed to delete employment document",
       );
       console.error("Delete error:", error);
     } finally {
@@ -294,7 +328,7 @@ export default function EmploymentDocumentListItemComponent({
       formData.append("crew_id", document.crew_id);
       formData.append(
         "employment_document_type_id",
-        document.employment_document_type_id.toString()
+        document.employment_document_type_id.toString(),
       );
       formData.append("document_number", trimmedValue);
       formData.append("file", documentFile);
@@ -319,14 +353,14 @@ export default function EmploymentDocumentListItemComponent({
 
       const response = await EmploymentDocumentService.updateEmploymentDocument(
         document.id,
-        requestData
+        requestData,
       );
       console.log(response);
       toast.dismiss(loadingToast);
 
       if (response.success) {
         toast.success(
-          response.message || "Employment document updated successfully!"
+          response.message || "Employment document updated successfully!",
         );
 
         setIsEditing(false);
@@ -342,7 +376,7 @@ export default function EmploymentDocumentListItemComponent({
       }
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "An error occurred while updating"
+        error?.response?.data?.message || "An error occurred while updating",
       );
       console.error("Update error:", error);
     } finally {
@@ -399,7 +433,16 @@ export default function EmploymentDocumentListItemComponent({
   const colors = getColorClasses(document.documentType);
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
+    <motion.div
+      className="relative overflow-hidden rounded-xl"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.4,
+        delay: index * 0.1,
+        ease: "easeOut",
+      }}
+    >
       {/* Action buttons background (shown when swiped) */}
       <div className="absolute inset-0 flex items-stretch justify-end bg-gray-100">
         <button
@@ -454,14 +497,13 @@ export default function EmploymentDocumentListItemComponent({
         className={`bg-gradient-to-r ${colors.gradient} rounded-xl p-5 border ${
           colors.border
         } ${
-          hasPendingApproval
-            ? "opacity-75"
-            : "hover:shadow-lg"
+          hasPendingApproval ? "opacity-75" : "hover:shadow-lg"
         } transition-all duration-300 ${
-          !isEditing && !isDragging && !hasPendingApproval && "cursor-grab active:cursor-grabbing"
-        } ${
-          hasPendingApproval && "cursor-not-allowed"
-        } relative`}
+          !isEditing &&
+          !isDragging &&
+          !hasPendingApproval &&
+          "cursor-grab active:cursor-grabbing"
+        } ${hasPendingApproval && "cursor-not-allowed"} relative`}
       >
         {!isEditing ? (
           // Simple view - only document name
@@ -473,14 +515,14 @@ export default function EmploymentDocumentListItemComponent({
               }
             }}
           >
-            {/* Icon */}
+            {/* Logo */}
             <div className="flex-shrink-0">
-              <div
-                className={`w-12 h-12 sm:w-14 sm:h-14 ${colors.bg} rounded-xl flex items-center justify-center shadow-md`}
-              >
-                <i
-                  className={`bi ${document.icon} text-white text-xl sm:text-2xl`}
-                ></i>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-xl flex items-center justify-center shadow-md overflow-hidden p-2">
+                <img
+                  src={documentLogos[document.documentType] || "/blank.png"}
+                  alt={document.documentType}
+                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+                />
               </div>
             </div>
 
@@ -497,6 +539,11 @@ export default function EmploymentDocumentListItemComponent({
                   </span>
                 )}
               </div>
+              {documentDescriptions[document.documentType] && (
+                <p className="text-xs sm:text-sm text-gray-500">
+                  {documentDescriptions[document.documentType]}
+                </p>
+              )}
               {document.file_path && (
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">
                   <i className="bi bi-paperclip mr-1"></i>
@@ -519,23 +566,30 @@ export default function EmploymentDocumentListItemComponent({
         ) : (
           // Edit mode
           <div className="flex items-start gap-4">
-            {/* Icon */}
+            {/* Logo */}
             <div className="flex-shrink-0">
-              <div
-                className={`w-12 h-12 sm:w-14 sm:h-14 ${colors.bg} rounded-xl flex items-center justify-center shadow-md`}
-              >
-                <i
-                  className={`bi ${document.icon} text-white text-xl sm:text-2xl`}
-                ></i>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-xl flex items-center justify-center shadow-md overflow-hidden p-2">
+                <img
+                  src={documentLogos[document.documentType] || "/BIR.png"}
+                  alt={document.documentType}
+                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+                />
               </div>
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2 mb-3">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
-                  {document.documentType}
-                </h3>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                    {document.documentType}
+                  </h3>
+                  {documentDescriptions[document.documentType] && (
+                    <p className="text-xs sm:text-sm text-gray-500">
+                      {documentDescriptions[document.documentType]}
+                    </p>
+                  )}
+                </div>
 
                 {/* Cancel/Save Buttons */}
                 <div className="flex gap-2 flex-shrink-0">
@@ -620,8 +674,8 @@ export default function EmploymentDocumentListItemComponent({
                           fileError
                             ? "border-red-500 bg-red-50 text-red-700"
                             : documentFile
-                            ? "border-green-500 bg-green-50 text-green-700"
-                            : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100"
+                              ? "border-green-500 bg-green-50 text-green-700"
+                              : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100"
                         }`}
                       >
                         {documentFile ? (
@@ -658,7 +712,7 @@ export default function EmploymentDocumentListItemComponent({
                             setDocumentFile(null);
                             setFileError("");
                             const fileInput = window.document.getElementById(
-                              `document-file-${document.id}`
+                              `document-file-${document.id}`,
                             ) as HTMLInputElement;
                             if (fileInput) fileInput.value = "";
                           }}
@@ -730,6 +784,6 @@ export default function EmploymentDocumentListItemComponent({
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

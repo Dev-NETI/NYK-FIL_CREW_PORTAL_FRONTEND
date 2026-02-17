@@ -46,7 +46,7 @@ export default function EmploymentDocumentListComponent() {
         setIsLoading(true);
         const data =
           await EmploymentDocumentService.getEmploymentDocumentsByCrewId(
-            user.profile.crew_id
+            user.profile.crew_id,
           );
         const eDocDataType =
           await EmploymentDocumentTypeService.getEmploymentDocumentTypes();
@@ -77,17 +77,6 @@ export default function EmploymentDocumentListComponent() {
     return iconMap[documentType] || "bi-file-earmark-text";
   };
 
-  const getDocumentColor = (documentType: string): string => {
-    const colorMap: Record<string, string> = {
-      TIN: "blue",
-      SSS: "green",
-      "PAG-IBIG": "purple",
-      PHILHEALTH: "orange",
-      SRN: "indigo",
-    };
-    return colorMap[documentType] || "gray";
-  };
-
   const mappedDocuments: EmploymentDocument[] =
     employmentDocuments?.map((doc) => ({
       id: doc.id,
@@ -104,10 +93,10 @@ export default function EmploymentDocumentListComponent() {
 
   // Find missing document types
   const existingDocumentTypeIds = employmentDocuments.map(
-    (doc) => doc.employment_document_type_id
+    (doc) => doc.employment_document_type_id,
   );
   const missingDocumentTypes = employmentDocumentTypes.filter(
-    (type) => !existingDocumentTypeIds.includes(type.id)
+    (type) => !existingDocumentTypeIds.includes(type.id),
   );
 
   if (isLoading) {
@@ -116,24 +105,25 @@ export default function EmploymentDocumentListComponent() {
 
   return (
     <div className="space-y-4 mb-28">
-      {mappedDocuments.map((doc) => (
+      {mappedDocuments.map((doc, index) => (
         <EmploymentDocumentListItemComponent
           key={doc.id}
           document={doc}
           onUpdate={fetchEmploymentDocuments}
+          index={index}
         />
       ))}
 
       {/* Missing Document Type Cards */}
-      {missingDocumentTypes.map((type) => (
+      {missingDocumentTypes.map((type, index) => (
         <MissingEmploymentDocumentCardComponent
           key={type.id}
           documentType={type.name}
-          icon={getDocumentIcon(type.name)}
           onAdd={() => {
             setSelectedDocumentType(type);
             setIsModalOpen(true);
           }}
+          index={mappedDocuments.length + index}
         />
       ))}
 

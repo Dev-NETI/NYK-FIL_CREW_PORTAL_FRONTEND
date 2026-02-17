@@ -125,7 +125,7 @@ export default function LoginPage() {
         AuthService.handleLoginSuccess(
           response.token,
           response.user,
-          response.redirect_to
+          response.redirect_to,
         );
       } else {
         let errorMessage = response.message || "Invalid OTP";
@@ -279,19 +279,6 @@ export default function LoginPage() {
       </div>
 
       <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
-        {/* Back Button */}
-        <div className="flex justify-start mb-4">
-          <button
-            onClick={handleBackToHome}
-            className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors duration-200 group"
-          >
-            <span className="text-xl group-hover:transform group-hover:-translate-x-1 transition-transform duration-200">
-              ←
-            </span>
-            <span className="text-sm sm:text-base">Back to Home</span>
-          </button>
-        </div>
-
         <div
           className={`text-center transform transition-all duration-1000 ${
             isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"

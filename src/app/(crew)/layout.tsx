@@ -30,7 +30,7 @@ export default function CrewLayout({
     <CrewUnreadCountProvider userId={currentUser?.id || null}>
       <div className="min-h-screen">
         <Navigation />
-        <main className="pb-25 md:pb-8 pt-5">{children}</main>
+        <main className="pb-25 md:pb-8 bg-blue-900">{children}</main>
       </div>
     </CrewUnreadCountProvider>
   );

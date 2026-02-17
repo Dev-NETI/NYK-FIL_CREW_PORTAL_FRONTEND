@@ -30,10 +30,11 @@ export default function Navigation({
   const currentRoute = currentPath || pathname;
   const [clickedItem, setClickedItem] = useState<string | null>(null);
   const [previousActive, setPreviousActive] = useState<string | null>(
-    currentRoute
+    currentRoute,
   );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(user || null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { unreadCount } = useCrewUnreadCount();
 
   // Get user from localStorage if not provided as prop
@@ -48,6 +49,15 @@ export default function Navigation({
   useEffect(() => {
     setPreviousActive(currentRoute);
   }, [currentRoute]);
+
+  // Track scroll for navbar styling
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navItems = [
     {
@@ -94,179 +104,192 @@ export default function Navigation({
 
   return (
     <>
-      <nav className="bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 backdrop-blur-md border-b border-blue-400/20 fixed top-0 left-0 right-0 z-50 shadow-md pt-7">
+      {/* Top Navigation Bar */}
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 pt-7 sm:pt-0 bg-blue-900`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14">
+          <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <Link href="/crew/home" className="flex items-center group">
+              <Link
+                href="/crew/home"
+                className="flex items-center group relative"
+              >
+                <div className="absolute -inset-2 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <Image
                   src="/nykfil.png"
                   alt="Logo"
                   width={150}
                   height={100}
-                  className="w-full h-full object-contain max-w-[120px] sm:max-w-[150px] lg:max-w-[180px]"
+                  className="relative w-full h-full object-contain max-w-[120px] sm:max-w-[150px] lg:max-w-[180px] transition-transform duration-300 group-hover:scale-105"
                 />
               </Link>
             </div>
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-white hover:bg-blue-800 transition-all duration-300"
+              className="md:hidden relative flex items-center justify-center w-11 h-11 rounded-xl text-white hover:bg-white/10 active:bg-white/20 transition-all duration-300"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle menu"
             >
-              <i
-                className={`bi ${
-                  isMobileMenuOpen ? "bi-x" : "bi-list"
-                } text-xl`}
-              ></i>
+              <div className="relative w-5 h-4 flex flex-col justify-between">
+                <span
+                  className={`block h-0.5 w-5 bg-white rounded-full transition-all duration-300 origin-center ${
+                    isMobileMenuOpen
+                      ? "rotate-45 translate-y-[7px]"
+                      : "rotate-0"
+                  }`}
+                />
+                <span
+                  className={`block h-0.5 w-5 bg-white rounded-full transition-all duration-300 ${
+                    isMobileMenuOpen ? "opacity-0 scale-0" : "opacity-100"
+                  }`}
+                />
+                <span
+                  className={`block h-0.5 w-5 bg-white rounded-full transition-all duration-300 origin-center ${
+                    isMobileMenuOpen
+                      ? "-rotate-45 -translate-y-[7px]"
+                      : "rotate-0"
+                  }`}
+                />
+              </div>
             </button>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => handleNavClick(item.href)}
-                  className={`px-3 lg:px-4 py-2 lg:py-3 rounded-lg text-sm lg:text-base font-medium transition-all duration-700 ease-out flex items-center space-x-2 transform relative overflow-hidden ${
-                    clickedItem === item.href
-                      ? "scale-110 rotate-1"
-                      : "scale-100"
-                  } ${
-                    isActive(item.href)
-                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-xl shadow-blue-300/30 animate-in slide-in-from-bottom-2 fade-in duration-500"
-                      : previousActive === item.href && !isActive(item.href)
-                      ? "bg-gradient-to-r from-blue-700 to-blue-800 text-blue-200 animate-out slide-out-to-top-2 fade-out duration-300"
-                      : "text-white hover:text-blue-100 hover:bg-gradient-to-r hover:from-blue-800 hover:to-blue-700 hover:shadow-md"
-                  }`}
-                >
-                  <div
-                    className={`absolute inset-0 bg-white/20 transform transition-transform duration-300 ${
-                      clickedItem === item.href
-                        ? "translate-x-0"
-                        : "-translate-x-full"
-                    }`}
-                  ></div>
-                  <div className="relative">
-                    <i
-                      className={`bi bi-${
-                        isActive(item.href) ? item.activeIcon : item.icon
-                      } text-base lg:text-lg transition-all duration-500 ease-out z-10 ${
-                        clickedItem === item.href
-                          ? "rotate-12 scale-125"
-                          : "rotate-0 scale-100"
-                      } ${
-                        isActive(item.href)
-                          ? "animate-in zoom-in-50 duration-400 delay-100"
-                          : ""
-                      }`}
-                    ></i>
-                    {/* Unread Badge for Chat */}
-                    {item.label === "Chat" && unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-semibold rounded-full h-4 w-4 flex items-center justify-center z-20 animate-in zoom-in-50 duration-300">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </div>
-                  <span
-                    className={`hidden lg:inline transition-all duration-400 ease-out z-10 ${
-                      clickedItem === item.href
-                        ? "translate-x-1"
-                        : "translate-x-0"
+            <div className="hidden md:flex items-center">
+              <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-2xl p-1.5 gap-1">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => handleNavClick(item.href)}
+                    className={`relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2.5 ${
+                      clickedItem === item.href ? "scale-95" : "scale-100"
                     } ${
                       isActive(item.href)
-                        ? "animate-in slide-in-from-right-2 duration-400 delay-150"
-                        : ""
+                        ? "bg-white text-blue-600 shadow-lg shadow-blue-500/25"
+                        : "text-white/90 hover:text-white hover:bg-white/10"
                     }`}
                   >
-                    {item.label}
-                  </span>
-                </Link>
-              ))}
+                    <div className="relative">
+                      <i
+                        className={`bi bi-${
+                          isActive(item.href) ? item.activeIcon : item.icon
+                        } text-lg transition-transform duration-300 ${
+                          clickedItem === item.href ? "scale-90" : "scale-100"
+                        }`}
+                      />
+                      {/* Unread Badge for Chat */}
+                      {item.label === "Chat" && unreadCount > 0 && (
+                        <span className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow-lg ring-2 ring-white animate-pulse">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <span className="hidden lg:inline font-medium">
+                      {item.label}
+                    </span>
+                  </Link>
+                ))}
+              </div>
             </div>
 
             {/* Desktop User Menu */}
-            <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
+            <div className="hidden md:flex items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center space-x-3 p-2 lg:p-3 rounded-xl hover:bg-blue-800 transition-all duration-300 text-white">
-                    <Avatar className="w-9 h-9 lg:w-10 lg:h-10">
-                      <AvatarImage
-                        src="/default-avatar.png"
-                        alt="User Avatar"
-                      />
-                      <AvatarFallback className="text-sm lg:text-base font-medium bg-blue-600 text-white">
-                        {currentUser?.name
-                          ? currentUser.name.charAt(0).toUpperCase()
-                          : "P"}
-                      </AvatarFallback>
-                    </Avatar>
+                  <button className="flex items-center gap-3 p-2 pr-4 rounded-2xl bg-white/10 hover:bg-white/15 active:bg-white/20 transition-all duration-300 text-white group">
+                    <div className="relative">
+                      <Avatar className="w-10 h-10 ring-2 ring-white/30 group-hover:ring-white/50 transition-all duration-300">
+                        <AvatarImage src="/USER.svg" alt="User Avatar" />
+                        <AvatarFallback className="text-sm font-semibold bg-gradient-to-br from-blue-400 to-blue-600 text-white">
+                          {currentUser?.name
+                            ? currentUser.name.charAt(0).toUpperCase()
+                            : "P"}
+                        </AvatarFallback>
+                      </Avatar>
+                      {/* Online indicator */}
+                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full" />
+                    </div>
                     <div className="hidden lg:block text-left">
-                      <p className="text-white font-medium text-sm">
+                      <p className="text-white font-semibold text-sm leading-tight">
                         {currentUser?.name
-                          ? `Hello, ${
-                              currentUser.profile?.first_name ||
-                              currentUser.name
-                            }!`
-                          : "Welcome back!"}
+                          ? `${currentUser.profile?.first_name || currentUser.name}`
+                          : "Welcome!"}
                       </p>
                       <p className="text-blue-200 text-xs">
                         {currentUser?.profile?.crew_id
-                          ? `Crew ID: ${currentUser.profile?.crew_id}`
-                          : currentUser?.name || "Portal User"}
+                          ? `ID: ${currentUser.profile?.crew_id}`
+                          : "Portal User"}
                       </p>
                     </div>
-                    <i className="bi bi-chevron-down text-blue-200 text-sm hidden lg:block"></i>
+                    <i className="bi bi-chevron-down text-white/70 text-xs hidden lg:block transition-transform duration-300 group-data-[state=open]:rotate-180" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64 mt-2 bg-blue-900/98 backdrop-blur-md border border-blue-700/50 shadow-xl">
-                  {/* User Welcome Section in Dropdown */}
-                  <div className="flex items-center space-x-3 px-4 py-3 mb-2 bg-blue-800/50 rounded-lg border border-blue-700/50 mx-2 mt-2">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage
-                        src="/default-avatar.png"
-                        alt="User Avatar"
-                      />
-                      <AvatarFallback className="text-sm font-medium bg-blue-600 text-white">
-                        {currentUser?.name
-                          ? currentUser.name.charAt(0).toUpperCase()
-                          : "P"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="text-white font-medium text-sm">
-                        {currentUser?.name
-                          ? `Hello, ${currentUser?.name || currentUser.name}!`
-                          : "Welcome back!"}
-                      </p>
-                      <p className="text-blue-200 text-xs">
-                        {currentUser?.profile?.crew_id
-                          ? `Crew ID: ${currentUser.profile?.crew_id}`
-                          : currentUser?.name || "Portal User"}
-                      </p>
+                <DropdownMenuContent
+                  className="w-72 mt-3 p-0 bg-white border-0 shadow-2xl shadow-black/20 rounded-2xl overflow-hidden"
+                  align="end"
+                >
+                  {/* User Header */}
+                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-5">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="w-14 h-14 ring-3 ring-white/30">
+                        <AvatarImage src="/USER.svg" alt="User Avatar" />
+                        <AvatarFallback className="text-lg font-bold bg-white text-blue-600">
+                          {currentUser?.name
+                            ? currentUser.name.charAt(0).toUpperCase()
+                            : "P"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-bold text-base truncate">
+                          {currentUser?.name
+                            ? `${currentUser.profile?.first_name || currentUser.name}`
+                            : "Welcome!"}
+                        </p>
+                        <p className="text-blue-100 text-sm truncate">
+                          {currentUser?.profile?.crew_id
+                            ? `Crew ID: ${currentUser.profile?.crew_id}`
+                            : currentUser?.email || "Portal User"}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="px-2 pb-2">
+                  {/* Menu Items */}
+                  <div className="p-2">
                     <DropdownMenuItem asChild>
                       <Link
-                        href={`/crew/profile/${
-                          currentUser?.profile?.crew_id || ""
-                        }`}
-                        className="flex items-center space-x-3 px-2 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-blue-800 transition-all duration-300"
+                        href={`/crew/profile/${currentUser?.profile?.crew_id || ""}`}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 cursor-pointer"
                       >
-                        <i className="bi bi-person-circle text-lg"></i>
-                        <span>Profile</span>
+                        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                          <i className="bi bi-person text-blue-600 text-lg" />
+                        </div>
+                        <div>
+                          <p className="font-medium">My Profile</p>
+                          <p className="text-xs text-gray-500">
+                            View and edit your profile
+                          </p>
+                        </div>
                       </Link>
                     </DropdownMenuItem>
+                    <div className="h-px bg-gray-100 my-2" />
                     <DropdownMenuItem asChild>
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center space-x-3 px-2 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-red-600 transition-all duration-300"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-200 cursor-pointer"
                       >
-                        <i className="bi bi-box-arrow-right text-lg"></i>
-                        <span>Sign Out</span>
+                        <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                          <i className="bi bi-box-arrow-right text-red-500 text-lg" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium">Sign Out</p>
+                          <p className="text-xs text-gray-500">
+                            Log out of your account
+                          </p>
+                        </div>
                       </button>
                     </DropdownMenuItem>
                   </div>
@@ -278,116 +301,144 @@ export default function Navigation({
 
         {/* Mobile Dropdown Menu */}
         <div
-          className={`md:hidden bg-gradient-to-b from-blue-600 to-blue-700 backdrop-blur-md border-b border-blue-400/20 transition-all duration-300 ease-in-out ${
-            isMobileMenuOpen
-              ? "max-h-96 opacity-100"
-              : "max-h-0 opacity-0 overflow-hidden"
+          className={`md:hidden overflow-hidden transition-all duration-400 ease-out ${
+            isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
-          <div className="px-4 py-3">
-            {/* User Welcome Section */}
-            <div className="flex items-center space-x-3 px-4 py-3 mb-3 bg-blue-800/50 rounded-lg border border-blue-700/50">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src="/default-avatar.png" alt="User Avatar" />
-                <AvatarFallback className="text-sm font-medium bg-blue-600 text-white">
-                  {currentUser?.name
-                    ? currentUser.name.charAt(0).toUpperCase()
-                    : "P"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <p className="text-white font-medium text-sm">
-                  {currentUser?.name
-                    ? `Hello, ${currentUser?.name}!`
-                    : "Welcome back!"}
-                </p>
-                <p className="text-blue-200 text-xs">
-                  {currentUser?.profile?.crew_id
-                    ? `Crew ID: ${currentUser.profile?.crew_id}`
-                    : currentUser?.email || "Portal User"}
-                </p>
+          <div className="bg-gradient-to-b from-blue-600/50 to-blue-700/80 backdrop-blur-xl border-t border-white/10">
+            <div className="px-4 py-4 space-y-3">
+              {/* User Welcome Card */}
+              <div
+                className={`flex items-center gap-4 p-4 bg-white/10 rounded-2xl border border-white/10 transition-all duration-300 ${
+                  isMobileMenuOpen
+                    ? "translate-y-0 opacity-100"
+                    : "-translate-y-4 opacity-0"
+                }`}
+                style={{ transitionDelay: "100ms" }}
+              >
+                <div className="relative">
+                  <Avatar className="w-12 h-12 ring-2 ring-white/30">
+                    <AvatarImage src="/USER.svg" alt="User Avatar" />
+                    <AvatarFallback className="text-base font-bold bg-gradient-to-br from-blue-400 to-blue-600 text-white">
+                      {currentUser?.name
+                        ? currentUser.name.charAt(0).toUpperCase()
+                        : "P"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-blue-600 rounded-full" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold text-base truncate">
+                    {currentUser?.name
+                      ? `Hello, ${currentUser.profile?.first_name || currentUser.name}!`
+                      : "Welcome back!"}
+                  </p>
+                  <p className="text-blue-200 text-sm truncate">
+                    {currentUser?.profile?.crew_id
+                      ? `Crew ID: ${currentUser.profile?.crew_id}`
+                      : currentUser?.email || "Portal User"}
+                  </p>
+                </div>
               </div>
-            </div>
-            {/* User Actions */}
-            <div className="space-y-1 pt-3 border-t border-blue-700/50">
-              <Link
-                href={`/crew/profile/${currentUser?.profile?.crew_id || ""}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg text-blue-100 hover:text-white hover:bg-blue-800 transition-all duration-300"
-              >
-                <i className="bi bi-person-circle text-lg"></i>
-                <span className="text-base font-medium">Profile</span>
-              </Link>
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-blue-100 hover:text-white hover:bg-red-600 transition-all duration-300"
-              >
-                <i className="bi bi-box-arrow-right text-lg"></i>
-                <span className="text-base font-medium">Sign Out</span>
-              </button>
+
+              {/* Quick Actions */}
+              <div className="space-y-1">
+                <Link
+                  href={`/crew/profile/${currentUser?.profile?.crew_id || ""}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-4 px-4 py-3.5 rounded-xl text-white hover:bg-white/10 active:bg-white/20 transition-all duration-300 ${
+                    isMobileMenuOpen
+                      ? "translate-y-0 opacity-100"
+                      : "-translate-y-4 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "150ms" }}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                    <i className="bi bi-person-circle text-lg" />
+                  </div>
+                  <span className="font-medium">View Profile</span>
+                  <i className="bi bi-chevron-right text-white/50 ml-auto" />
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-white hover:bg-red-500/20 active:bg-red-500/30 transition-all duration-300 ${
+                    isMobileMenuOpen
+                      ? "translate-y-0 opacity-100"
+                      : "-translate-y-4 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "200ms" }}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+                    <i className="bi bi-box-arrow-right text-lg text-red-300" />
+                  </div>
+                  <span className="font-medium">Sign Out</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Bottom Navigation - Hidden when chat is open */}
+      {/* Mobile Bottom Navigation */}
       {!hideBottomNav && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/98 backdrop-blur-lg border-t border-gray-200 shadow-[0_-2px_10px_-2px_rgba(0,0,0,0.06)] z-40 md:hidden pb-10">
-          <div className="grid grid-cols-4 px-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => handleNavClick(item.href)}
-                className={`flex flex-col items-center py-2 sm:py-3 px-1 sm:px-2 transition-all duration-600 ease-out rounded-lg mx-1 transform relative overflow-hidden ${
-                  clickedItem === item.href
-                    ? "scale-105 -rotate-1"
-                    : "scale-100"
-                } ${
-                  isActive(item.href)
-                    ? "text-blue-600"
-                    : "text-gray-500 hover:text-blue-500"
-                }`}
-              >
-                <div className="relative mb-1">
-                  <i
-                    className={`bi bi-${
-                      isActive(item.href) ? item.activeIcon : item.icon
-                    } text-[22px] transition-all duration-300 ${
-                      clickedItem === item.href ? "scale-110" : "scale-100"
+        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden pb-safe">
+          <div className="">
+            <div className="bg-white/95 backdrop-blur-xl rounded-t-xl shadow-lg shadow-black/10 border border-gray-100 px-2 py-2">
+              <div className="grid grid-cols-4 gap-1">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => handleNavClick(item.href)}
+                    className={`flex flex-col items-center py-2.5 px-2 rounded-xl transition-all duration-300 relative ${
+                      clickedItem === item.href ? "scale-90" : "scale-100"
+                    } ${
+                      isActive(item.href)
+                        ? "bg-blue-50"
+                        : "hover:bg-gray-50 active:bg-gray-100"
                     }`}
-                  ></i>
-                  {/* Unread Badge for Chat */}
-                  {item.label === "Chat" && unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center shadow-sm ring-2 ring-white">
-                      {unreadCount}
+                  >
+                    <div className="relative mb-1">
+                      <i
+                        className={`bi bi-${
+                          isActive(item.href) ? item.activeIcon : item.icon
+                        } text-xl transition-all duration-300 ${
+                          isActive(item.href)
+                            ? "text-blue-600"
+                            : "text-gray-400"
+                        }`}
+                      />
+                      {/* Unread Badge for Chat */}
+                      {item.label === "Chat" && unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center shadow-sm ring-2 ring-white">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      className={`text-[11px] font-medium transition-colors duration-300 ${
+                        isActive(item.href) ? "text-blue-600" : "text-gray-500"
+                      }`}
+                    >
+                      {item.label}
                     </span>
-                  )}
-                  {/* Active Indicator Dot */}
-                  {isActive(item.href) && (
-                    <div className="absolute -bottom-1.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
-                  )}
-                </div>
-                <span
-                  className={`text-[11px] leading-tight transition-all duration-300 ${
-                    isActive(item.href)
-                      ? "font-semibold text-blue-600"
-                      : "font-medium text-gray-600"
-                  }`}
-                >
-                  {item.label}
-                </span>
-              </Link>
-            ))}
+                    {/* Active indicator line */}
+                    {isActive(item.href) && (
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full" />
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Spacer for mobile bottom nav - Only show when nav is visible */}
-      {!hideBottomNav && <div className="h-8 md:h-0"></div>}
+      {/* Spacer for mobile bottom nav */}
+      {!hideBottomNav && <div className="h-23 md:h-0" />}
     </>
   );
 }
