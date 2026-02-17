@@ -81,7 +81,7 @@ export default function Dashboard() {
         delay: "delay-600",
       },
     ],
-    [currentUser]
+    [currentUser],
   );
 
   const recentActivities = [
@@ -107,8 +107,14 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 pt-15">
-        <div className="px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8">
+      <div
+        className="min-h-screen pt-15 bg-cover bg-center bg-no-repeat bg-fixed relative"
+        style={{ backgroundImage: "url('/home1.png')" }}
+      >
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/50"></div>
+
+        <div className="relative z-10 px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div
@@ -120,14 +126,14 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div className="text-center sm:text-left w-full">
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
                     {getTimeBasedGreeting()}, {userName}! ⚓
                   </h1>
-                  <p className="text-gray-600 text-xs sm:text-sm lg:text-base mt-1">
+                  <p className="text-white/80 text-xs sm:text-sm lg:text-base mt-1">
                     Welcome to your crew portal. Stay updated with your maritime
                     career and documentation.
                   </p>
-                  <div className="flex items-center justify-center sm:justify-start mt-2 text-xs text-blue-600">
+                  <div className="flex items-center justify-center sm:justify-start mt-2 text-xs text-blue-300">
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
                     <span>System Status: Online</span>
                   </div>
@@ -142,12 +148,11 @@ export default function Dashboard() {
             <DashboardStatsCard currentUser={currentUser} isLoaded={isLoaded} />
           </div>
         </div>
+        <div className="relative z-10 bg-blue-900/90 px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8 shadow-2xl rounded-t-4xl">
+          {/* Quick Access */}
+          <QuickAccess currentUser={currentUser} isLoaded={isLoaded} />
 
-        {/* Quick Access */}
-        <QuickAccess currentUser={currentUser} isLoaded={isLoaded} />
-
-        {/* Recent Activities and Helpful Tips inside white background */}
-        <div className="bg-white px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8">
+          {/* Recent Activities and Helpful Tips inside white background */}
           <RecentActivities isLoaded={isLoaded} />
           <HelpfulTips isLoaded={isLoaded} />
         </div>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { motion } from "motion/react";
 import toast from "react-hot-toast";
 import { TravelDocumentService } from "@/services/travel-document";
 import {
@@ -8,6 +9,25 @@ import {
 import ViewTravelDocumentModal from "./ViewTravelDocumentModal";
 import DeleteConfirmationModalComponent from "./DeleteConfirmationModalComponent";
 import EditTravelDocumentModal from "./EditTravelDocumentModal";
+
+// Map document types to their logo images
+const documentLogos: Record<string, string> = {
+  Passport: "/PASSPORT.png",
+  SIRB: "/MARINA.svg",
+  "Seafarer's Identification and Record Book (SIRB)": "/MARINA.svg",
+  SID: "/MARINA.svg",
+  "US VISA": "/globe.svg",
+};
+
+// Map document types to their full descriptions
+const documentDescriptions: Record<string, string> = {
+  Passport: "Philippines Department of Foreign Affairs",
+  SIRB: "Seafarer's Identification and Record Book",
+  "Seafarer's Identification and Record Book (SIRB)":
+    "Seafarer's Identification and Record Book",
+  SID: "Seafarer's Identity Document",
+  "US VISA": "United States Travel Visa",
+};
 
 interface TravelDocument {
   id: number;
@@ -30,18 +50,20 @@ interface TravelDocument {
 interface TravelDocumentListItemComponentProps {
   document: TravelDocument;
   onUpdate?: () => void;
+  index?: number;
 }
 
 export default function TravelDocumentListItemComponent({
   document,
   onUpdate,
+  index = 0,
 }: TravelDocumentListItemComponentProps) {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pendingUpdates, setPendingUpdates] = useState<TravelDocumentUpdate[]>(
-    []
+    [],
   );
   const [loadingPending, setLoadingPending] = useState(true);
 
@@ -58,7 +80,7 @@ export default function TravelDocumentListItemComponent({
       try {
         setLoadingPending(true);
         const history = await TravelDocumentApprovalService.getHistory(
-          document.id
+          document.id,
         );
         // Filter for pending updates only
         const pending = history.filter((update) => update.status === "pending");
@@ -92,7 +114,7 @@ export default function TravelDocumentListItemComponent({
       }
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Failed to delete travel document"
+        error?.response?.data?.message || "Failed to delete travel document",
       );
       console.error("Delete error:", error);
     } finally {
@@ -283,7 +305,16 @@ export default function TravelDocumentListItemComponent({
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-xl">
+      <motion.div
+        className="relative overflow-hidden rounded-xl"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.4,
+          delay: index * 0.1,
+          ease: "easeOut",
+        }}
+      >
         {/* Background action buttons - revealed on swipe left */}
         <div className="absolute inset-0 flex items-center justify-end gap-2 pr-3">
           <button
@@ -326,19 +357,21 @@ export default function TravelDocumentListItemComponent({
           } transition-all duration-300 select-none relative`}
         >
           <div className="flex items-center gap-4">
-            {/* Icon */}
+            {/* Logo */}
             <div className="flex-shrink-0">
-              <div
-                className={`w-14 h-14 ${colors.bg} rounded-xl flex items-center justify-center shadow-md`}
-              >
-                <i className={`bi ${document.icon} text-white text-2xl`}></i>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-xl flex items-center justify-center shadow-md overflow-hidden p-2">
+                <img
+                  src={documentLogos[document.documentType] || "/nykfil.png"}
+                  alt={document.documentType}
+                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+                />
               </div>
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-base font-semibold text-gray-900">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                   {document.documentType}
                 </h3>
                 {!loadingPending && pendingUpdates.length > 0 && (
@@ -348,19 +381,13 @@ export default function TravelDocumentListItemComponent({
                   </span>
                 )}
               </div>
-              {!loadingPending && pendingUpdates.length === 0 && (
-                <p className="text-xs text-gray-600">
-                  {document.documentType === "Passport" && "Travel Passport"}
-                  {document.documentType === "SIRB" &&
-                    "Seafarer's Identification and Record Book"}
-                  {document.documentType === "SID" &&
-                    "Seafarer's Identity Document"}
-                  {document.documentType === "US VISA" &&
-                    "United States Travel Visa"}
+              {documentDescriptions[document.documentType] && (
+                <p className="text-xs sm:text-sm text-gray-500">
+                  {documentDescriptions[document.documentType]}
                 </p>
               )}
               {!loadingPending && pendingUpdates.length > 0 && (
-                <p className="text-xs text-yellow-700 font-medium">
+                <p className="text-xs sm:text-sm text-yellow-700 mt-1 font-medium">
                   <i className="bi bi-info-circle mr-1"></i>
                   Update request is awaiting admin review
                 </p>
@@ -377,7 +404,7 @@ export default function TravelDocumentListItemComponent({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* View Document Modal */}
       <ViewTravelDocumentModal

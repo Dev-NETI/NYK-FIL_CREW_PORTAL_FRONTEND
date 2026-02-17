@@ -11,7 +11,9 @@ interface RecentActivitiesProps {
   isLoaded?: boolean;
 }
 
-export default function RecentActivities({ isLoaded = true }: RecentActivitiesProps) {
+export default function RecentActivities({
+  isLoaded = true,
+}: RecentActivitiesProps) {
   const activities: Activity[] = [
     {
       icon: "file-earmark-check",
@@ -36,12 +38,10 @@ export default function RecentActivities({ isLoaded = true }: RecentActivitiesPr
   return (
     <div
       className={`mt-8 transform transition-all duration-1000 delay-700 ${
-        isLoaded
-          ? "translate-y-0 opacity-100"
-          : "translate-y-10 opacity-0"
+        isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
       }`}
     >
-      <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
+      <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4">
         Recent Activities
       </h2>
       <div className="space-y-3">
@@ -63,9 +63,7 @@ export default function RecentActivities({ isLoaded = true }: RecentActivitiesPr
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">
                   {activity.description}
                 </p>
-                <p className="text-xs text-gray-500 mt-2">
-                  {activity.time}
-                </p>
+                <p className="text-xs text-gray-500 mt-2">{activity.time}</p>
               </div>
             </div>
           </div>

@@ -52,7 +52,7 @@ export default function TravelDocumentListComponent() {
       try {
         setIsLoading(true);
         const data = await TravelDocumentService.getTravelDocumentsByCrewId(
-          user.profile.crew_id
+          user.profile.crew_id,
         );
         const types = await TravelDocumentTypeService.getTravelDocumentTypes();
 
@@ -68,7 +68,7 @@ export default function TravelDocumentListComponent() {
           createdAt: doc.created_at,
           modifiedBy: doc.modified_by,
           icon: getDocumentIcon(
-            doc.is_US_VISA === 1 ? "US VISA" : doc.travel_document_type.name
+            doc.is_US_VISA === 1 ? "US VISA" : doc.travel_document_type.name,
           ),
           travel_document_type_id: doc.travel_document_type_id,
           remaining_pages: doc.remaining_pages,
@@ -95,14 +95,14 @@ export default function TravelDocumentListComponent() {
   const existingDocumentTypeIds = travelDocuments
     .map((doc) => {
       const foundType = travelDocumentTypes.find(
-        (type) => type.name === doc.documentType
+        (type) => type.name === doc.documentType,
       );
       return foundType?.id;
     })
     .filter(Boolean);
 
   const missingDocumentTypes = travelDocumentTypes.filter(
-    (type) => !existingDocumentTypeIds.includes(type.id)
+    (type) => !existingDocumentTypeIds.includes(type.id),
   );
 
   if (isLoading) {
@@ -111,24 +111,25 @@ export default function TravelDocumentListComponent() {
 
   return (
     <div className="space-y-4 mb-28">
-      {travelDocuments.map((doc) => (
+      {travelDocuments.map((doc, index) => (
         <TravelDocumentListItemComponent
           key={doc.id}
           document={doc}
           onUpdate={fetchTravelDocuments}
+          index={index}
         />
       ))}
 
       {/* Missing Document Type Cards */}
-      {missingDocumentTypes.map((type) => (
+      {missingDocumentTypes.map((type, index) => (
         <MissingTravelDocumentCardComponent
           key={type.id}
           documentType={type.name}
-          icon={getDocumentIcon(type.name)}
           onAdd={() => {
             setSelectedDocumentType(type);
             setIsModalOpen(true);
           }}
+          index={travelDocuments.length + index}
         />
       ))}
 

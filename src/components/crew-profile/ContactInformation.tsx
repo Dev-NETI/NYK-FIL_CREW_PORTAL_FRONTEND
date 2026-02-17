@@ -62,6 +62,8 @@ export default function ContactInformation({
   const [currentBarangays, setCurrentBarangays] = useState<Barangay[]>([]);
   const [loadingGeography, setLoadingGeography] = useState(false);
   const [sameAsPermanent, setSameAsPermanent] = useState(false);
+  // Track if we're initializing edit mode to prevent clearing existing data
+  const [isInitializing, setIsInitializing] = useState(false);
 
   // Load regions on component mount
   useEffect(() => {
@@ -91,6 +93,9 @@ export default function ContactInformation({
       setCurrentProvinces([]);
       setCurrentCities([]);
       setCurrentBarangays([]);
+      setIsInitializing(false);
+    } else {
+      setIsInitializing(true);
     }
   }, [isEditing]);
 
@@ -171,6 +176,36 @@ export default function ContactInformation({
 
     loadPermanentBarangays();
   }, [editedProfile?.permanent_city, profile.permanent_city]);
+
+  // Reset initialization flag after all geography data is loaded
+  useEffect(() => {
+    if (isInitializing && isEditing) {
+      const hasRegion =
+        editedProfile?.permanent_region || profile.permanent_region;
+      const hasProvince =
+        editedProfile?.permanent_province || profile.permanent_province;
+      const hasCity = editedProfile?.permanent_city || profile.permanent_city;
+
+      // If we have all the geography data loaded that we need, stop initializing
+      if (
+        hasRegion &&
+        permanentProvinces.length > 0 &&
+        (!hasProvince || (hasProvince && permanentCities.length > 0)) &&
+        (!hasCity || (hasCity && permanentBarangays.length > 0))
+      ) {
+        const timer = setTimeout(() => setIsInitializing(false), 100);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [
+    isInitializing,
+    isEditing,
+    permanentProvinces,
+    permanentCities,
+    permanentBarangays,
+    editedProfile,
+    profile,
+  ]);
 
   // Load provinces when current region changes
   useEffect(() => {
@@ -286,6 +321,61 @@ export default function ContactInformation({
     </div>
   );
 
+  // Save button content component for cleaner rendering
+  const SaveButtonContent = ({ loading }: { loading: boolean }) => {
+    const currentUser = AuthService.getStoredUser();
+    const isAdmin = currentUser?.is_crew === false;
+
+    if (loading) {
+      return (
+        <>
+          <i className="bi bi-arrow-clockwise animate-spin text-base"></i>
+          <span>{isAdmin ? "Saving..." : "Submitting..."}</span>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <i className="bi bi-check-lg text-base"></i>
+        <span>{isAdmin ? "Save Contact Info" : "Submit for Approval"}</span>
+      </>
+    );
+  };
+
+  // Handle save button click - supports both admin and crew workflows
+  const handleSaveClick = async () => {
+    try {
+      const currentUser = AuthService.getStoredUser();
+      const isAdmin = currentUser?.is_crew === false;
+
+      if (isAdmin) {
+        // ADMIN WORKFLOW: Save addresses directly to database
+        console.log("Admin saving contact information directly...");
+        await handleSaveAddresses();
+
+        // Exit edit mode after successful save
+        onSave();
+      } else {
+        // CREW WORKFLOW: Submit for approval via parent component
+        console.log("Crew submitting contact information for approval...");
+        onSave();
+      }
+    } catch (error) {
+      console.error("Save operation failed:", error);
+
+      // Show appropriate error message based on user role
+      const currentUser = AuthService.getStoredUser();
+      const isAdmin = currentUser?.is_crew === false;
+
+      const errorMessage = isAdmin
+        ? "Failed to save contact information. Please try again."
+        : "Failed to submit update request. Please try again.";
+
+      toast.error(errorMessage);
+    }
+  };
+
   // Handle "same as permanent address" checkbox
   const handleSameAsPermanentChange = (checked: boolean) => {
     setSameAsPermanent(checked);
@@ -312,7 +402,11 @@ export default function ContactInformation({
     }
   };
 
-  // Function to save addresses and update user contacts
+  /**
+   * ADMIN ONLY: Save addresses directly to the database
+   * This function handles permanent and current address creation/updates
+   * and returns the address IDs for linking to the user's contact record
+   */
   const handleSaveAddresses = async () => {
     let permanentAddressId: number | undefined;
     let currentAddressId: number | undefined;
@@ -328,6 +422,13 @@ export default function ContactInformation({
 
     if (permRegion && permProvince && permCity && permBarangay) {
       try {
+        console.log("Saving permanent address with:", {
+          permRegion,
+          permProvince,
+          permCity,
+          permBarangay,
+          existingId: profile.contacts?.permanent_address_id,
+        });
         const addressData = {
           user_id: profile.id,
           street_address:
@@ -369,13 +470,16 @@ export default function ContactInformation({
           ),
         };
 
+        console.log("Sending address data:", addressData);
         const response = await AddressService.createOrUpdateFromGeography(
           addressData,
           profile.contacts?.permanent_address_id
         );
+        console.log("Permanent address response:", response);
 
         if (response.success) {
           permanentAddressId = response.data.id;
+          console.log("Permanent address saved with ID:", permanentAddressId);
         }
       } catch (error) {
         throw error;
@@ -419,6 +523,14 @@ export default function ContactInformation({
     // Always create/update a separate current address record
     if (currRegion && currProvince && currCity && currBarangay) {
       try {
+        console.log("Saving current address with:", {
+          currRegion,
+          currProvince,
+          currCity,
+          currBarangay,
+          existingId: profile.contacts?.current_address_id,
+          sameAsPermanent,
+        });
         const currentAddressData = {
           user_id: profile.id,
           street_address: currStreet,
@@ -471,14 +583,17 @@ export default function ContactInformation({
           ),
         };
 
+        console.log("Sending current address data:", currentAddressData);
         const currentResponse =
           await AddressService.createOrUpdateFromGeography(
             currentAddressData,
             sameAsPermanent ? undefined : profile.contacts?.current_address_id
           );
+        console.log("Current address response:", currentResponse);
 
         if (currentResponse.success) {
           currentAddressId = currentResponse.data.id;
+          console.log("Current address saved with ID:", currentAddressId);
         }
       } catch (error) {
         throw error;
@@ -699,64 +814,14 @@ export default function ContactInformation({
                 <span className="sm:inline">Cancel</span>
               </button>
               <button
-                onClick={async () => {
-                  try {
-                    // Check user role to determine save behavior
-                    const currentUser = AuthService.getStoredUser();
-                    const isAdmin = currentUser?.is_crew === 0;
-
-                    if (isAdmin) {
-                      // Admin can save addresses directly
-                      const addressResult = await handleSaveAddresses();
-
-                      // Call onSave to save other profile changes
-                      onSave();
-
-                      // Log success with address ID for debugging
-                      console.log("Address saved successfully:", {
-                        permanentAddressId: addressResult.permanentAddressId,
-                        currentAddressId: addressResult.currentAddressId,
-                      });
-                    } else {
-                      // Crew member: All changes go through pre-approval system
-                      // Don't save addresses directly, let the main profile page handle the approval workflow
-                      onSave();
-                    }
-                  } catch (error) {
-                    // Address saving failed (for admin) or approval submission failed (for crew)
-                    console.error("Save operation failed:", error);
-                    const errorMessage =
-                      AuthService.getStoredUser()?.is_crew === 0
-                        ? "Failed to save address information"
-                        : "Failed to submit update request";
-                    toast.error(errorMessage);
-                  }
-                }}
+                onClick={handleSaveClick}
                 disabled={saving}
                 className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] shadow-sm active:shadow-none"
               >
                 {saving ? (
-                  <>
-                    <i className="bi bi-arrow-clockwise animate-spin text-base"></i>
-                    <span>
-                      {(() => {
-                        const currentUser = AuthService.getStoredUser();
-                        const isAdmin = currentUser?.is_crew === 0;
-                        return isAdmin ? "Saving..." : "Submitting...";
-                      })()}
-                    </span>
-                  </>
+                  <SaveButtonContent loading={true} />
                 ) : (
-                  <>
-                    <i className="bi bi-check-lg text-base"></i>
-                    <span>
-                      {(() => {
-                        const currentUser = AuthService.getStoredUser();
-                        const isAdmin = currentUser?.is_crew === 0;
-                        return isAdmin ? "Save" : "Submit for Approval";
-                      })()}
-                    </span>
-                  </>
+                  <SaveButtonContent loading={false} />
                 )}
               </button>
             </div>
