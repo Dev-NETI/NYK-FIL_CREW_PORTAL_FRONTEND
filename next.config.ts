@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
       // },
       {
         protocol: "https",
-        hostname: "super-app.netiaccess.com",
+        hostname: "nyk-super-app-backend.netiaccess.com",
         port: "",
         pathname: "/storage/**",
       },
