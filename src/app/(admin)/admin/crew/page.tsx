@@ -42,11 +42,6 @@ export default function CrewManagement() {
           if (resetPage && pageToLoad !== currentPage) {
             setCurrentPage(pageToLoad);
           }
-
-          // Only show success toast on initial load
-          if (!isLoaded) {
-            toast.success("Crew data loaded successfully");
-          }
         } else {
           toast.error(response.message || "Failed to load crew data");
         }
@@ -58,7 +53,7 @@ export default function CrewManagement() {
         setIsLoaded(true);
       }
     },
-    [currentPage, itemsPerPage, searchTerm, statusFilter, sortBy, sortOrder]
+    [currentPage, itemsPerPage, searchTerm, statusFilter, sortBy, sortOrder],
   );
 
   // Load data when dependencies change
@@ -83,7 +78,7 @@ export default function CrewManagement() {
       setSortOrder(newSortOrder);
       setCurrentPage(1);
     },
-    []
+    [],
   );
 
   const handlePageChange = useCallback((page: number) => {

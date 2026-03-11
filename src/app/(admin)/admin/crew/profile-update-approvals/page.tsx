@@ -1,14 +1,36 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ProfileUpdateRequestService, ProfileUpdateRequest } from "@/services/profile-update-request";
+import {
+  ProfileUpdateRequestService,
+  ProfileUpdateRequest,
+} from "@/services/profile-update-request";
 import toast from "react-hot-toast";
 import { UserCheck, Clock, CheckCircle, XCircle } from "lucide-react";
+
+function formatFullName(profile?: {
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  suffix?: string | null;
+}): string {
+  if (!profile?.first_name && !profile?.last_name) return "";
+  const mi = profile.middle_name?.trim().charAt(0);
+  return [
+    profile.first_name?.trim(),
+    mi ? `${mi}.` : undefined,
+    profile.last_name?.trim(),
+    profile.suffix?.trim() || undefined,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
 
 export default function ProfileUpdateApprovalsPage() {
   const [requests, setRequests] = useState<ProfileUpdateRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRequest, setSelectedRequest] = useState<ProfileUpdateRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] =
+    useState<ProfileUpdateRequest | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
@@ -23,6 +45,7 @@ export default function ProfileUpdateApprovalsPage() {
       const response = await ProfileUpdateRequestService.getPendingRequests();
       if (response.success && response.data) {
         setRequests(response.data);
+        console.log("Profile update requests:", response.data);
       } else {
         toast.error(response.message || "Failed to load requests");
       }
@@ -66,7 +89,10 @@ export default function ProfileUpdateApprovalsPage() {
 
     try {
       setActionLoading(true);
-      const response = await ProfileUpdateRequestService.rejectRequest(id, rejectionReason);
+      const response = await ProfileUpdateRequestService.rejectRequest(
+        id,
+        rejectionReason,
+      );
       if (response.success) {
         toast.success("Profile update request rejected");
         setShowModal(false);
@@ -83,26 +109,33 @@ export default function ProfileUpdateApprovalsPage() {
 
   const getSectionLabel = (section: string) => {
     switch (section) {
-      case "basic": return "Basic Information";
-      case "contact": return "Contact Information";
-      case "physical": return "Physical Traits";
-      case "education": return "Education Information";
-      default: return section;
+      case "basic":
+        return "Basic Information";
+      case "contact":
+        return "Contact Information";
+      case "physical":
+        return "Physical Traits";
+      case "education":
+        return "Education Information";
+      default:
+        return section;
     }
   };
 
   const formatChanges = (current: any, requested: any) => {
     const changes: string[] = [];
-    
+
     // Basic comparison of objects
     const compareObjects = (curr: any, req: any, prefix = "") => {
       if (!req) return;
-      
-      Object.keys(req).forEach(key => {
-        if (typeof req[key] === 'object' && req[key] !== null) {
+
+      Object.keys(req).forEach((key) => {
+        if (typeof req[key] === "object" && req[key] !== null) {
           compareObjects(curr?.[key], req[key], prefix + key + ".");
         } else if (curr?.[key] !== req[key]) {
-          changes.push(`${prefix}${key}: "${curr?.[key] || 'N/A'}" → "${req[key]}"`);
+          changes.push(
+            `${prefix}${key}: "${curr?.[key] || "N/A"}" → "${req[key]}"`,
+          );
         }
       });
     };
@@ -195,24 +228,15 @@ export default function ProfileUpdateApprovalsPage() {
                     {requests.map((request) => (
                       <tr key={request.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10">
-                              <div className="h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-                                <span className="text-sm font-medium text-white">
-                                  {(request.crew?.profile?.full_name || request.crew?.name || request.crew?.email)
-                                    ?.split(" ")
-                                    .map((n) => n[0])
-                                    .join("") || "?"}
-                                </span>
-                              </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {formatFullName(request.current_data?.profile) ||
+                                "N/A"}
                             </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {request.crew?.profile?.full_name || request.crew?.name || "Unknown"}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {request.crew?.profile?.crew_id ? `ID: ${request.crew.profile.crew_id}` : request.crew?.email}
-                              </div>
+                            <div className="text-sm text-gray-500">
+                              {request.crew?.profile?.crew_id
+                                ? `ID: ${request.crew.profile.crew_id}`
+                                : request.crew?.email}
                             </div>
                           </div>
                         </td>
@@ -247,14 +271,17 @@ export default function ProfileUpdateApprovalsPage() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             {/* Background overlay */}
-            <div 
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+            <div
+              className="fixed inset-0 bg-gray-950/90 transition-opacity"
               aria-hidden="true"
               onClick={() => setShowModal(false)}
             ></div>
 
             {/* This element is to trick the browser into centering the modal contents. */}
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
               &#8203;
             </span>
 
@@ -264,7 +291,8 @@ export default function ProfileUpdateApprovalsPage() {
               <div className="bg-white px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Profile Update Request - {getSectionLabel(selectedRequest.section)}
+                    Profile Update Request -{" "}
+                    {getSectionLabel(selectedRequest.section)}
                   </h3>
                   <button
                     type="button"
@@ -280,30 +308,50 @@ export default function ProfileUpdateApprovalsPage() {
               {/* Content */}
               <div className="bg-white px-6 py-4 max-h-96 overflow-y-auto">
                 <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Crew Member</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">
+                    Crew Member
+                  </h4>
                   <p className="text-sm text-gray-900">
-                    {selectedRequest.crew?.profile?.full_name || selectedRequest.crew?.name} 
-                    {selectedRequest.crew?.profile?.crew_id && ` (ID: ${selectedRequest.crew.profile.crew_id})`}
+                    {selectedRequest.crew?.profile?.full_name ||
+                      selectedRequest.crew?.name}
+                    {selectedRequest.crew?.profile?.crew_id &&
+                      ` (ID: ${selectedRequest.crew.profile.crew_id})`}
                   </p>
                 </div>
 
                 <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Requested Changes</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">
+                    Requested Changes
+                  </h4>
                   <div className="bg-gray-50 rounded-lg p-4">
-                    {formatChanges(selectedRequest.current_data, selectedRequest.requested_data).length > 0 ? (
-                      formatChanges(selectedRequest.current_data, selectedRequest.requested_data).map((change, index) => (
-                        <div key={index} className="text-sm text-gray-800 mb-1 font-mono">
+                    {formatChanges(
+                      selectedRequest.current_data,
+                      selectedRequest.requested_data,
+                    ).length > 0 ? (
+                      formatChanges(
+                        selectedRequest.current_data,
+                        selectedRequest.requested_data,
+                      ).map((change, index) => (
+                        <div
+                          key={index}
+                          className="text-sm text-gray-800 mb-1 font-mono"
+                        >
                           {change}
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500">No specific changes detected</p>
+                      <p className="text-sm text-gray-500">
+                        No specific changes detected
+                      </p>
                     )}
                   </div>
                 </div>
 
                 <div className="mb-6">
-                  <label htmlFor="rejection-reason" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="rejection-reason"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Rejection Reason (if rejecting)
                   </label>
                   <textarea
