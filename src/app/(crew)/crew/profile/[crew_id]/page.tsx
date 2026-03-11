@@ -32,7 +32,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeSection, setActiveSection] = useState<ProfileSection>("basic");
   const [editingSection, setEditingSection] = useState<ProfileSection | null>(
-    null
+    null,
   );
   const [saving, setSaving] = useState(false);
   const [nationalities, setNationalities] = useState<Nationality[]>([]);
@@ -189,7 +189,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         // Admin can update directly - keep original logic
         const response = await UserService.updateUserProfile(
           editedProfile.id.toString(),
-          requestedData
+          requestedData,
         );
 
         if (response.success && response.user) {
@@ -205,18 +205,18 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         const response = await ProfileUpdateRequestService.submitUpdateRequest(
           editedProfile.id,
           editingSection,
-          requestedData
+          requestedData,
         );
 
         if (response.success) {
           setEditingSection(null);
           setEditedProfile(null);
           toast.success(
-            "Profile update request submitted! Please wait for admin approval."
+            "Profile update request submitted! Please wait for admin approval.",
           );
         } else {
           throw new Error(
-            response.message || "Failed to submit update request"
+            response.message || "Failed to submit update request",
           );
         }
       }
@@ -250,7 +250,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   const handleNestedInputChange = (
     parent: string,
     field: string,
-    value: string
+    value: string,
   ) => {
     if (!editedProfile) return;
 
@@ -293,7 +293,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <div className="min-h-screen bg-gray-50 pt-5">
+      <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
         <div className="relative overflow-hidden">
           {/* Background with better contrast */}
@@ -301,7 +301,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           <div
             className="absolute inset-0 opacity-10"
             style={{
-              backgroundImage: 'url("/anchor.jpg")',
+              backgroundImage: 'url("/home1.png")',
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
