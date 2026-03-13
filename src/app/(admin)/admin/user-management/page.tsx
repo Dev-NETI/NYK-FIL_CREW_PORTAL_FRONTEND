@@ -92,6 +92,31 @@ export default function UserManagement() {
     }
   };
 
+  const handleResetDevice = async (admin: Admin) => {
+    if (
+      !confirm(
+        `Reset device for ${admin.profile.full_name}?\n\nThis will log them out of their current device and allow them to log in from a new device.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await AdminManagementService.resetDevice(admin.id);
+      if (response.success) {
+        toast.success(
+          "Device reset successfully. User can now log in from a new device."
+        );
+        loadAdminData();
+      } else {
+        toast.error(response.message || "Failed to reset device");
+      }
+    } catch (error: any) {
+      console.error("Error resetting device:", error);
+      toast.error(error.response?.data?.message || "Failed to reset device");
+    }
+  };
+
   const handleDelete = async (id: number, email: string) => {
     if (!confirm(`Are you sure you want to delete admin account: ${email}?`)) {
       return;
@@ -189,6 +214,7 @@ export default function UserManagement() {
               admins={admins}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onResetDevice={handleResetDevice}
             />
           </div>
         </div>

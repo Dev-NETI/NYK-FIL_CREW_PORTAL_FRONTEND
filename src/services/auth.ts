@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import { getOrCreateDeviceId, getDeviceName } from "@/lib/device";
 import toast from "react-hot-toast";
 import {
   LoginInitiateRequest,
@@ -24,13 +25,22 @@ export class AuthService {
   }
 
   /**
-   * Initiate login by sending email and receiving OTP
+   * Initiate login by sending email and receiving OTP.
+   * Device fingerprint is sent here so the backend can block immediately
+   * if the account is already registered on another device.
    */
   static async initiateLogin(
     data: LoginInitiateRequest
   ): Promise<LoginInitiateResponse> {
     await this.getCsrfCookie();
-    const response = await api.post<LoginInitiateResponse>("/auth/login", data);
+    const deviceData =
+      typeof window !== "undefined"
+        ? { device_fingerprint: getOrCreateDeviceId() }
+        : {};
+    const response = await api.post<LoginInitiateResponse>("/auth/login", {
+      ...data,
+      ...deviceData,
+    });
     return response.data;
   }
 
@@ -41,7 +51,17 @@ export class AuthService {
     data: LoginVerifyRequest
   ): Promise<LoginVerifyResponse> {
     await this.getCsrfCookie();
-    const response = await api.post<LoginVerifyResponse>("/auth/verify", data);
+    const deviceData =
+      typeof window !== "undefined"
+        ? {
+            device_fingerprint: getOrCreateDeviceId(),
+            device_name: getDeviceName(),
+          }
+        : {};
+    const response = await api.post<LoginVerifyResponse>("/auth/verify", {
+      ...data,
+      ...deviceData,
+    });
     return response.data;
   }
 

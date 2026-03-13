@@ -76,7 +76,20 @@ export default function LoginPage() {
 
       if (err instanceof AxiosError) {
         const errorData = err.response?.data as ApiErrorResponse;
-        if (errorData) {
+        const statusCode = err.response?.status;
+
+        if (
+          statusCode === 409 &&
+          errorData?.error_code === "DEVICE_CONFLICT"
+        ) {
+          const deviceInfo = errorData.device_name
+            ? ` (${errorData.device_name})`
+            : "";
+          toast.error(
+            `Account already active on another device${deviceInfo}. Contact your administrator to reset your device.`,
+            { icon: "🔒", duration: 10000 }
+          );
+        } else if (errorData) {
           const errorMessage = errorData.retry_after
             ? `${errorData.message} Please wait ${errorData.retry_after} seconds.`
             : errorData.message || "Failed to send OTP";
@@ -286,13 +299,13 @@ export default function LoginPage() {
         >
           <div className="mx-auto flex items-center justify-center mb-6 sm:mb-8">
             <div className="text-center  rounded-2xl p-4 ">
-              <Image
+              {/* <Image
                 src="/nykfil.png"
                 alt="Logo"
                 width={120}
                 height={80}
                 className="w-full h-full object-contain sm:w-[150px] sm:h-[100px] md:w-[180px] md:h-[120px] lg:w-[150px] lg:h-[100px]"
-              />
+              /> */}
             </div>
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-3xl font-bold text-white mb-3 sm:mb-4 drop-shadow-lg">
