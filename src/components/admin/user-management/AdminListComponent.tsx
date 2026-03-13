@@ -7,12 +7,14 @@ interface AdminListComponentProps {
   admins: Admin[];
   onEdit?: (admin: Admin) => void;
   onDelete?: (id: number, email: string) => void;
+  onResetDevice?: (admin: Admin) => void;
 }
 
 export default function AdminListComponent({
   admins,
   onEdit,
   onDelete,
+  onResetDevice,
 }: AdminListComponentProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
@@ -149,6 +151,7 @@ export default function AdminListComponent({
                     admin={admin}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    onResetDevice={onResetDevice}
                   />
                 ))
               )}

@@ -35,11 +35,11 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     EmploymentRecord[]
   >([]);
   const [editingEmploymentId, setEditingEmploymentId] = useState<number | null>(
-    null
+    null,
   );
   const [showProgramSelection, setShowProgramSelection] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState<number | null>(
-    null
+    null,
   );
   const [batchInput, setBatchInput] = useState("");
   const [validationErrors, setValidationErrors] = useState<
@@ -141,7 +141,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         } catch (adminError) {
           console.error(
             "Admin endpoint failed, trying alternative approach:",
-            adminError
+            adminError,
           );
         }
 
@@ -298,7 +298,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
   const handleSavePermanentAddressId = async (
     permanentAddressId?: any,
-    contactAddressId?: any
+    contactAddressId?: any,
   ) => {
     if (!editedProfile) return;
 
@@ -388,7 +388,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   const handleNestedInputChange = (
     parent: string,
     field: string,
-    value: string
+    value: string,
   ) => {
     if (!editedProfile) return;
 
@@ -463,7 +463,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         console.error("API returned non-success response:", response);
         toast.error(
           "Failed to create employment record: " +
-            (response.message || "Unknown error")
+            (response.message || "Unknown error"),
         );
       }
     } catch (error: any) {
@@ -472,11 +472,11 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
       // Handle specific database errors
       if (error?.response?.data?.message?.includes("modified_by")) {
         toast.error(
-          "Database configuration error. Please contact your system administrator."
+          "Database configuration error. Please contact your system administrator.",
         );
       } else if (error?.response?.data?.message?.includes("Column not found")) {
         toast.error(
-          "Database schema error. Please contact your system administrator."
+          "Database schema error. Please contact your system administrator.",
         );
       } else {
         const errorMessage =
@@ -494,12 +494,12 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   const updateEmploymentRecord = (
     id: number,
     field: string,
-    value: string | number
+    value: string | number,
   ) => {
     setEmploymentRecords(
       employmentRecords.map((record) =>
-        record.id === id ? { ...record, [field]: value } : record
-      )
+        record.id === id ? { ...record, [field]: value } : record,
+      ),
     );
   };
 
@@ -511,11 +511,11 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     try {
       const response = await EmploymentService.deleteEmploymentRecord(
         id,
-        employmentId
+        employmentId,
       );
       if (response.success) {
         setEmploymentRecords(
-          employmentRecords.filter((record) => record.id !== employmentId)
+          employmentRecords.filter((record) => record.id !== employmentId),
         );
         toast.success("Employment record deleted!");
       }
@@ -541,14 +541,14 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         {
           program_id: record.program_id,
           batch: record.batch,
-        }
+        },
       );
 
       if (response.success && response.data) {
         setEmploymentRecords(
           employmentRecords.map((r) =>
-            r.id === employmentId ? response.data : r
-          )
+            r.id === employmentId ? response.data : r,
+          ),
         );
         setEditingEmploymentId(null);
         toast.success("Employment record saved!");
@@ -563,6 +563,23 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     setEditingEmploymentId(null);
     // Reload employment records to revert any unsaved changes
     loadEmploymentRecords();
+  };
+
+  const handleIsIndustrialChange = async (value: boolean) => {
+    try {
+      const response = await UserService.updateCrewProfile(id, {
+        is_industrial: value,
+      });
+      if (response.success && response.user) {
+        setProfile((prev) => prev ? { ...prev, is_industrial: value } : prev);
+        setEditedProfile((prev) => prev ? { ...prev, is_industrial: value } : prev);
+        toast.success(`Crew type updated to ${value ? "Industrial" : "Cruise"}`);
+      } else {
+        throw new Error(response.message || "Update failed");
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || "Failed to update crew type");
+    }
   };
 
   if (loading) {
@@ -751,9 +768,8 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          {/* Profile Tabs - Takes up 3 columns */}
-          <div className="xl:col-span-3">
+        <div>
+          <div>
             <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 overflow-hidden">
               {/* Enhanced Tab Navigation */}
               <div className="border-b border-gray-200/50 bg-gray-50/50">
@@ -847,6 +863,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     isEditing={isEditing}
                     saving={saving}
                     canEdit={hasRole("Manage Crew Employment Info")}
+                    onIsIndustrialChange={handleIsIndustrialChange}
                     programs={programs}
                     employmentRecords={employmentRecords}
                     editingEmploymentId={editingEmploymentId}
@@ -884,66 +901,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
             </div>
           </div>
 
-          {/* Sidebar - Takes up 1 column */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                <i className="bi bi-lightning text-blue-600 mr-2"></i>
-                Quick Actions
-              </h3>
-              <div className="space-y-3">
-                {[
-                  {
-                    icon: "bi-file-earmark-medical",
-                    label: "Medical Records",
-                    color: "text-green-600 bg-green-50",
-                  },
-                  {
-                    icon: "bi-award",
-                    label: "Certificates",
-                    color: "text-purple-600 bg-purple-50",
-                  },
-                  {
-                    icon: "bi-envelope",
-                    label: "Send Message",
-                    color: "text-blue-600 bg-blue-50",
-                  },
-                  {
-                    icon: "bi-download",
-                    label: "Export Profile",
-                    color: "text-indigo-600 bg-indigo-50",
-                  },
-                ].map((action, index) => (
-                  <button
-                    key={index}
-                    className="w-full flex items-center px-4 py-3 text-left hover:bg-gray-50 rounded-xl transition-all duration-200 group"
-                  >
-                    <div
-                      className={`p-2 rounded-lg mr-3 ${action.color} group-hover:scale-110 transition-transform duration-200`}
-                    >
-                      <i className={`${action.icon}`}></i>
-                    </div>
-                    <span className="font-medium text-gray-700">
-                      {action.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Danger Zone */}
-            <div className="bg-red-50/70 backdrop-blur-md rounded-2xl shadow-lg border border-red-200/20 p-6">
-              <h3 className="text-lg font-bold text-red-900 mb-4 flex items-center">
-                <i className="bi bi-exclamation-triangle text-red-600 mr-2"></i>
-                Danger Zone
-              </h3>
-              <button className="w-full flex items-center justify-center px-4 py-3 text-red-600 hover:bg-red-100 rounded-xl transition-all duration-200 border border-red-200">
-                <i className="bi bi-person-x mr-2"></i>
-                <span className="font-medium">Deactivate Account</span>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

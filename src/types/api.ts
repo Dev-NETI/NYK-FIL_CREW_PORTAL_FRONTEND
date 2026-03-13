@@ -10,6 +10,8 @@ export interface LoginInitiateResponse extends BaseApiResponse {
   expires_in?: number;
   otp?: string; // Only for development/debugging
   retry_after?: number;
+  error_code?: string;
+  device_name?: string;
 }
 
 export interface LoginVerifyResponse extends BaseApiResponse {
@@ -19,6 +21,8 @@ export interface LoginVerifyResponse extends BaseApiResponse {
   redirect_to?: string;
   attempts_remaining?: number;
   retry_after?: number;
+  error_code?: string;
+  device_name?: string;
 }
 
 export interface ResendOtpResponse extends BaseApiResponse {
@@ -126,6 +130,7 @@ export interface User {
   last_login_at?: string | null;
   last_login_ip?: string;
   is_crew: boolean; // 1 = crew, 0 = admin
+  is_industrial?: boolean | null; // true = industrial, false = cruise (only applies when is_crew = 1)
   role?: string; // 'crew' or 'admin'
 
   // Organized nested data
@@ -254,6 +259,8 @@ export interface ApiErrorResponse {
   message: string;
   errors?: Record<string, string[]>;
   retry_after?: number;
+  error_code?: string;
+  device_name?: string;
 }
 
 // appointment calendar

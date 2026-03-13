@@ -75,9 +75,10 @@ export default function AppointmentFilters({
               className="w-full h-[42px] px-3 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Status</option>
-              <option value="pending">Pending</option>
               <option value="confirmed">Confirmed</option>
               <option value="cancelled">Cancelled</option>
+              <option value="attended">Attended</option>
+              <option value="no show">No Show</option>
             </select>
           </div>
           <div className="w-full">
