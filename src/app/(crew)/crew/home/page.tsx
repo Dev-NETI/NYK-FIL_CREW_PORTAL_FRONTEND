@@ -10,10 +10,12 @@ import {
   RecentActivities,
   HelpfulTips,
 } from "@/components/crew/home";
+import DataPrivacyModal from "@/components/DataPrivacyModal";
 
 export default function Dashboard() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const getTimeBasedGreeting = () => {
     const hour = new Date().getHours();
@@ -32,7 +34,16 @@ export default function Dashboard() {
     setIsLoaded(true);
 
     console.log(user);
+
+    if (!sessionStorage.getItem("privacy_consented")) {
+      setShowPrivacyModal(true);
+    }
   }, []);
+
+  const handlePrivacyConsent = () => {
+    sessionStorage.setItem("privacy_consented", "true");
+    setShowPrivacyModal(false);
+  };
 
   const quickLinks = useMemo(
     () => [
@@ -107,6 +118,7 @@ export default function Dashboard() {
 
   return (
     <>
+      <DataPrivacyModal open={showPrivacyModal} onConsent={handlePrivacyConsent} />
       <div
         className="min-h-screen pt-15 bg-cover bg-center bg-no-repeat bg-fixed relative"
         style={{ backgroundImage: "url('/home1.png')" }}
