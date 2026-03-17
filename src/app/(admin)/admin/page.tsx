@@ -1,7 +1,26 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import DataPrivacyModal from "@/components/DataPrivacyModal";
 
 export default function AdminDashboard() {
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
+  useEffect(() => {
+    if (!sessionStorage.getItem("privacy_consented")) {
+      setShowPrivacyModal(true);
+    }
+  }, []);
+
+  const handlePrivacyConsent = () => {
+    sessionStorage.setItem("privacy_consented", "true");
+    setShowPrivacyModal(false);
+  };
+
   return (
+    <>
+      <DataPrivacyModal open={showPrivacyModal} onConsent={handlePrivacyConsent} />
     <div className="space-y-6 p-4 lg:p-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -260,5 +279,6 @@ export default function AdminDashboard() {
         </div>
       </div>
     </div>
+    </>
   );
 }
