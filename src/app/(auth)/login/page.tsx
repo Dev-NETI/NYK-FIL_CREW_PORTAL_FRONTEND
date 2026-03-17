@@ -8,6 +8,8 @@ import { AxiosError } from "axios";
 import { ApiErrorResponse } from "@/types/api";
 import toast from "react-hot-toast";
 import OTPInput from "@/components/OTPInput";
+import DataPrivacyModal from "@/components/DataPrivacyModal";
+import nykfillogo from "@/lib/assets/nykfil.png";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -18,11 +20,17 @@ export default function LoginPage() {
   const [sessionToken, setSessionToken] = useState("");
   const [canResend, setCanResend] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     setIsLoaded(true);
+    setShowPrivacyModal(true);
   }, []);
+
+  const handlePrivacyConsent = () => {
+    setShowPrivacyModal(false);
+  };
 
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -78,16 +86,13 @@ export default function LoginPage() {
         const errorData = err.response?.data as ApiErrorResponse;
         const statusCode = err.response?.status;
 
-        if (
-          statusCode === 409 &&
-          errorData?.error_code === "DEVICE_CONFLICT"
-        ) {
+        if (statusCode === 409 && errorData?.error_code === "DEVICE_CONFLICT") {
           const deviceInfo = errorData.device_name
             ? ` (${errorData.device_name})`
             : "";
           toast.error(
             `Account already active on another device${deviceInfo}. Contact your administrator to reset your device.`,
-            { icon: "🔒", duration: 10000 }
+            { icon: "🔒", duration: 10000 },
           );
         } else if (errorData) {
           const errorMessage = errorData.retry_after
@@ -117,6 +122,7 @@ export default function LoginPage() {
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setIsLoading(true);
 
     // Show loading toast
@@ -284,6 +290,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative overflow-hidden">
+      <DataPrivacyModal open={showPrivacyModal} onConsent={handlePrivacyConsent} />
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600 rounded-full opacity-20 animate-pulse"></div>
@@ -299,13 +306,14 @@ export default function LoginPage() {
         >
           <div className="mx-auto flex items-center justify-center mb-6 sm:mb-8">
             <div className="text-center  rounded-2xl p-4 ">
-              {/* <Image
-                src="/nykfil.png"
-                alt="Logo"
-                width={120}
-                height={80}
+              <Image
+                // src="/nykfil.png"
+                src={nykfillogo}
+                alt="NYK-Fil Logo"
+                width={200}
+                height={150}
                 className="w-full h-full object-contain sm:w-[150px] sm:h-[100px] md:w-[180px] md:h-[120px] lg:w-[150px] lg:h-[100px]"
-              /> */}
+              />
             </div>
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-3xl font-bold text-white mb-3 sm:mb-4 drop-shadow-lg">

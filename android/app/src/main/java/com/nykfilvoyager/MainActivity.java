@@ -1,4 +1,4 @@
-package com.netiaccess.superapp;
+package com.nykfilvoyager;
 
 import com.getcapacitor.BridgeActivity;
 
