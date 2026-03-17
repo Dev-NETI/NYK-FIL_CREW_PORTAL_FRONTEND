@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AuthService } from "@/services/auth";
 import { useUser } from "@/hooks/useUser";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
+import nykfillogo from "@/lib/assets/nykfil.png";
 
 interface NavigationComponentProps {
   sidebarOpen: boolean;
@@ -29,10 +30,9 @@ export default function NavigationComponent({
     if (!user || !user.admin_roles) return false;
     return user.admin_roles.some(
       (adminRole: any) =>
-        adminRole.role_name?.toLowerCase() === roleName.toLowerCase()
+        adminRole.role_name?.toLowerCase() === roleName.toLowerCase(),
     );
   };
-
 
   // Navigation links array for easy management
   const navigationLinks = [
@@ -64,33 +64,33 @@ export default function NavigationComponent({
       isActive: pathname.startsWith("/admin/chat"),
       requiredRole: "Inquiries",
     },
-    {
-      href: "/admin/reports",
-      icon: "bi-graph-up",
-      label: "Reports",
-      isActive: pathname.startsWith("/admin/reports"),
-      requiredRole: "Reports",
-    },
+    // {
+    //   href: "/admin/reports",
+    //   icon: "bi-graph-up",
+    //   label: "Reports",
+    //   isActive: pathname.startsWith("/admin/reports"),
+    //   requiredRole: "Reports",
+    // },
     {
       href: "/admin/appointment",
       icon: "bi-calendar-event",
       label: "Appointments",
       isActive: pathname.startsWith("/admin/appointment"),
-      requiredRole: 'Appointments',
+      requiredRole: "Appointments",
     },
     {
       href: "/admin/qr-scanner",
       icon: "bi-qr-code-scan",
       label: "Qr Scanner",
       isActive: pathname.startsWith("/admin/qr-scanner"),
-      requiredRole: 'Qr Scanner',
+      requiredRole: "Qr Scanner",
     },
     {
       href: "/admin/debriefing-form",
       icon: "bi-file-earmark-text",
       label: "Debriefing Form",
       isActive: pathname.startsWith("/admin/debriefing-form"),
-      requiredRole: 'Debriefing Form',
+      requiredRole: "Debriefing Form",
     },
   ].filter((link) => hasRole(link.requiredRole));
 
@@ -185,7 +185,8 @@ export default function NavigationComponent({
         <div className="p-6">
           <div className="flex items-center justify-center">
             <Image
-              src="/nykfil.png"
+              // src="/nykfil.png"
+              src={nykfillogo}
               alt="Logo"
               width={150}
               height={100}
@@ -268,7 +269,7 @@ export default function NavigationComponent({
                             <button
                               onClick={() =>
                                 setGeneralSettingsDropdownOpen(
-                                  !generalSettingsDropdownOpen
+                                  !generalSettingsDropdownOpen,
                                 )
                               }
                               className="flex items-center justify-between w-full px-6 py-2 text-sm text-blue-200 hover:bg-blue-700 hover:text-white transition-colors"
