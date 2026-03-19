@@ -177,23 +177,10 @@ export default function ApprovalModal({
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {/* Crew Info */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
+            <div className="mb-3">
               <h3 className="text-lg font-medium text-gray-900">
                 Crew Information
               </h3>
-              {(hasCurrentDocument || hasPendingDocument) && (
-                <button
-                  onClick={() =>
-                    openDocumentViewer(
-                      hasPendingDocument ? "pending" : "current"
-                    )
-                  }
-                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Eye className="w-4 h-4" />
-                  View Documents
-                </button>
-              )}
             </div>
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="grid grid-cols-2 gap-4">
