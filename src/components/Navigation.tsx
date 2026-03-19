@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { User } from "@/types/api";
 import { useCrewUnreadCount } from "@/contexts/CrewUnreadCountContext";
+import nyklogo from "@/lib/assets/nykfil.png";
 
 interface NavigationProps {
   currentPath?: string;
@@ -118,10 +119,11 @@ export default function Navigation({
               >
                 <div className="absolute -inset-2 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <Image
-                  src="/nykfil.png"
+                  // src="/nykfil.png"
+                  src={nyklogo}
                   alt="Logo"
-                  width={150}
-                  height={100}
+                  width={200}
+                  height={150}
                   className="relative w-full h-full object-contain max-w-[120px] sm:max-w-[150px] lg:max-w-[180px] transition-transform duration-300 group-hover:scale-105"
                 />
               </Link>
