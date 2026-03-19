@@ -55,7 +55,7 @@ export default function TravelDocumentApprovalsPage() {
       if (response.success) {
         toast.success(
           "Document approved successfully! An email notification has been sent to the crew member.",
-          { duration: 5000 }
+          { duration: 5000 },
         );
         setShowModal(false);
         await loadUpdates();
@@ -75,7 +75,7 @@ export default function TravelDocumentApprovalsPage() {
       if (response.success) {
         toast.success(
           "Document rejected. An email notification with the rejection reason has been sent to the crew member.",
-          { duration: 5000 }
+          { duration: 5000 },
         );
         setShowModal(false);
         await loadUpdates();
