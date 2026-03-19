@@ -118,7 +118,10 @@ export default function Dashboard() {
 
   return (
     <>
-      <DataPrivacyModal open={showPrivacyModal} onConsent={handlePrivacyConsent} />
+      <DataPrivacyModal
+        open={showPrivacyModal}
+        onConsent={handlePrivacyConsent}
+      />
       <div
         className="min-h-screen pt-15 bg-cover bg-center bg-no-repeat bg-fixed relative"
         style={{ backgroundImage: "url('/home1.png')" }}
@@ -142,13 +145,8 @@ export default function Dashboard() {
                     {getTimeBasedGreeting()}, {userName}! ⚓
                   </h1>
                   <p className="text-white/80 text-xs sm:text-sm lg:text-base mt-1">
-                    Welcome to your crew portal. Stay updated with your maritime
-                    career and documentation.
+                    Welcome to your NYK-Fil Super App Profile.
                   </p>
-                  <div className="flex items-center justify-center sm:justify-start mt-2 text-xs text-blue-300">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                    <span>System Status: Online</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -165,7 +163,7 @@ export default function Dashboard() {
           <QuickAccess currentUser={currentUser} isLoaded={isLoaded} />
 
           {/* Recent Activities and Helpful Tips inside white background */}
-          <RecentActivities isLoaded={isLoaded} />
+          {/* <RecentActivities isLoaded={isLoaded} /> */}
           <HelpfulTips isLoaded={isLoaded} />
         </div>
       </div>
