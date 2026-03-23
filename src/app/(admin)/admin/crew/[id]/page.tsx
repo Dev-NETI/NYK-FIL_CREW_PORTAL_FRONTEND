@@ -13,6 +13,9 @@ import ContactInformation from "@/components/crew-profile/ContactInformation";
 import EmploymentInformation from "@/components/crew-profile/EmploymentInformation";
 import EducationInformation from "@/components/crew-profile/EducationInformation";
 import { Nationality, NationalityService } from "@/services/nationality";
+import { Rank, RankService } from "@/services/rank";
+import { Fleet, FleetService } from "@/services/fleet";
+import { Company, CompanyService } from "@/services/company";
 import { AdminRoleService, AdminRole } from "@/services/admin-role";
 import { AuthService } from "@/services/auth";
 
@@ -26,6 +29,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<User | null>(null);
   const [nationalities, setNationalities] = useState<Nationality[]>([]);
+  const [ranks, setRanks] = useState<Rank[]>([]);
+  const [fleets, setFleets] = useState<Fleet[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [activeTab, setActiveTab] = useState("basic");
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState<User | null>(null);
@@ -96,12 +102,20 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
   const loadNationality = async () => {
     try {
-      const response = await NationalityService.getNationalities();
-      if (response.success && response.data) {
-        setNationalities(response.data);
+      const [nationalityRes, rankRes, fleetRes, companyRes] = await Promise.all([
+        NationalityService.getNationalities(),
+        RankService.getRanks(),
+        FleetService.getFleets(),
+        CompanyService.getCompanies(),
+      ]);
+      if (nationalityRes.success && nationalityRes.data) {
+        setNationalities(nationalityRes.data);
       }
+      if (rankRes.success) setRanks(rankRes.data);
+      if (fleetRes.success) setFleets(fleetRes.data);
+      if (companyRes.success) setCompanies(companyRes.data);
     } catch (error) {
-      console.error("Error loading nationalities:", error);
+      console.error("Error loading lookup data:", error);
     }
   };
 
@@ -388,7 +402,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   const handleNestedInputChange = (
     parent: string,
     field: string,
-    value: string,
+    value: string | number | null,
   ) => {
     if (!editedProfile) return;
 
@@ -822,6 +836,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onCancel={handleCancel}
                     onNestedInputChange={handleNestedInputChange}
                     nationalities={nationalities}
+                    ranks={ranks}
+                    fleets={fleets}
+                    companies={companies}
                     validationErrors={validationErrors}
                   />
                 )}

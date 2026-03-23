@@ -7,6 +7,9 @@ import { AuthService } from "@/services";
 import { ProfileUpdateRequestService } from "@/services/profile-update-request";
 import { User } from "@/types/api";
 import { Nationality } from "@/services/nationality";
+import { Rank, RankService } from "@/services/rank";
+import { Fleet, FleetService } from "@/services/fleet";
+import { Company, CompanyService } from "@/services/company";
 import toast from "react-hot-toast";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -36,6 +39,9 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   );
   const [saving, setSaving] = useState(false);
   const [nationalities, setNationalities] = useState<Nationality[]>([]);
+  const [ranks, setRanks] = useState<Rank[]>([]);
+  const [fleets, setFleets] = useState<Fleet[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string[]>
   >({});
@@ -66,11 +72,15 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           return;
         }
 
-        // Load profile data and nationalities
-        const [profileResponse, nationalitiesResponse] = await Promise.all([
-          UserService.getUserProfile(crewId),
-          NationalityService.getNationalities(),
-        ]);
+        // Load profile data, nationalities, ranks, and fleets
+        const [profileResponse, nationalitiesResponse, rankRes, fleetRes, companyRes] =
+          await Promise.all([
+            UserService.getUserProfile(crewId),
+            NationalityService.getNationalities(),
+            RankService.getRanks(),
+            FleetService.getFleets(),
+            CompanyService.getCompanies(),
+          ]);
 
         if (profileResponse.success && profileResponse.user) {
           setProfile(profileResponse.user);
@@ -81,6 +91,9 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         if (nationalitiesResponse.success) {
           setNationalities(nationalitiesResponse.data);
         }
+        if (rankRes.success) setRanks(rankRes.data);
+        if (fleetRes.success) setFleets(fleetRes.data);
+        if (companyRes.success) setCompanies(companyRes.data);
       } catch (error) {
         console.error("Error loading profile:", error);
         toast.error("Failed to load profile data");
@@ -250,7 +263,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   const handleNestedInputChange = (
     parent: string,
     field: string,
-    value: string,
+    value: string | number | null,
   ) => {
     if (!editedProfile) return;
 
@@ -456,6 +469,9 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                     onCancel={handleCancel}
                     onNestedInputChange={handleNestedInputChange}
                     nationalities={nationalities}
+                    ranks={ranks}
+                    fleets={fleets}
+                    companies={companies}
                     validationErrors={validationErrors}
                   />
                 )}
