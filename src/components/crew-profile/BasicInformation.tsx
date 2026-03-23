@@ -10,6 +10,9 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 import { Nationality } from "@/services/nationality";
+import { Rank } from "@/services/rank";
+import { Fleet } from "@/services/fleet";
+import { Company } from "@/services/company";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import ValidationError from "@/components/ui/ValidationError";
@@ -24,8 +27,11 @@ interface BasicInformationProps {
   onEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
-  onNestedInputChange: (parent: string, field: string, value: string) => void;
+  onNestedInputChange: (parent: string, field: string, value: string | number | null) => void;
   nationalities: Nationality[];
+  ranks?: Rank[];
+  fleets?: Fleet[];
+  companies?: Company[];
   validationErrors?: Record<string, string[]>;
 }
 
@@ -44,6 +50,9 @@ export default function BasicInformation({
   onCancel,
   onNestedInputChange,
   nationalities,
+  ranks = [],
+  fleets = [],
+  companies = [],
   validationErrors = {},
 }: BasicInformationProps) {
   // Use validation hook for cleaner validation logic
@@ -520,6 +529,174 @@ export default function BasicInformation({
                 <DisplayField
                   label="Religion"
                   value={profile.profile?.religion as string}
+                />
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Rank, Fleet & Company */}
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <i className="bi bi-award text-blue-600 mr-2"></i>
+            Rank, Fleet &amp; Company
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {isEditing ? (
+              <>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-2">
+                    Rank
+                  </label>
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    error={hasValidationError("profile.rank_id")}
+                  >
+                    <Select
+                      value={
+                        (editedProfile?.profile as any)?.rank_id != null
+                          ? String((editedProfile?.profile as any).rank_id)
+                          : ""
+                      }
+                      onChange={(e: SelectChangeEvent) =>
+                        onNestedInputChange(
+                          "profile",
+                          "rank_id",
+                          e.target.value === "" ? null : Number(e.target.value)
+                        )
+                      }
+                      displayEmpty
+                      renderValue={(value) => {
+                        if (!value) return "Select Rank";
+                        const rank = ranks.find((r) => String(r.id) === value);
+                        return rank ? rank.name : value;
+                      }}
+                    >
+                      <MenuItem value="">Select Rank</MenuItem>
+                      {ranks.map((rank) => (
+                        <MenuItem key={rank.id} value={String(rank.id)}>
+                          {rank.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <ValidationError
+                    errors={getValidationError("profile.rank_id")}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-2">
+                    Fleet
+                  </label>
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    error={hasValidationError("profile.fleet_id")}
+                  >
+                    <Select
+                      value={
+                        (editedProfile?.profile as any)?.fleet_id != null
+                          ? String((editedProfile?.profile as any).fleet_id)
+                          : ""
+                      }
+                      onChange={(e: SelectChangeEvent) =>
+                        onNestedInputChange(
+                          "profile",
+                          "fleet_id",
+                          e.target.value === "" ? null : Number(e.target.value)
+                        )
+                      }
+                      displayEmpty
+                      renderValue={(value) => {
+                        if (!value) return "Select Fleet";
+                        const fleet = fleets.find(
+                          (f) => String(f.id) === value
+                        );
+                        return fleet ? fleet.name : value;
+                      }}
+                    >
+                      <MenuItem value="">Select Fleet</MenuItem>
+                      {fleets.map((fleet) => (
+                        <MenuItem key={fleet.id} value={String(fleet.id)}>
+                          {fleet.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <ValidationError
+                    errors={getValidationError("profile.fleet_id")}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-2">
+                    Company
+                  </label>
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    error={hasValidationError("profile.company_id")}
+                  >
+                    <Select
+                      value={
+                        (editedProfile?.profile as any)?.company_id != null
+                          ? String((editedProfile?.profile as any).company_id)
+                          : ""
+                      }
+                      onChange={(e: SelectChangeEvent) =>
+                        onNestedInputChange(
+                          "profile",
+                          "company_id",
+                          e.target.value === "" ? null : Number(e.target.value)
+                        )
+                      }
+                      displayEmpty
+                      renderValue={(value) => {
+                        if (!value) return "Select Company";
+                        const company = companies.find(
+                          (c) => String(c.id) === value
+                        );
+                        return company ? company.name : value;
+                      }}
+                    >
+                      <MenuItem value="">Select Company</MenuItem>
+                      {companies.map((company) => (
+                        <MenuItem key={company.id} value={String(company.id)}>
+                          {company.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <ValidationError
+                    errors={getValidationError("profile.company_id")}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <DisplayField
+                  label="Rank"
+                  value={
+                    profile.profile?.rank_name ||
+                    ranks.find((r) => r.id === profile.profile?.rank_id)?.name ||
+                    null
+                  }
+                />
+                <DisplayField
+                  label="Fleet"
+                  value={
+                    profile.profile?.fleet_name ||
+                    fleets.find((f) => f.id === profile.profile?.fleet_id)?.name ||
+                    null
+                  }
+                />
+                <DisplayField
+                  label="Company"
+                  value={
+                    profile.profile?.company_name ||
+                    companies.find((c) => c.id === profile.profile?.company_id)?.name ||
+                    null
+                  }
                 />
               </>
             )}

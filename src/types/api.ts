@@ -75,6 +75,12 @@ export interface UserProfile {
   nationality?: string;
   civil_status?: string;
   religion?: string;
+  rank_id?: number | null;
+  rank_name?: string;
+  fleet_id?: number | null;
+  fleet_name?: string;
+  company_id?: number | null;
+  company_name?: string;
 }
 
 export interface UserContact {
