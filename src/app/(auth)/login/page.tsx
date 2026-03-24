@@ -381,7 +381,6 @@ export default function LoginPage() {
                   <Link
                     href="/data-privacy"
                     className="text-blue-600 hover:text-blue-800 font-medium underline underline-offset-2 transition-colors duration-200"
-                    target="_blank"
                     rel="noopener noreferrer"
                   >
                     Data Privacy Policy
