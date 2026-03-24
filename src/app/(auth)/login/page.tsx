@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AuthService } from "@/services/auth";
@@ -373,6 +374,20 @@ export default function LoginPage() {
                   </div>
                 )}
               </button>
+
+              <div className="pt-1 border-t border-blue-100 text-center">
+                <p className="text-xs text-gray-400">
+                  By signing in, you agree to our{" "}
+                  <Link
+                    href="/data-privacy"
+                    className="text-blue-600 hover:text-blue-800 font-medium underline underline-offset-2 transition-colors duration-200"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Data Privacy Policy
+                  </Link>
+                </p>
+              </div>
             </form>
           ) : (
             // OTP Verification Form
