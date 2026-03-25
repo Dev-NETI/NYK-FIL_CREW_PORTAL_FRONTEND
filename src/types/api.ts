@@ -81,6 +81,7 @@ export interface UserProfile {
   fleet_name?: string;
   company_id?: number | null;
   company_name?: string;
+  image_path?: string | null;
 }
 
 export interface UserContact {

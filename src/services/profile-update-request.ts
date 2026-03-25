@@ -4,7 +4,7 @@ import { BaseApiResponse } from "@/types/api";
 export interface ProfileUpdateRequest {
   id: number;
   crew_id: number;
-  section: "basic" | "contact" | "physical" | "education";
+  section: "basic" | "contact" | "physical" | "education" | "image";
   current_data: any;
   requested_data: any;
   status: "pending" | "approved" | "rejected";
@@ -99,6 +99,24 @@ export class ProfileUpdateRequestService {
       {
         rejection_reason: rejectionReason,
       }
+    );
+    return response.data;
+  }
+
+  /**
+   * Submit a profile image update request (crew — goes through approval workflow).
+   */
+  static async submitImageRequest(
+    crewId: number,
+    file: File
+  ): Promise<ProfileUpdateRequestResponse> {
+    const formData = new FormData();
+    formData.append("crew_id", crewId.toString());
+    formData.append("image", file);
+    const response = await api.post<ProfileUpdateRequestResponse>(
+      "/profile-image-requests",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
     );
     return response.data;
   }
