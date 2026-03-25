@@ -5,6 +5,11 @@ export interface UserProfileResponse extends BaseApiResponse {
   user?: User;
 }
 
+export interface ProfileImageUploadResponse extends BaseApiResponse {
+  image_path?: string;
+  image_url?: string;
+}
+
 export class UserService {
   /**
    * Get user profile by crew ID
@@ -85,6 +90,23 @@ export class UserService {
     const response = await api.put<UserProfileResponse>(
       `/admin/crew/${id}`,
       profileData
+    );
+    return response.data;
+  }
+
+  /**
+   * Upload profile image for a crew member (admin only — direct update).
+   */
+  static async uploadProfileImage(
+    id: string,
+    file: File
+  ): Promise<ProfileImageUploadResponse> {
+    const formData = new FormData();
+    formData.append("image", file);
+    const response = await api.post<ProfileImageUploadResponse>(
+      `/admin/crew/${id}/profile-image`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
     );
     return response.data;
   }

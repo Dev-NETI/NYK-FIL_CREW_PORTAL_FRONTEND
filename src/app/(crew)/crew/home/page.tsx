@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { AuthService } from "@/services";
+import { UserService } from "@/services/user";
 import { User } from "@/types/api";
 import {
   CrewIdCard,
@@ -33,10 +34,17 @@ export default function Dashboard() {
     setCurrentUser(user);
     setIsLoaded(true);
 
-    console.log(user);
-
     if (!sessionStorage.getItem("privacy_consented")) {
       setShowPrivacyModal(true);
+    }
+
+    // Fetch fresh profile data to get image_path (localStorage may be stale)
+    if (user?.profile?.crew_id) {
+      UserService.getUserProfile(user.profile.crew_id).then((res) => {
+        if (res.user) {
+          setCurrentUser(res.user);
+        }
+      }).catch(() => {});
     }
   }, []);
 

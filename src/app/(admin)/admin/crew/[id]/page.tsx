@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { UserService, ProgramService, EmploymentService } from "@/services";
 import { User } from "@/types/api";
+import AvatarUpload from "@/components/AvatarUpload";
 import { Program } from "@/services/program";
 import { EmploymentRecord } from "@/services/employment";
 import toast from "react-hot-toast";
@@ -79,6 +80,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         const currentUser = AuthService.getStoredUser();
         if (currentUser?.id) {
           const roles = await AdminRoleService.getByUserId(currentUser.id);
+          console.log("Loaded roles:", roles);
           setUserRoles(roles);
         }
       } catch (error) {
@@ -170,6 +172,31 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
     loadData();
   }, [id]);
+
+  const getImageUrl = (imagePath?: string | null): string | null => {
+    if (!imagePath) return null;
+    const base = (process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000/api").replace(/\/api$/, "");
+    return `${base}/storage/${imagePath}`;
+  };
+
+  const handleProfileImageUpload = async (file: File) => {
+    const response = await UserService.uploadProfileImage(id, file);
+    if (response.success && response.image_path) {
+      setProfile((prev) =>
+        prev
+          ? { ...prev, profile: { ...(prev.profile ?? {}), image_path: response.image_path } }
+          : prev
+      );
+      setEditedProfile((prev) =>
+        prev
+          ? { ...prev, profile: { ...(prev.profile ?? {}), image_path: response.image_path } }
+          : prev
+      );
+      toast.success("Profile image updated!");
+    } else {
+      throw new Error(response.message ?? "Upload failed");
+    }
+  };
 
   const handleEdit = (section?: string) => {
     if (!profile) return;
@@ -665,19 +692,16 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
           {/* Content with improved readability */}
           <div className="relative px-8 py-16">
             <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-12">
-              {/* Avatar with better styling */}
+              {/* Avatar with upload */}
               <div className="flex-shrink-0 text-center lg:text-left mb-8 lg:mb-0">
-                <div className="relative">
-                  <div className="w-40 h-40 lg:w-48 lg:h-48 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full mx-auto lg:mx-0 flex items-center justify-center shadow-2xl border-4 border-white/20 backdrop-blur-sm">
-                    <span className="text-4xl lg:text-5xl font-bold text-white drop-shadow-lg">
-                      {profile.name || profile.profile?.full_name
-                        ? (profile.name || profile.name)
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                        : profile.email.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
+                <div className="relative inline-block mx-auto lg:mx-0">
+                  <AvatarUpload
+                    displayName={profile.profile?.full_name || profile.name || profile.email}
+                    imageUrl={getImageUrl(profile.profile?.image_path)}
+                    onUpload={handleProfileImageUpload}
+                    className="w-40 h-40 lg:w-48 lg:h-48"
+                    readOnly={!hasRole("Manage Crew Basic Info")}
+                  />
                   {/* Admin badge */}
                   <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
                     <i className="bi bi-shield-check text-white text-lg font-bold"></i>
