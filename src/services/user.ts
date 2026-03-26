@@ -53,15 +53,19 @@ export class UserService {
     status?: string;
     sort_by?: string;
     sort_order?: string;
+    rank_id?: number;
+    fleet_id?: number;
   }): Promise<CrewListResponse> {
     const searchParams = new URLSearchParams();
-    
+
     if (params?.page) searchParams.append('page', params.page.toString());
     if (params?.per_page) searchParams.append('per_page', params.per_page.toString());
     if (params?.search !== undefined) searchParams.append('search', params.search);
     if (params?.status && params.status !== 'all') searchParams.append('status', params.status);
     if (params?.sort_by) searchParams.append('sort_by', params.sort_by);
     if (params?.sort_order) searchParams.append('sort_order', params.sort_order);
+    if (params?.rank_id) searchParams.append('rank_id', params.rank_id.toString());
+    if (params?.fleet_id) searchParams.append('fleet_id', params.fleet_id.toString());
 
     const queryString = searchParams.toString();
     const url = queryString ? `/admin/crew?${queryString}` : '/admin/crew';
