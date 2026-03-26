@@ -47,6 +47,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string[]>
   >({});
+  const [hasPendingImage, setHasPendingImage] = useState(false);
 
   const router = useRouter();
   const resolvedParams = use(params);
@@ -81,12 +82,16 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           rankRes,
           fleetRes,
           companyRes,
+          updateRequestsRes,
         ] = await Promise.all([
           UserService.getUserProfile(crewId),
           NationalityService.getNationalities(),
           RankService.getRanks(),
           FleetService.getFleets(),
           CompanyService.getCompanies(),
+          currentUserData.is_crew
+            ? ProfileUpdateRequestService.getCrewRequests(crewId)
+            : Promise.resolve({ success: false, data: [] }),
         ]);
 
         if (profileResponse.success && profileResponse.user) {
@@ -101,6 +106,12 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         if (rankRes.success) setRanks(rankRes.data);
         if (fleetRes.success) setFleets(fleetRes.data);
         if (companyRes.success) setCompanies(companyRes.data);
+        if (updateRequestsRes.success && updateRequestsRes.data) {
+          const pendingImage = updateRequestsRes.data.some(
+            (r) => r.section === "image" && r.status === "pending",
+          );
+          setHasPendingImage(pendingImage);
+        }
       } catch (error) {
         console.error("Error loading profile:", error);
         toast.error("Failed to load profile data");
@@ -324,6 +335,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         file,
       );
       if (response.success) {
+        setHasPendingImage(true);
         toast.success(
           "Profile image request submitted. Waiting for admin approval.",
         );
@@ -390,11 +402,18 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                       onUpload={handleProfileImageUpload}
                       className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48"
                       readOnly={!canEdit}
+                      pendingApproval={hasPendingImage}
                     />
                     {/* Status indicator */}
-                    <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                      <i className="bi bi-check text-white text-sm font-bold"></i>
-                    </div>
+                    {hasPendingImage ? (
+                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full border-4 border-white shadow-lg flex items-center justify-center" title="Photo update pending approval">
+                        <i className="bi bi-hourglass-split text-white text-xs font-bold"></i>
+                      </div>
+                    ) : (
+                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                        <i className="bi bi-check text-white text-sm font-bold"></i>
+                      </div>
+                    )}
                   </div>
                 </div>
 

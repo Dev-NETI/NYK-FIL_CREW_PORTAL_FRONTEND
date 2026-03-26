@@ -17,8 +17,7 @@ import { Nationality, NationalityService } from "@/services/nationality";
 import { Rank, RankService } from "@/services/rank";
 import { Fleet, FleetService } from "@/services/fleet";
 import { Company, CompanyService } from "@/services/company";
-import { AdminRoleService, AdminRole } from "@/services/admin-role";
-import { AuthService } from "@/services/auth";
+import { useUser } from "@/hooks/useUser";
 
 interface CrewDetailsPageProps {
   params: Promise<{
@@ -52,17 +51,19 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string[]>
   >({});
-  const [userRoles, setUserRoles] = useState<AdminRole[]>([]);
   const router = useRouter();
   const resolvedParams = use(params);
   const id = resolvedParams.id;
+  const { user: currentAdminUser } = useUser();
 
-  // Helper function to check if user has a specific role
+  // Helper function to check if user has a specific role (reads from stored user, consistent with NavigationComponent)
   const hasRole = (roleName: string): boolean => {
-    return userRoles.some((adminRole) => adminRole.role.name === roleName);
+    if (!currentAdminUser?.admin_roles) return false;
+    return currentAdminUser.admin_roles.some(
+      (adminRole: any) =>
+        adminRole.role_name?.toLowerCase() === roleName.toLowerCase(),
+    );
   };
-
-  // Program options will be loaded from API
 
   // Load employment records when profile loads
   useEffect(() => {
@@ -72,24 +73,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
     loadNationality();
   }, [profile]);
-
-  // Load current user's roles on mount
-  useEffect(() => {
-    const loadUserRoles = async () => {
-      try {
-        const currentUser = AuthService.getStoredUser();
-        if (currentUser?.id) {
-          const roles = await AdminRoleService.getByUserId(currentUser.id);
-          console.log("Loaded roles:", roles);
-          setUserRoles(roles);
-        }
-      } catch (error) {
-        console.error("Error loading user roles:", error);
-      }
-    };
-
-    loadUserRoles();
-  }, []);
 
   const loadEmploymentRecords = async () => {
     try {
@@ -104,12 +87,14 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
   const loadNationality = async () => {
     try {
-      const [nationalityRes, rankRes, fleetRes, companyRes] = await Promise.all([
-        NationalityService.getNationalities(),
-        RankService.getRanks(),
-        FleetService.getFleets(),
-        CompanyService.getCompanies(),
-      ]);
+      const [nationalityRes, rankRes, fleetRes, companyRes] = await Promise.all(
+        [
+          NationalityService.getNationalities(),
+          RankService.getRanks(),
+          FleetService.getFleets(),
+          CompanyService.getCompanies(),
+        ],
+      );
       if (nationalityRes.success && nationalityRes.data) {
         setNationalities(nationalityRes.data);
       }
@@ -175,7 +160,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
   const getImageUrl = (imagePath?: string | null): string | null => {
     if (!imagePath) return null;
-    const base = (process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000/api").replace(/\/api$/, "");
+    const base = (
+      process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000/api"
+    ).replace(/\/api$/, "");
     return `${base}/storage/${imagePath}`;
   };
 
@@ -184,13 +171,25 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     if (response.success && response.image_path) {
       setProfile((prev) =>
         prev
-          ? { ...prev, profile: { ...(prev.profile ?? {}), image_path: response.image_path } }
-          : prev
+          ? {
+              ...prev,
+              profile: {
+                ...(prev.profile ?? {}),
+                image_path: response.image_path,
+              },
+            }
+          : prev,
       );
       setEditedProfile((prev) =>
         prev
-          ? { ...prev, profile: { ...(prev.profile ?? {}), image_path: response.image_path } }
-          : prev
+          ? {
+              ...prev,
+              profile: {
+                ...(prev.profile ?? {}),
+                image_path: response.image_path,
+              },
+            }
+          : prev,
       );
       toast.success("Profile image updated!");
     } else {
@@ -612,14 +611,22 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         is_industrial: value,
       });
       if (response.success && response.user) {
-        setProfile((prev) => prev ? { ...prev, is_industrial: value } : prev);
-        setEditedProfile((prev) => prev ? { ...prev, is_industrial: value } : prev);
-        toast.success(`Crew type updated to ${value ? "Industrial" : "Cruise"}`);
+        setProfile((prev) => (prev ? { ...prev, is_industrial: value } : prev));
+        setEditedProfile((prev) =>
+          prev ? { ...prev, is_industrial: value } : prev,
+        );
+        toast.success(
+          `Crew type updated to ${value ? "Industrial" : "Cruise"}`,
+        );
       } else {
         throw new Error(response.message || "Update failed");
       }
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || "Failed to update crew type");
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to update crew type",
+      );
     }
   };
 
@@ -679,9 +686,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         {/* Enhanced Hero Section */}
         <div className="relative overflow-hidden rounded-3xl shadow-2xl mb-8">
           {/* Background with better contrast */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 pointer-events-none"></div>
           <div
-            className="absolute inset-0 opacity-10"
+            className="absolute inset-0 opacity-10 pointer-events-none"
             style={{
               backgroundImage: 'url("/anchor.jpg")',
               backgroundSize: "cover",
@@ -690,17 +697,21 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
           ></div>
 
           {/* Content with improved readability */}
-          <div className="relative px-8 py-16">
+          <div className="relative z-10 px-8 py-16">
             <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-12">
               {/* Avatar with upload */}
               <div className="flex-shrink-0 text-center lg:text-left mb-8 lg:mb-0">
                 <div className="relative inline-block mx-auto lg:mx-0">
                   <AvatarUpload
-                    displayName={profile.profile?.full_name || profile.name || profile.email}
+                    displayName={
+                      profile.profile?.full_name ||
+                      profile.name ||
+                      profile.email
+                    }
                     imageUrl={getImageUrl(profile.profile?.image_path)}
                     onUpload={handleProfileImageUpload}
                     className="w-40 h-40 lg:w-48 lg:h-48"
-                    readOnly={!hasRole("Manage Crew Basic Info")}
+                    readOnly={!hasRole("Manage Crew Image")}
                   />
                   {/* Admin badge */}
                   <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
@@ -941,7 +952,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>

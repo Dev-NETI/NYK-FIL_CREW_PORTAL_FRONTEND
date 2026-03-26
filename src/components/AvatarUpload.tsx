@@ -13,6 +13,8 @@ interface AvatarUploadProps {
   className?: string;
   /** When true the upload overlay is hidden */
   readOnly?: boolean;
+  /** When true, shows a pending badge and disables upload */
+  pendingApproval?: boolean;
 }
 
 /**
@@ -25,6 +27,7 @@ export default function AvatarUpload({
   onUpload,
   className = "w-40 h-40 lg:w-48 lg:h-48",
   readOnly = false,
+  pendingApproval = false,
 }: AvatarUploadProps) {
   const [hovered, setHovered] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -65,17 +68,25 @@ export default function AvatarUpload({
     setSelectedFile(null);
   };
 
+  const uploadDisabled = readOnly || pendingApproval;
+
   return (
     <>
       {/* ── Avatar circle ── */}
       <div
         className={`relative ${className} rounded-full overflow-hidden flex-shrink-0 shadow-2xl border-4 border-white/20 ${
-          !readOnly ? "cursor-pointer" : ""
+          !uploadDisabled ? "cursor-pointer" : ""
         }`}
-        onMouseEnter={() => !readOnly && setHovered(true)}
+        onMouseEnter={() => !uploadDisabled && setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        onClick={() => !readOnly && fileInputRef.current?.click()}
-        title={readOnly ? undefined : "Change profile photo"}
+        onClick={() => !uploadDisabled && fileInputRef.current?.click()}
+        title={
+          pendingApproval
+            ? "Photo update pending approval"
+            : readOnly
+              ? undefined
+              : "Change profile photo"
+        }
       >
         {/* Image or gradient + initials */}
         {imageUrl ? (
@@ -93,8 +104,18 @@ export default function AvatarUpload({
           </div>
         )}
 
+        {/* Pending approval overlay */}
+        {pendingApproval && (
+          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1">
+            <i className="bi bi-hourglass-split text-yellow-400 text-2xl"></i>
+            <span className="text-yellow-300 text-xs font-semibold tracking-wide text-center px-1">
+              Pending
+            </span>
+          </div>
+        )}
+
         {/* Hover overlay */}
-        {!readOnly && (
+        {!uploadDisabled && (
           <div
             className={`absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-1 transition-opacity duration-200 ${
               hovered ? "opacity-100" : "opacity-0"
@@ -109,7 +130,7 @@ export default function AvatarUpload({
       </div>
 
       {/* Hidden file input – accept images; on mobile the browser offers camera */}
-      {!readOnly && (
+      {!uploadDisabled && (
         <input
           ref={fileInputRef}
           type="file"
