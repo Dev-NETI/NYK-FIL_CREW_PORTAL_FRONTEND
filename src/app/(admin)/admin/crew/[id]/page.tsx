@@ -13,6 +13,7 @@ import PhysicalTraits from "@/components/crew-profile/PhysicalTraits";
 import ContactInformation from "@/components/crew-profile/ContactInformation";
 import EmploymentInformation from "@/components/crew-profile/EmploymentInformation";
 import EducationInformation from "@/components/crew-profile/EducationInformation";
+import CrewDocuments from "@/components/crew-profile/CrewDocuments";
 import { Nationality, NationalityService } from "@/services/nationality";
 import { Rank, RankService } from "@/services/rank";
 import { Fleet, FleetService } from "@/services/fleet";
@@ -840,6 +841,11 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                       label: "Education",
                       icon: "bi-mortarboard",
                     },
+                    {
+                      id: "documents",
+                      label: "Documents",
+                      icon: "bi-folder2-open",
+                    },
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -948,6 +954,10 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     }}
                     canEdit={hasRole("Manage Crew Education")}
                   />
+                )}
+
+                {activeTab === "documents" && (
+                  <CrewDocuments crewId={profile.profile?.crew_id} />
                 )}
               </div>
             </div>
