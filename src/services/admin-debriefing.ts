@@ -108,9 +108,12 @@ export class AdminDebriefingService {
     date_from?: string;
     date_to?: string;
   }): Promise<DebriefingListResponse> {
-    const res = await api.get<DebriefingListResponse>("/admin/debriefing-forms", {
-      params,
-    });
+    const res = await api.get<DebriefingListResponse>(
+      "/admin/debriefing-forms",
+      {
+        params,
+      },
+    );
 
     return res.data;
   }
@@ -119,7 +122,7 @@ export class AdminDebriefingService {
     const res = await api.post<BaseApiResponse>(
       `/admin/debriefing-forms/${id}/confirm`,
       undefined,
-      { timeout: 180000 }
+      { timeout: 180000 },
     );
     return res.data;
   }
@@ -128,7 +131,7 @@ export class AdminDebriefingService {
     const res = await api.post<BaseApiResponse>(
       `/admin/debriefing-forms/${id}/pdf/regenerate`,
       undefined,
-      { timeout: 180000 }
+      { timeout: 180000 },
     );
     return res.data;
   }
@@ -154,14 +157,23 @@ export class AdminDebriefingService {
     downloadBlob(res.data, `debriefing_form_${id}.pdf`);
   }
   static async getForm(id: number): Promise<DebriefingItemResponse> {
-    const res = await api.get<DebriefingItemResponse>(`/admin/debriefing-forms/${id}`);
+    const res = await api.get<DebriefingItemResponse>(
+      `/admin/debriefing-forms/${id}`,
+    );
     return res.data;
   }
 
-  static async overrideForm(id: number, payload: OverrideDebriefingPayload): Promise<BaseApiResponse> {
-    const res = await api.put<BaseApiResponse>(`/admin/debriefing-forms/${id}/override`, payload, {
-      timeout: 180000,
-    });
+  static async overrideForm(
+    id: number,
+    payload: OverrideDebriefingPayload,
+  ): Promise<BaseApiResponse> {
+    const res = await api.put<BaseApiResponse>(
+      `/admin/debriefing-forms/${id}/override`,
+      payload,
+      {
+        timeout: 180000,
+      },
+    );
     return res.data;
   }
 }
