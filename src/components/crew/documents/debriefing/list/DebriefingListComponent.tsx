@@ -130,7 +130,7 @@ export default function DebriefingListComponent() {
               {forms.map((f) => (
                 <tr key={f.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3">{getDisplayFormId(f.id)}</td>
-                  <td className="px-4 py-3">{f.rank ?? "-"}</td>
+                  <td className="px-4 py-3">{typeof f.rank === "object" && f.rank !== null ? (f.rank as any).name ?? "-" : (f.rank ?? "-")}</td>
                   <td className="px-4 py-3">{f.embarkation_vessel_name ?? "-"}</td>
                   <td className="px-4 py-3">
                     {f.submitted_at ? formatDate(String(f.submitted_at).slice(0, 10)) : "—"}
@@ -196,7 +196,7 @@ export default function DebriefingListComponent() {
                   <p className="font-semibold text-gray-900 text-sm truncate">
                     #{f.id} — {f.embarkation_vessel_name ?? "-"}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">{f.rank ?? "-"}</p>
+                  <p className="text-xs text-gray-500 truncate">{typeof f.rank === "object" && f.rank !== null ? (f.rank as any).name ?? "-" : (f.rank ?? "-")}</p>
                 </div>
 
                 <div className="flex flex-col items-end gap-1">

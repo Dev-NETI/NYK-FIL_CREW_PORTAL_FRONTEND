@@ -186,6 +186,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           break;
         case "contact":
           requestedData = {
+            email: editedProfile.email,
             contacts: editedProfile.contacts,
             permanent_region: editedProfile.permanent_region,
             permanent_province: editedProfile.permanent_province,

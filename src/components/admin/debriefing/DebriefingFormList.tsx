@@ -7,8 +7,13 @@ import TableSkeleton from "@/components/TableSkeleton";
 import Pagination from "@/components/Pagination";
 import ConfirmDebriefingModal from "./modal/ConfirmDebriefingModal";
 import { formatDate, getStatusBadge } from "@/lib/utils";
-import { AdminDebriefingService, DebriefingForm } from "@/services/admin-debriefing";
-import DebriefingFilters, { DebriefingFilters as Filters } from "./filter/DebriefingListFilter";
+import {
+  AdminDebriefingService,
+  DebriefingForm,
+} from "@/services/admin-debriefing";
+import DebriefingFilters, {
+  DebriefingFilters as Filters,
+} from "./filter/DebriefingListFilter";
 import DebriefingReadOnlyModal from "@/components/DebriefingReadOnlyModal";
 
 const PAGE_SIZE = 10;
@@ -17,14 +22,19 @@ const POLL_MS = 4000;
 function PdfBadge({ status }: { status?: DebriefingForm["pdf_status"] }) {
   if (!status) return null;
 
-  const base = "px-2 py-0.5 rounded-full text-xs font-medium inline-flex items-center";
+  const base =
+    "px-2 py-0.5 rounded-full text-xs font-medium inline-flex items-center";
 
-  if (status === "ready") return <span className={`${base} bg-green-100 text-green-700`}>Ready</span>;
+  if (status === "ready")
+    return <span className={`${base} bg-green-100 text-green-700`}>Ready</span>;
 
   if (status === "pending" || status === "generating")
-    return <span className={`${base} bg-amber-100 text-amber-700`}>Generating…</span>;
+    return (
+      <span className={`${base} bg-amber-100 text-amber-700`}>Generating…</span>
+    );
 
-  if (status === "failed") return <span className={`${base} bg-red-100 text-red-700`}>Failed</span>;
+  if (status === "failed")
+    return <span className={`${base} bg-red-100 text-red-700`}>Failed</span>;
 
   return null;
 }
@@ -34,7 +44,7 @@ export default function DebriefingFormList() {
   const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState<Filters>({
-    status: "all",
+    status: "submitted",
     crewName: "",
     vessel: "",
     dateFrom: "",
@@ -87,7 +97,10 @@ export default function DebriefingFormList() {
       setTotalPages(paginated?.last_page ?? 1);
       setTotalItems(paginated?.total ?? 0);
     } catch (e: any) {
-      if (!silent) toast.error(e?.response?.data?.message || "Failed to load debriefing forms");
+      if (!silent)
+        toast.error(
+          e?.response?.data?.message || "Failed to load debriefing forms",
+        );
       setForms([]);
       setCurrentPage(1);
       setTotalPages(1);
@@ -106,7 +119,13 @@ export default function DebriefingFormList() {
     setCurrentPage(1);
     fetchForms(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.status, filters.crewName, filters.vessel, filters.dateFrom, filters.dateTo]);
+  }, [
+    filters.status,
+    filters.crewName,
+    filters.vessel,
+    filters.dateFrom,
+    filters.dateTo,
+  ]);
 
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages || page === currentPage) return;
@@ -118,14 +137,21 @@ export default function DebriefingFormList() {
     setSelectedForm(null);
   };
 
-  const canConfirm = (status: DebriefingForm["status"]) => status === "submitted";
+  const canConfirm = (status: DebriefingForm["status"]) =>
+    status === "submitted";
 
-  const isPdfReady = (f: DebriefingForm) => f.status === "confirmed" && f.pdf_status === "ready";
+  const isPdfReady = (f: DebriefingForm) =>
+    f.status === "confirmed" && f.pdf_status === "ready";
   const isPdfGenerating = (f: DebriefingForm) =>
-    f.status === "confirmed" && (f.pdf_status === "pending" || f.pdf_status === "generating");
-  const isPdfFailed = (f: DebriefingForm) => f.status === "confirmed" && f.pdf_status === "failed";
+    f.status === "confirmed" &&
+    (f.pdf_status === "pending" || f.pdf_status === "generating");
+  const isPdfFailed = (f: DebriefingForm) =>
+    f.status === "confirmed" && f.pdf_status === "failed";
 
-  const hasGenerating = useMemo(() => forms.some((f) => isPdfGenerating(f)), [forms]);
+  const hasGenerating = useMemo(
+    () => forms.some((f) => isPdfGenerating(f)),
+    [forms],
+  );
 
   useEffect(() => {
     if (pollRef.current) {
@@ -146,7 +172,15 @@ export default function DebriefingFormList() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasGenerating, currentPage, filters.status, filters.crewName, filters.vessel, filters.dateFrom, filters.dateTo]);
+  }, [
+    hasGenerating,
+    currentPage,
+    filters.status,
+    filters.crewName,
+    filters.vessel,
+    filters.dateFrom,
+    filters.dateTo,
+  ]);
 
   const confirmForm = async () => {
     if (!selectedForm) return;
@@ -168,7 +202,8 @@ export default function DebriefingFormList() {
     try {
       await AdminDebriefingService.previewPdf(id);
     } catch (e: any) {
-      if (e?.response?.status === 409) toast("PDF is still being generated. Please try again later.");
+      if (e?.response?.status === 409)
+        toast("PDF is still being generated. Please try again later.");
       else toast.error(e?.response?.data?.message || "Failed to preview PDF");
     }
   };
@@ -177,7 +212,8 @@ export default function DebriefingFormList() {
     try {
       await AdminDebriefingService.downloadPdf(id);
     } catch (e: any) {
-      if (e?.response?.status === 409) toast("PDF is still being generated. Please try again later.");
+      if (e?.response?.status === 409)
+        toast("PDF is still being generated. Please try again later.");
       else toast.error(e?.response?.data?.message || "Failed to download PDF");
     }
   };
@@ -211,7 +247,13 @@ export default function DebriefingFormList() {
           setCurrentPage(1);
         }}
         onClear={() => {
-          setFilters({ status: "all", crewName: "", vessel: "", dateFrom: "", dateTo: "" });
+          setFilters({
+            status: "submitted",
+            crewName: "",
+            vessel: "",
+            dateFrom: "",
+            dateTo: "",
+          });
           setCurrentPage(1);
         }}
       />
@@ -240,7 +282,10 @@ export default function DebriefingFormList() {
               <tbody className="text-sm">
                 {forms.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
+                    <td
+                      colSpan={8}
+                      className="px-4 py-6 text-center text-gray-500"
+                    >
                       No debriefing forms found
                     </td>
                   </tr>
@@ -251,22 +296,33 @@ export default function DebriefingFormList() {
                     <td className="px-4 py-3">#{f.id}</td>
                     <td className="px-4 py-3">{getCrewName(f)}</td>
                     <td className="px-4 py-3">{f.rank ?? "-"}</td>
-                    <td className="px-4 py-3">{f.embarkation_vessel_name ?? "-"}</td>
+                    <td className="px-4 py-3">
+                      {f.embarkation_vessel_name ?? "-"}
+                    </td>
 
                     <td className="px-4 py-3">
-                      {f.submitted_at ? formatDate(String(f.submitted_at).slice(0, 10)) : "—"}
+                      {f.submitted_at
+                        ? formatDate(String(f.submitted_at).slice(0, 10))
+                        : "—"}
                     </td>
 
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadge(f.status as any)}`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadge(f.status as any)}`}
+                        >
                           {f.status}
                         </span>
-                        {f.status === "confirmed" && <PdfBadge status={f.pdf_status} />}
+                        {f.status === "confirmed" && (
+                          <PdfBadge status={f.pdf_status} />
+                        )}
                       </div>
 
                       {isPdfFailed(f) && f.pdf_error && (
-                        <div className="text-xs text-red-600 mt-1 truncate" title={f.pdf_error}>
+                        <div
+                          className="text-xs text-red-600 mt-1 truncate"
+                          title={f.pdf_error}
+                        >
                           {f.pdf_error}
                         </div>
                       )}
@@ -274,7 +330,9 @@ export default function DebriefingFormList() {
 
                     <td className="px-4 py-3">
                       {f.confirmed_at ? (
-                        <span className="text-gray-700">{formatDate(String(f.confirmed_at).slice(0, 10))}</span>
+                        <span className="text-gray-700">
+                          {formatDate(String(f.confirmed_at).slice(0, 10))}
+                        </span>
                       ) : (
                         <span className="text-gray-300">—</span>
                       )}
@@ -307,10 +365,17 @@ export default function DebriefingFormList() {
                           <>
                             <button
                               title={
-                                isPdfReady(f) ? "Preview PDF" : isPdfGenerating(f) ? "PDF is generating…" : "PDF not ready"
+                                isPdfReady(f)
+                                  ? "Preview PDF"
+                                  : isPdfGenerating(f)
+                                    ? "PDF is generating…"
+                                    : "PDF not ready"
                               }
-                              className={`transition ${isPdfReady(f) ? "text-gray-700 hover:text-gray-900" : "text-gray-300 cursor-not-allowed"
-                                }`}
+                              className={`transition ${
+                                isPdfReady(f)
+                                  ? "text-gray-700 hover:text-gray-900"
+                                  : "text-gray-300 cursor-not-allowed"
+                              }`}
                               onClick={() => isPdfReady(f) && openPreview(f.id)}
                               disabled={!isPdfReady(f)}
                             >
@@ -319,11 +384,20 @@ export default function DebriefingFormList() {
 
                             <button
                               title={
-                                isPdfReady(f) ? "Download PDF" : isPdfGenerating(f) ? "PDF is generating…" : "PDF not ready"
+                                isPdfReady(f)
+                                  ? "Download PDF"
+                                  : isPdfGenerating(f)
+                                    ? "PDF is generating…"
+                                    : "PDF not ready"
                               }
-                              className={`transition ${isPdfReady(f) ? "text-gray-700 hover:text-gray-900" : "text-gray-300 cursor-not-allowed"
-                                }`}
-                              onClick={() => isPdfReady(f) && openDownload(f.id)}
+                              className={`transition ${
+                                isPdfReady(f)
+                                  ? "text-gray-700 hover:text-gray-900"
+                                  : "text-gray-300 cursor-not-allowed"
+                              }`}
+                              onClick={() =>
+                                isPdfReady(f) && openDownload(f.id)
+                              }
                               disabled={!isPdfReady(f)}
                             >
                               <Download size={18} />
@@ -352,29 +426,43 @@ export default function DebriefingFormList() {
 
           <div className="lg:hidden p-4 space-y-3">
             {forms.length === 0 && (
-              <div className="py-10 text-center text-gray-500 text-sm">No debriefing forms found</div>
+              <div className="py-10 text-center text-gray-500 text-sm">
+                No debriefing forms found
+              </div>
             )}
 
             {forms.map((f) => (
-              <div key={f.id} className="border rounded-xl p-4 bg-white shadow-sm">
+              <div
+                key={f.id}
+                className="border rounded-xl p-4 bg-white shadow-sm"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 text-sm truncate">
                       #{f.id} — {getCrewName(f)}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">{f.embarkation_vessel_name ?? "-"}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {f.embarkation_vessel_name ?? "-"}
+                    </p>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadge(f.status as any)}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadge(f.status as any)}`}
+                    >
                       {f.status}
                     </span>
-                    {f.status === "confirmed" && <PdfBadge status={f.pdf_status} />}
+                    {f.status === "confirmed" && (
+                      <PdfBadge status={f.pdf_status} />
+                    )}
                   </div>
                 </div>
 
                 {isPdfFailed(f) && f.pdf_error && (
-                  <div className="text-xs text-red-600 mt-2 truncate" title={f.pdf_error}>
+                  <div
+                    className="text-xs text-red-600 mt-2 truncate"
+                    title={f.pdf_error}
+                  >
                     {f.pdf_error}
                   </div>
                 )}
@@ -388,7 +476,9 @@ export default function DebriefingFormList() {
                   <div>
                     <p className="text-gray-500">Submitted</p>
                     <p className="font-medium text-gray-900">
-                      {f.submitted_at ? formatDate(String(f.submitted_at).slice(0, 10)) : "—"}
+                      {f.submitted_at
+                        ? formatDate(String(f.submitted_at).slice(0, 10))
+                        : "—"}
                     </p>
                   </div>
 
@@ -405,9 +495,18 @@ export default function DebriefingFormList() {
                       {f.status === "confirmed" && (
                         <>
                           <button
-                            className={`transition p-1 ${isPdfReady(f) ? "text-gray-700 hover:text-gray-900" : "text-gray-300 cursor-not-allowed"
-                              }`}
-                            title={isPdfReady(f) ? "Preview PDF" : isPdfGenerating(f) ? "PDF is generating…" : "PDF not ready"}
+                            className={`transition p-1 ${
+                              isPdfReady(f)
+                                ? "text-gray-700 hover:text-gray-900"
+                                : "text-gray-300 cursor-not-allowed"
+                            }`}
+                            title={
+                              isPdfReady(f)
+                                ? "Preview PDF"
+                                : isPdfGenerating(f)
+                                  ? "PDF is generating…"
+                                  : "PDF not ready"
+                            }
                             onClick={() => isPdfReady(f) && openPreview(f.id)}
                             disabled={!isPdfReady(f)}
                           >
@@ -415,9 +514,18 @@ export default function DebriefingFormList() {
                           </button>
 
                           <button
-                            className={`transition p-1 ${isPdfReady(f) ? "text-gray-700 hover:text-gray-900" : "text-gray-300 cursor-not-allowed"
-                              }`}
-                            title={isPdfReady(f) ? "Download PDF" : isPdfGenerating(f) ? "PDF is generating…" : "PDF not ready"}
+                            className={`transition p-1 ${
+                              isPdfReady(f)
+                                ? "text-gray-700 hover:text-gray-900"
+                                : "text-gray-300 cursor-not-allowed"
+                            }`}
+                            title={
+                              isPdfReady(f)
+                                ? "Download PDF"
+                                : isPdfGenerating(f)
+                                  ? "PDF is generating…"
+                                  : "PDF not ready"
+                            }
                             onClick={() => isPdfReady(f) && openDownload(f.id)}
                             disabled={!isPdfReady(f)}
                           >

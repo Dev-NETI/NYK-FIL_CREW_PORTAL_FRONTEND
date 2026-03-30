@@ -99,8 +99,8 @@ export default function CrewDebriefingFormModal({
 
     return {
       ...raw,
-      phone_number: raw.phone_number ?? prefill.mobile_number ?? null,
-      email: raw.email ?? prefill.email ?? null,
+      phone_number: prefill.mobile_number ?? raw.phone_number ?? null,
+      email: prefill.email ?? raw.email ?? null,
       present_address: raw.present_address ?? prefill.present_address ?? null,
       provincial_address:
         raw.provincial_address ?? prefill.provincial_address ?? null,

@@ -1149,6 +1149,15 @@ export default function ContactInformation({
               "tel"
             )}
           </Grid>
+          <Grid size={12}>
+            {renderField(
+              "Email Address",
+              profile.email || "Not provided",
+              "email",
+              false,
+              "email"
+            )}
+          </Grid>
         </Grid>
       </div>
 
