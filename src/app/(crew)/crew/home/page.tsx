@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { AuthService } from "@/services";
+import { UserService } from "@/services/user";
 import { User } from "@/types/api";
 import {
   CrewIdCard,
@@ -10,10 +11,12 @@ import {
   RecentActivities,
   HelpfulTips,
 } from "@/components/crew/home";
+import DataPrivacyModal from "@/components/DataPrivacyModal";
 
 export default function Dashboard() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const getTimeBasedGreeting = () => {
     const hour = new Date().getHours();
@@ -31,8 +34,24 @@ export default function Dashboard() {
     setCurrentUser(user);
     setIsLoaded(true);
 
-    console.log(user);
+    if (!sessionStorage.getItem("privacy_consented")) {
+      setShowPrivacyModal(true);
+    }
+
+    // Fetch fresh profile data to get image_path (localStorage may be stale)
+    if (user?.profile?.crew_id) {
+      UserService.getUserProfile(user.profile.crew_id).then((res) => {
+        if (res.user) {
+          setCurrentUser(res.user);
+        }
+      }).catch(() => {});
+    }
   }, []);
+
+  const handlePrivacyConsent = () => {
+    sessionStorage.setItem("privacy_consented", "true");
+    setShowPrivacyModal(false);
+  };
 
   const quickLinks = useMemo(
     () => [
@@ -107,6 +126,10 @@ export default function Dashboard() {
 
   return (
     <>
+      <DataPrivacyModal
+        open={showPrivacyModal}
+        onConsent={handlePrivacyConsent}
+      />
       <div
         className="min-h-screen pt-15 bg-cover bg-center bg-no-repeat bg-fixed relative"
         style={{ backgroundImage: "url('/home1.png')" }}
@@ -130,13 +153,8 @@ export default function Dashboard() {
                     {getTimeBasedGreeting()}, {userName}! ⚓
                   </h1>
                   <p className="text-white/80 text-xs sm:text-sm lg:text-base mt-1">
-                    Welcome to your crew portal. Stay updated with your maritime
-                    career and documentation.
+                    Welcome to your NYK-Fil Super App Profile.
                   </p>
-                  <div className="flex items-center justify-center sm:justify-start mt-2 text-xs text-blue-300">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                    <span>System Status: Online</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -153,7 +171,7 @@ export default function Dashboard() {
           <QuickAccess currentUser={currentUser} isLoaded={isLoaded} />
 
           {/* Recent Activities and Helpful Tips inside white background */}
-          <RecentActivities isLoaded={isLoaded} />
+          {/* <RecentActivities isLoaded={isLoaded} /> */}
           <HelpfulTips isLoaded={isLoaded} />
         </div>
       </div>

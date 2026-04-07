@@ -5,6 +5,11 @@ export interface UserProfileResponse extends BaseApiResponse {
   user?: User;
 }
 
+export interface ProfileImageUploadResponse extends BaseApiResponse {
+  image_path?: string;
+  image_url?: string;
+}
+
 export class UserService {
   /**
    * Get user profile by crew ID
@@ -48,15 +53,19 @@ export class UserService {
     status?: string;
     sort_by?: string;
     sort_order?: string;
+    rank_id?: number;
+    fleet_id?: number;
   }): Promise<CrewListResponse> {
     const searchParams = new URLSearchParams();
-    
+
     if (params?.page) searchParams.append('page', params.page.toString());
     if (params?.per_page) searchParams.append('per_page', params.per_page.toString());
     if (params?.search !== undefined) searchParams.append('search', params.search);
     if (params?.status && params.status !== 'all') searchParams.append('status', params.status);
     if (params?.sort_by) searchParams.append('sort_by', params.sort_by);
     if (params?.sort_order) searchParams.append('sort_order', params.sort_order);
+    if (params?.rank_id) searchParams.append('rank_id', params.rank_id.toString());
+    if (params?.fleet_id) searchParams.append('fleet_id', params.fleet_id.toString());
 
     const queryString = searchParams.toString();
     const url = queryString ? `/admin/crew?${queryString}` : '/admin/crew';
@@ -85,6 +94,23 @@ export class UserService {
     const response = await api.put<UserProfileResponse>(
       `/admin/crew/${id}`,
       profileData
+    );
+    return response.data;
+  }
+
+  /**
+   * Upload profile image for a crew member (admin only — direct update).
+   */
+  static async uploadProfileImage(
+    id: string,
+    file: File
+  ): Promise<ProfileImageUploadResponse> {
+    const formData = new FormData();
+    formData.append("image", file);
+    const response = await api.post<ProfileImageUploadResponse>(
+      `/admin/crew/${id}/profile-image`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
     );
     return response.data;
   }

@@ -7,7 +7,9 @@ import CrewDebriefingFormModal from "@/components/crew/documents/debriefing/form
 export default function DebriefingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [activeFormId, setActiveFormId] = useState<number | undefined>(undefined);
+  const [activeFormId, setActiveFormId] = useState<number | undefined>(
+    undefined,
+  );
 
   const handleSuccess = () => {
     setRefreshKey((prev) => prev + 1);
@@ -48,9 +50,7 @@ export default function DebriefingPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DebriefingListComponent
-          key={refreshKey}
-        />
+        <DebriefingListComponent key={refreshKey} />
       </div>
 
       <CrewDebriefingFormModal

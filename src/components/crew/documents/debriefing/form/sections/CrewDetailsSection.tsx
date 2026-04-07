@@ -8,7 +8,7 @@ export default function CrewDetailsSection({ form }: { form: Partial<DebriefingF
   return (
     <Section title="Crew Details">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Input label="Rank" value={String(form.rank ?? "")} disabled />
+        <Input label="Rank" value={typeof form.rank === "object" && form.rank !== null ? (form.rank as any).name ?? "" : String(form.rank ?? "")} disabled />
         <Input label="Name" value={String(form.crew_name ?? "")} disabled />
         <Input label="Vessel Type" value={String(form.vessel_type ?? "")} disabled />
         <Input label="Principal" value={String(form.principal_name ?? "")} disabled />

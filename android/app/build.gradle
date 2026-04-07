@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.netiaccess.superapp"
+    namespace "com.nykfilvoyager"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.netiaccess.superapp"
+        applicationId "com.nykfilvoyager"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

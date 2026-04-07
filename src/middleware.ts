@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Define public routes that don't require authentication
-  const publicRoutes = ['/login']
+  const publicRoutes = ['/login', '/data-privacy']
   const isPublicRoute = publicRoutes.includes(pathname)
 
   // If user is already logged in and tries to access login page

@@ -42,24 +42,24 @@ export default function QuickAccess({
       color: "bg-purple-500 hover:bg-purple-600",
       delay: "delay-200",
     },
-    {
-      title: "Reports",
-      href: "/crew/reports",
-      color: "bg-orange-500 hover:bg-orange-600",
-      delay: "delay-250",
-    },
-    {
-      title: "Finance",
-      href: "/crew/finance",
-      color: "bg-teal-500 hover:bg-teal-600",
-      delay: "delay-300",
-    },
-    {
-      title: "Notifications",
-      href: "/crew/notifications",
-      color: "bg-amber-500 hover:bg-amber-600",
-      delay: "delay-350",
-    },
+    // {
+    //   title: "Reports",
+    //   href: "/crew/reports",
+    //   color: "bg-orange-500 hover:bg-orange-600",
+    //   delay: "delay-250",
+    // },
+    // {
+    //   title: "Finance",
+    //   href: "/crew/finance",
+    //   color: "bg-teal-500 hover:bg-teal-600",
+    //   delay: "delay-300",
+    // },
+    // {
+    //   title: "Notifications",
+    //   href: "/crew/notifications",
+    //   color: "bg-amber-500 hover:bg-amber-600",
+    //   delay: "delay-350",
+    // },
   ];
 
   return (

@@ -21,6 +21,8 @@ export interface Admin {
   profile: AdminProfile;
   email_verified_at: string | null;
   last_login_at: string | null;
+  device_fingerprint: string | null;
+  device_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -91,6 +93,17 @@ export class AdminManagementService {
    */
   static async deleteAdmin(id: number): Promise<BaseApiResponse> {
     const response = await api.delete<BaseApiResponse>(`/admins/${id}`);
+    return response.data;
+  }
+
+  /**
+   * Reset the device binding for an admin user.
+   * Clears their registered device and revokes all active sessions.
+   */
+  static async resetDevice(id: number): Promise<BaseApiResponse> {
+    const response = await api.post<BaseApiResponse>(
+      `/admins/${id}/reset-device`
+    );
     return response.data;
   }
 }

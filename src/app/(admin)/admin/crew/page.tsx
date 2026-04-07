@@ -15,7 +15,8 @@ export default function CrewManagement() {
   const [itemsPerPage] = useState(10);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [rankFilter, setRankFilter] = useState("all");
+  const [fleetFilter, setFleetFilter] = useState("all");
   const [sortBy, setSortBy] = useState("first_name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
@@ -30,9 +31,10 @@ export default function CrewManagement() {
           page: pageToLoad,
           per_page: itemsPerPage,
           search: searchTerm,
-          status: statusFilter,
           sort_by: sortBy,
           sort_order: sortOrder,
+          rank_id: rankFilter !== "all" ? Number(rankFilter) : undefined,
+          fleet_id: fleetFilter !== "all" ? Number(fleetFilter) : undefined,
         });
 
         if (response.success && response.crew) {
@@ -53,7 +55,15 @@ export default function CrewManagement() {
         setIsLoaded(true);
       }
     },
-    [currentPage, itemsPerPage, searchTerm, statusFilter, sortBy, sortOrder],
+    [
+      currentPage,
+      itemsPerPage,
+      searchTerm,
+      rankFilter,
+      fleetFilter,
+      sortBy,
+      sortOrder,
+    ],
   );
 
   // Load data when dependencies change
@@ -67,8 +77,13 @@ export default function CrewManagement() {
     setCurrentPage(1);
   }, []);
 
-  const handleStatusFilterChange = useCallback((newStatus: string) => {
-    setStatusFilter(newStatus);
+  const handleRankFilterChange = useCallback((rankId: string) => {
+    setRankFilter(rankId);
+    setCurrentPage(1);
+  }, []);
+
+  const handleFleetFilterChange = useCallback((fleetId: string) => {
+    setFleetFilter(fleetId);
     setCurrentPage(1);
   }, []);
 
@@ -144,12 +159,14 @@ export default function CrewManagement() {
                 itemsPerPage={itemsPerPage}
                 pagination={pagination}
                 searchTerm={searchTerm}
-                statusFilter={statusFilter}
+                rankFilter={rankFilter}
+                fleetFilter={fleetFilter}
                 sortBy={sortBy}
                 sortOrder={sortOrder}
                 onPageChange={handlePageChange}
                 onSearchChange={handleSearchChange}
-                onStatusFilterChange={handleStatusFilterChange}
+                onRankFilterChange={handleRankFilterChange}
+                onFleetFilterChange={handleFleetFilterChange}
                 onSortChange={handleSortChange}
                 loading={loading}
               />

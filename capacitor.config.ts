@@ -1,11 +1,11 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.netiaccess.superapp",
-  appName: "nykfil-super-app",
+  appId: "com.nykfilvoyager",
+  appName: "nykfil-voyager",
   webDir: "super-app-mobile/src",
   server: {
-    url: "https://super-app.netiaccess.com",
+    url: "https://nykfilvoyager.com",
     cleartext: true,
   },
 };

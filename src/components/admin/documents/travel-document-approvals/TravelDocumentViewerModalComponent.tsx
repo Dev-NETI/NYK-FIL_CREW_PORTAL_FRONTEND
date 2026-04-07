@@ -23,7 +23,7 @@ export default function TravelDocumentViewerModalComponent({
   initialView = "current",
 }: TravelDocumentViewerModalComponentProps) {
   const [viewingDocument, setViewingDocument] = useState<"current" | "pending">(
-    initialView
+    initialView,
   );
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;

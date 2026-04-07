@@ -30,8 +30,8 @@ export default function OTPInput({
   }, [autoFocus]);
 
   const handleChange = (index: number, inputValue: string) => {
-    const newValue = inputValue.replace(/\D/g, ''); // Only allow digits
-    if (newValue.length > 1) return; // Only allow single digit
+    const newValue = inputValue.replace(/[^a-zA-Z0-9]/g, '').slice(-1).toLowerCase();
+    if (newValue.length > 1) return;
 
     const otpArray = value.split('');
     otpArray[index] = newValue;
@@ -70,7 +70,7 @@ export default function OTPInput({
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     const paste = e.clipboardData.getData('text');
-    const pasteArray = paste.replace(/\D/g, '').split('').slice(0, length);
+    const pasteArray = paste.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().split('').slice(0, length);
     
     if (pasteArray.length > 0) {
       const newValue = pasteArray.join('').padEnd(length, '');
@@ -100,8 +100,7 @@ export default function OTPInput({
           <input
             ref={(el) => (inputRefs.current[index] = el)}
             type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
+            inputMode="text"
             maxLength={1}
             value={value[index] || ''}
             onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange(index, e.target.value)}
@@ -126,7 +125,7 @@ export default function OTPInput({
             `}
             placeholder="•"
             autoComplete="one-time-code"
-            aria-label={`Digit ${index + 1} of verification code`}
+            aria-label={`Character ${index + 1} of verification code`}
           />
         </div>
       ))}

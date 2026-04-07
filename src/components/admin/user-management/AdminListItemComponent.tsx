@@ -1,17 +1,19 @@
 import { Admin } from "@/services/admin-management";
-import { Mail, Building2, Calendar, Edit, Trash2, ShieldCheck } from "lucide-react";
+import { Mail, Building2, Calendar, Edit, Trash2, ShieldCheck, Smartphone, PhoneOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface AdminListItemProps {
   admin: Admin;
   onEdit?: (admin: Admin) => void;
   onDelete?: (id: number, email: string) => void;
+  onResetDevice?: (admin: Admin) => void;
 }
 
 export default function AdminListItemComponent({
   admin,
   onEdit,
   onDelete,
+  onResetDevice,
 }: AdminListItemProps) {
   const router = useRouter();
 
@@ -70,6 +72,27 @@ export default function AdminListItemComponent({
           >
             <ShieldCheck className="w-4 h-4" />
           </button>
+          {onResetDevice && (
+            <button
+              onClick={() => onResetDevice(admin)}
+              className={`p-2 rounded-lg transition-colors ${
+                admin.device_fingerprint
+                  ? "text-orange-600 hover:text-orange-900 hover:bg-orange-50"
+                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+              }`}
+              title={
+                admin.device_fingerprint
+                  ? `Reset device: ${admin.device_name ?? "Registered"}`
+                  : "No device registered"
+              }
+            >
+              {admin.device_fingerprint ? (
+                <Smartphone className="w-4 h-4" />
+              ) : (
+                <PhoneOff className="w-4 h-4" />
+              )}
+            </button>
+          )}
           {onEdit && (
             <button
               onClick={() => onEdit(admin)}

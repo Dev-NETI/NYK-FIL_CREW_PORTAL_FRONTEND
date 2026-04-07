@@ -69,9 +69,7 @@ export default function CrewIdCard({ user, isLoaded = true }: CrewIdCardProps) {
 
       <div
         className={`mb-6 sm:mb-8 flex justify-center transform transition-all duration-1000 delay-300 ${
-          isLoaded
-            ? "translate-y-0 opacity-100"
-            : "translate-y-10 opacity-0"
+          isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
         }`}
       >
         <div className="w-full max-w-sm sm:max-w-md perspective-1000">
@@ -114,21 +112,28 @@ export default function CrewIdCard({ user, isLoaded = true }: CrewIdCardProps) {
                 <div className="flex space-x-3 sm:space-x-4">
                   {/* Photo Section */}
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-16 sm:w-16 sm:h-20 bg-gray-100 border-2 border-gray-300 rounded flex items-center justify-center">
-                      <div className="w-10 h-14 sm:w-14 sm:h-18 bg-gradient-to-b from-blue-500 to-blue-600 rounded flex items-center justify-center">
-                        <span className="text-white font-bold text-sm sm:text-lg">
-                          {user?.profile?.first_name &&
-                          user?.profile?.last_name
-                            ? `${user.profile.first_name[0]}${user.profile?.last_name[0]}`
-                            : user?.name
-                            ? user.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                            : user?.email?.[0]?.toUpperCase() ||
-                              "U"}
-                        </span>
-                      </div>
+                    <div className="w-12 h-16 sm:w-16 sm:h-20 bg-gray-100 border-2 border-gray-300 rounded overflow-hidden flex items-center justify-center">
+                      {user?.profile?.image_path ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${user.profile.image_path}`}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-14 sm:w-14 sm:h-18 bg-gradient-to-b from-blue-500 to-blue-600 rounded flex items-center justify-center">
+                          <span className="text-white font-bold text-sm sm:text-lg">
+                            {user?.profile?.first_name && user?.profile?.last_name
+                              ? `${user.profile.first_name[0]}${user.profile?.last_name[0]}`
+                              : user?.name
+                                ? user.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                : user?.email?.[0]?.toUpperCase() || "U"}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="text-center mt-1">
                       <div className="text-xs text-gray-500">PHOTO</div>
@@ -143,12 +148,10 @@ export default function CrewIdCard({ user, isLoaded = true }: CrewIdCardProps) {
                         Full Name
                       </div>
                       <div className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">
-                        {user?.profile?.first_name &&
-                        user?.profile?.last_name
+                        {user?.profile?.first_name && user?.profile?.last_name
                           ? `${user.profile?.first_name} ${
                               user.profile?.middle_name
-                                ? user.profile?.middle_name[0] +
-                                  "."
+                                ? user.profile?.middle_name[0] + "."
                                 : ""
                             } ${user.profile?.last_name}`.trim()
                           : user?.name || "NOT PROVIDED"}
@@ -263,9 +266,7 @@ export default function CrewIdCard({ user, isLoaded = true }: CrewIdCardProps) {
                       />
                     ) : (
                       <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-900 rounded flex items-center justify-center">
-                        <div className="text-white text-xs">
-                          Loading...
-                        </div>
+                        <div className="text-white text-xs">Loading...</div>
                       </div>
                     )}
                   </div>
@@ -276,7 +277,7 @@ export default function CrewIdCard({ user, isLoaded = true }: CrewIdCardProps) {
                       Crew ID: {user?.profile?.crew_id || "N/A"}
                     </div>
                     <div className="text-xs text-gray-600">
-                      Scan for secure verification
+                      {/* Scan for secure verification */}
                     </div>
                   </div>
                 </div>

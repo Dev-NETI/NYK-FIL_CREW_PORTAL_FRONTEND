@@ -7,9 +7,14 @@ import { AuthService } from "@/services";
 import { ProfileUpdateRequestService } from "@/services/profile-update-request";
 import { User } from "@/types/api";
 import { Nationality } from "@/services/nationality";
+import { Rank, RankService } from "@/services/rank";
+import { Fleet, FleetService } from "@/services/fleet";
+import { Company, CompanyService } from "@/services/company";
 import toast from "react-hot-toast";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+
+import AvatarUpload from "@/components/AvatarUpload";
 
 // Import modular components
 import BasicInformation from "@/components/crew-profile/BasicInformation";
@@ -36,9 +41,13 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   );
   const [saving, setSaving] = useState(false);
   const [nationalities, setNationalities] = useState<Nationality[]>([]);
+  const [ranks, setRanks] = useState<Rank[]>([]);
+  const [fleets, setFleets] = useState<Fleet[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string[]>
   >({});
+  const [hasPendingImage, setHasPendingImage] = useState(false);
 
   const router = useRouter();
   const resolvedParams = use(params);
@@ -66,10 +75,23 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           return;
         }
 
-        // Load profile data and nationalities
-        const [profileResponse, nationalitiesResponse] = await Promise.all([
+        // Load profile data, nationalities, ranks, and fleets
+        const [
+          profileResponse,
+          nationalitiesResponse,
+          rankRes,
+          fleetRes,
+          companyRes,
+          updateRequestsRes,
+        ] = await Promise.all([
           UserService.getUserProfile(crewId),
           NationalityService.getNationalities(),
+          RankService.getRanks(),
+          FleetService.getFleets(),
+          CompanyService.getCompanies(),
+          currentUserData.is_crew
+            ? ProfileUpdateRequestService.getCrewRequests(crewId)
+            : Promise.resolve({ success: false, data: [] }),
         ]);
 
         if (profileResponse.success && profileResponse.user) {
@@ -80,6 +102,15 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
         if (nationalitiesResponse.success) {
           setNationalities(nationalitiesResponse.data);
+        }
+        if (rankRes.success) setRanks(rankRes.data);
+        if (fleetRes.success) setFleets(fleetRes.data);
+        if (companyRes.success) setCompanies(companyRes.data);
+        if (updateRequestsRes.success && updateRequestsRes.data) {
+          const pendingImage = updateRequestsRes.data.some(
+            (r) => r.section === "image" && r.status === "pending",
+          );
+          setHasPendingImage(pendingImage);
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -155,6 +186,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           break;
         case "contact":
           requestedData = {
+            email: editedProfile.email,
             contacts: editedProfile.contacts,
             permanent_region: editedProfile.permanent_region,
             permanent_province: editedProfile.permanent_province,
@@ -250,7 +282,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   const handleNestedInputChange = (
     parent: string,
     field: string,
-    value: string,
+    value: string | number | null,
   ) => {
     if (!editedProfile) return;
 
@@ -265,6 +297,53 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
   const handleProfileUpdate = (updatedProfile: User) => {
     setProfile(updatedProfile);
+  };
+
+  const getImageUrl = (imagePath?: string | null): string | null => {
+    if (!imagePath) return null;
+    const base = process.env.NEXT_PUBLIC_BACKEND_URL;
+    return `${base}/storage/${imagePath}`;
+  };
+
+  const handleProfileImageUpload = async (file: File) => {
+    if (!profile) return;
+    if (currentUser?.is_crew === false) {
+      // Admin visiting crew profile — direct upload
+      const response = await UserService.uploadProfileImage(
+        profile.id.toString(),
+        file,
+      );
+      if (response.success && response.image_path) {
+        setProfile((prev) =>
+          prev
+            ? {
+                ...prev,
+                profile: {
+                  ...(prev.profile ?? {}),
+                  image_path: response.image_path,
+                },
+              }
+            : prev,
+        );
+        toast.success("Profile image updated!");
+      } else {
+        throw new Error(response.message ?? "Upload failed");
+      }
+    } else {
+      // Crew member — submit for approval
+      const response = await ProfileUpdateRequestService.submitImageRequest(
+        profile.id,
+        file,
+      );
+      if (response.success) {
+        setHasPendingImage(true);
+        toast.success(
+          "Profile image request submitted. Waiting for admin approval.",
+        );
+      } else {
+        throw new Error(response.message ?? "Failed to submit request");
+      }
+    }
   };
 
   const canEdit =
@@ -311,23 +390,31 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
             <div className="max-w-7xl mx-auto">
               <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-12">
-                {/* Avatar with better styling */}
+                {/* Avatar with upload */}
                 <div className="flex-shrink-0 text-center lg:text-left mb-8 lg:mb-0">
-                  <div className="relative">
-                    <div className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full mx-auto lg:mx-0 flex items-center justify-center shadow-2xl border-4 border-white/20 backdrop-blur-sm">
-                      <span className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white drop-shadow-lg">
-                        {profile.profile?.full_name || profile.name
-                          ? (profile.profile?.full_name || profile.name)
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                          : profile.email.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
+                  <div className="relative inline-block mx-auto lg:mx-0">
+                    <AvatarUpload
+                      displayName={
+                        profile.profile?.full_name ||
+                        profile.name ||
+                        profile.email
+                      }
+                      imageUrl={getImageUrl(profile.profile?.image_path)}
+                      onUpload={handleProfileImageUpload}
+                      className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48"
+                      readOnly={!canEdit}
+                      pendingApproval={hasPendingImage}
+                    />
                     {/* Status indicator */}
-                    <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                      <i className="bi bi-check text-white text-sm font-bold"></i>
-                    </div>
+                    {hasPendingImage ? (
+                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full border-4 border-white shadow-lg flex items-center justify-center" title="Photo update pending approval">
+                        <i className="bi bi-hourglass-split text-white text-xs font-bold"></i>
+                      </div>
+                    ) : (
+                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                        <i className="bi bi-check text-white text-sm font-bold"></i>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -456,6 +543,9 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                     onCancel={handleCancel}
                     onNestedInputChange={handleNestedInputChange}
                     nationalities={nationalities}
+                    ranks={ranks}
+                    fleets={fleets}
+                    companies={companies}
                     validationErrors={validationErrors}
                   />
                 )}

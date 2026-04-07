@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { UserService, ProgramService, EmploymentService } from "@/services";
 import { User } from "@/types/api";
+import AvatarUpload from "@/components/AvatarUpload";
 import { Program } from "@/services/program";
 import { EmploymentRecord } from "@/services/employment";
 import toast from "react-hot-toast";
@@ -12,9 +13,12 @@ import PhysicalTraits from "@/components/crew-profile/PhysicalTraits";
 import ContactInformation from "@/components/crew-profile/ContactInformation";
 import EmploymentInformation from "@/components/crew-profile/EmploymentInformation";
 import EducationInformation from "@/components/crew-profile/EducationInformation";
+import CrewDocuments from "@/components/crew-profile/CrewDocuments";
 import { Nationality, NationalityService } from "@/services/nationality";
-import { AdminRoleService, AdminRole } from "@/services/admin-role";
-import { AuthService } from "@/services/auth";
+import { Rank, RankService } from "@/services/rank";
+import { Fleet, FleetService } from "@/services/fleet";
+import { Company, CompanyService } from "@/services/company";
+import { useUser } from "@/hooks/useUser";
 
 interface CrewDetailsPageProps {
   params: Promise<{
@@ -26,6 +30,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<User | null>(null);
   const [nationalities, setNationalities] = useState<Nationality[]>([]);
+  const [ranks, setRanks] = useState<Rank[]>([]);
+  const [fleets, setFleets] = useState<Fleet[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [activeTab, setActiveTab] = useState("basic");
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState<User | null>(null);
@@ -35,27 +42,29 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     EmploymentRecord[]
   >([]);
   const [editingEmploymentId, setEditingEmploymentId] = useState<number | null>(
-    null
+    null,
   );
   const [showProgramSelection, setShowProgramSelection] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState<number | null>(
-    null
+    null,
   );
   const [batchInput, setBatchInput] = useState("");
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string[]>
   >({});
-  const [userRoles, setUserRoles] = useState<AdminRole[]>([]);
   const router = useRouter();
   const resolvedParams = use(params);
   const id = resolvedParams.id;
+  const { user: currentAdminUser } = useUser();
 
-  // Helper function to check if user has a specific role
+  // Helper function to check if user has a specific role (reads from stored user, consistent with NavigationComponent)
   const hasRole = (roleName: string): boolean => {
-    return userRoles.some((adminRole) => adminRole.role.name === roleName);
+    if (!currentAdminUser?.admin_roles) return false;
+    return currentAdminUser.admin_roles.some(
+      (adminRole: any) =>
+        adminRole.role_name?.toLowerCase() === roleName.toLowerCase(),
+    );
   };
-
-  // Program options will be loaded from API
 
   // Load employment records when profile loads
   useEffect(() => {
@@ -65,23 +74,6 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
     loadNationality();
   }, [profile]);
-
-  // Load current user's roles on mount
-  useEffect(() => {
-    const loadUserRoles = async () => {
-      try {
-        const currentUser = AuthService.getStoredUser();
-        if (currentUser?.id) {
-          const roles = await AdminRoleService.getByUserId(currentUser.id);
-          setUserRoles(roles);
-        }
-      } catch (error) {
-        console.error("Error loading user roles:", error);
-      }
-    };
-
-    loadUserRoles();
-  }, []);
 
   const loadEmploymentRecords = async () => {
     try {
@@ -96,12 +88,22 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
   const loadNationality = async () => {
     try {
-      const response = await NationalityService.getNationalities();
-      if (response.success && response.data) {
-        setNationalities(response.data);
+      const [nationalityRes, rankRes, fleetRes, companyRes] = await Promise.all(
+        [
+          NationalityService.getNationalities(),
+          RankService.getRanks(),
+          FleetService.getFleets(),
+          CompanyService.getCompanies(),
+        ],
+      );
+      if (nationalityRes.success && nationalityRes.data) {
+        setNationalities(nationalityRes.data);
       }
+      if (rankRes.success) setRanks(rankRes.data);
+      if (fleetRes.success) setFleets(fleetRes.data);
+      if (companyRes.success) setCompanies(companyRes.data);
     } catch (error) {
-      console.error("Error loading nationalities:", error);
+      console.error("Error loading lookup data:", error);
     }
   };
 
@@ -141,7 +143,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         } catch (adminError) {
           console.error(
             "Admin endpoint failed, trying alternative approach:",
-            adminError
+            adminError,
           );
         }
 
@@ -156,6 +158,45 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
     loadData();
   }, [id]);
+
+  const getImageUrl = (imagePath?: string | null): string | null => {
+    if (!imagePath) return null;
+    const base = (
+      process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000/api"
+    ).replace(/\/api$/, "");
+    return `${base}/storage/${imagePath}`;
+  };
+
+  const handleProfileImageUpload = async (file: File) => {
+    const response = await UserService.uploadProfileImage(id, file);
+    if (response.success && response.image_path) {
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              profile: {
+                ...(prev.profile ?? {}),
+                image_path: response.image_path,
+              },
+            }
+          : prev,
+      );
+      setEditedProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              profile: {
+                ...(prev.profile ?? {}),
+                image_path: response.image_path,
+              },
+            }
+          : prev,
+      );
+      toast.success("Profile image updated!");
+    } else {
+      throw new Error(response.message ?? "Upload failed");
+    }
+  };
 
   const handleEdit = (section?: string) => {
     if (!profile) return;
@@ -298,7 +339,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
 
   const handleSavePermanentAddressId = async (
     permanentAddressId?: any,
-    contactAddressId?: any
+    contactAddressId?: any,
   ) => {
     if (!editedProfile) return;
 
@@ -388,7 +429,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   const handleNestedInputChange = (
     parent: string,
     field: string,
-    value: string
+    value: string | number | null,
   ) => {
     if (!editedProfile) return;
 
@@ -463,7 +504,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         console.error("API returned non-success response:", response);
         toast.error(
           "Failed to create employment record: " +
-            (response.message || "Unknown error")
+            (response.message || "Unknown error"),
         );
       }
     } catch (error: any) {
@@ -472,11 +513,11 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
       // Handle specific database errors
       if (error?.response?.data?.message?.includes("modified_by")) {
         toast.error(
-          "Database configuration error. Please contact your system administrator."
+          "Database configuration error. Please contact your system administrator.",
         );
       } else if (error?.response?.data?.message?.includes("Column not found")) {
         toast.error(
-          "Database schema error. Please contact your system administrator."
+          "Database schema error. Please contact your system administrator.",
         );
       } else {
         const errorMessage =
@@ -494,12 +535,12 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
   const updateEmploymentRecord = (
     id: number,
     field: string,
-    value: string | number
+    value: string | number,
   ) => {
     setEmploymentRecords(
       employmentRecords.map((record) =>
-        record.id === id ? { ...record, [field]: value } : record
-      )
+        record.id === id ? { ...record, [field]: value } : record,
+      ),
     );
   };
 
@@ -511,11 +552,11 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     try {
       const response = await EmploymentService.deleteEmploymentRecord(
         id,
-        employmentId
+        employmentId,
       );
       if (response.success) {
         setEmploymentRecords(
-          employmentRecords.filter((record) => record.id !== employmentId)
+          employmentRecords.filter((record) => record.id !== employmentId),
         );
         toast.success("Employment record deleted!");
       }
@@ -541,14 +582,14 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         {
           program_id: record.program_id,
           batch: record.batch,
-        }
+        },
       );
 
       if (response.success && response.data) {
         setEmploymentRecords(
           employmentRecords.map((r) =>
-            r.id === employmentId ? response.data : r
-          )
+            r.id === employmentId ? response.data : r,
+          ),
         );
         setEditingEmploymentId(null);
         toast.success("Employment record saved!");
@@ -563,6 +604,31 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
     setEditingEmploymentId(null);
     // Reload employment records to revert any unsaved changes
     loadEmploymentRecords();
+  };
+
+  const handleIsIndustrialChange = async (value: boolean) => {
+    try {
+      const response = await UserService.updateCrewProfile(id, {
+        is_industrial: value,
+      });
+      if (response.success && response.user) {
+        setProfile((prev) => (prev ? { ...prev, is_industrial: value } : prev));
+        setEditedProfile((prev) =>
+          prev ? { ...prev, is_industrial: value } : prev,
+        );
+        toast.success(
+          `Crew type updated to ${value ? "Industrial" : "Cruise"}`,
+        );
+      } else {
+        throw new Error(response.message || "Update failed");
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to update crew type",
+      );
+    }
   };
 
   if (loading) {
@@ -621,9 +687,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         {/* Enhanced Hero Section */}
         <div className="relative overflow-hidden rounded-3xl shadow-2xl mb-8">
           {/* Background with better contrast */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 pointer-events-none"></div>
           <div
-            className="absolute inset-0 opacity-10"
+            className="absolute inset-0 opacity-10 pointer-events-none"
             style={{
               backgroundImage: 'url("/anchor.jpg")',
               backgroundSize: "cover",
@@ -632,21 +698,22 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
           ></div>
 
           {/* Content with improved readability */}
-          <div className="relative px-8 py-16">
+          <div className="relative z-10 px-8 py-16">
             <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-12">
-              {/* Avatar with better styling */}
+              {/* Avatar with upload */}
               <div className="flex-shrink-0 text-center lg:text-left mb-8 lg:mb-0">
-                <div className="relative">
-                  <div className="w-40 h-40 lg:w-48 lg:h-48 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full mx-auto lg:mx-0 flex items-center justify-center shadow-2xl border-4 border-white/20 backdrop-blur-sm">
-                    <span className="text-4xl lg:text-5xl font-bold text-white drop-shadow-lg">
-                      {profile.name || profile.profile?.full_name
-                        ? (profile.name || profile.name)
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                        : profile.email.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
+                <div className="relative inline-block mx-auto lg:mx-0">
+                  <AvatarUpload
+                    displayName={
+                      profile.profile?.full_name ||
+                      profile.name ||
+                      profile.email
+                    }
+                    imageUrl={getImageUrl(profile.profile?.image_path)}
+                    onUpload={handleProfileImageUpload}
+                    className="w-40 h-40 lg:w-48 lg:h-48"
+                    readOnly={!hasRole("Manage Crew Image")}
+                  />
                   {/* Admin badge */}
                   <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
                     <i className="bi bi-shield-check text-white text-lg font-bold"></i>
@@ -751,9 +818,8 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          {/* Profile Tabs - Takes up 3 columns */}
-          <div className="xl:col-span-3">
+        <div>
+          <div>
             <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 overflow-hidden">
               {/* Enhanced Tab Navigation */}
               <div className="border-b border-gray-200/50 bg-gray-50/50">
@@ -774,6 +840,11 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                       id: "education",
                       label: "Education",
                       icon: "bi-mortarboard",
+                    },
+                    {
+                      id: "documents",
+                      label: "Documents",
+                      icon: "bi-folder2-open",
                     },
                   ].map((tab) => (
                     <button
@@ -806,6 +877,9 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     onCancel={handleCancel}
                     onNestedInputChange={handleNestedInputChange}
                     nationalities={nationalities}
+                    ranks={ranks}
+                    fleets={fleets}
+                    companies={companies}
                     validationErrors={validationErrors}
                   />
                 )}
@@ -847,6 +921,7 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     isEditing={isEditing}
                     saving={saving}
                     canEdit={hasRole("Manage Crew Employment Info")}
+                    onIsIndustrialChange={handleIsIndustrialChange}
                     programs={programs}
                     employmentRecords={employmentRecords}
                     editingEmploymentId={editingEmploymentId}
@@ -880,68 +955,11 @@ export default function CrewDetailsPage({ params }: CrewDetailsPageProps) {
                     canEdit={hasRole("Manage Crew Education")}
                   />
                 )}
-              </div>
-            </div>
-          </div>
 
-          {/* Sidebar - Takes up 1 column */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                <i className="bi bi-lightning text-blue-600 mr-2"></i>
-                Quick Actions
-              </h3>
-              <div className="space-y-3">
-                {[
-                  {
-                    icon: "bi-file-earmark-medical",
-                    label: "Medical Records",
-                    color: "text-green-600 bg-green-50",
-                  },
-                  {
-                    icon: "bi-award",
-                    label: "Certificates",
-                    color: "text-purple-600 bg-purple-50",
-                  },
-                  {
-                    icon: "bi-envelope",
-                    label: "Send Message",
-                    color: "text-blue-600 bg-blue-50",
-                  },
-                  {
-                    icon: "bi-download",
-                    label: "Export Profile",
-                    color: "text-indigo-600 bg-indigo-50",
-                  },
-                ].map((action, index) => (
-                  <button
-                    key={index}
-                    className="w-full flex items-center px-4 py-3 text-left hover:bg-gray-50 rounded-xl transition-all duration-200 group"
-                  >
-                    <div
-                      className={`p-2 rounded-lg mr-3 ${action.color} group-hover:scale-110 transition-transform duration-200`}
-                    >
-                      <i className={`${action.icon}`}></i>
-                    </div>
-                    <span className="font-medium text-gray-700">
-                      {action.label}
-                    </span>
-                  </button>
-                ))}
+                {activeTab === "documents" && (
+                  <CrewDocuments crewId={profile.profile?.crew_id} />
+                )}
               </div>
-            </div>
-
-            {/* Danger Zone */}
-            <div className="bg-red-50/70 backdrop-blur-md rounded-2xl shadow-lg border border-red-200/20 p-6">
-              <h3 className="text-lg font-bold text-red-900 mb-4 flex items-center">
-                <i className="bi bi-exclamation-triangle text-red-600 mr-2"></i>
-                Danger Zone
-              </h3>
-              <button className="w-full flex items-center justify-center px-4 py-3 text-red-600 hover:bg-red-100 rounded-xl transition-all duration-200 border border-red-200">
-                <i className="bi bi-person-x mr-2"></i>
-                <span className="font-medium">Deactivate Account</span>
-              </button>
             </div>
           </div>
         </div>

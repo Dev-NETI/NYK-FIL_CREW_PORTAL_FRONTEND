@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 interface DocumentViewerModalComponentProps {
@@ -23,18 +23,24 @@ export default function DocumentViewerModalComponent({
   initialView = "current",
 }: DocumentViewerModalComponentProps) {
   const [viewingDocument, setViewingDocument] = useState<"current" | "pending">(
-    initialView
+    initialView,
   );
+
+  useEffect(() => {
+    if (isOpen) {
+      setViewingDocument(initialView);
+    }
+  }, [isOpen, initialView]);
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   const getCurrentDocumentUrl = () => {
-    return `${backendUrl}/api/employment-documents/${employmentDocumentId}/view-file`;
+    if (!currentDocumentPath) return null;
+    return `${backendUrl}/storage/${currentDocumentPath}`;
   };
 
   const getPendingDocumentUrl = () => {
     if (!pendingDocumentPath) return null;
-    console.log(`${backendUrl}/storage/${pendingDocumentPath}`);
     return `${backendUrl}/storage/${pendingDocumentPath}`;
   };
 
@@ -51,7 +57,7 @@ export default function DocumentViewerModalComponent({
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
               {viewingDocument === "current"
-                ? "Current Document"
+                ? "Uploaded Document"
                 : "Pending Document"}
             </h3>
             <p className="text-sm text-gray-600 mt-1">
@@ -70,7 +76,7 @@ export default function DocumentViewerModalComponent({
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
                 >
-                  Current
+                  Uploaded
                 </button>
                 <button
                   onClick={() => setViewingDocument("pending")}
@@ -97,9 +103,9 @@ export default function DocumentViewerModalComponent({
         <div className="flex-1 overflow-auto bg-gray-100">
           {viewingDocument === "current" && hasCurrentDocument && (
             <iframe
-              src={getCurrentDocumentUrl()}
+              src={getCurrentDocumentUrl()!}
               className="w-full h-full min-h-[600px] border-0"
-              title="Current Document"
+              title="Uploaded Document"
             />
           )}
           {viewingDocument === "pending" && hasPendingDocument && (

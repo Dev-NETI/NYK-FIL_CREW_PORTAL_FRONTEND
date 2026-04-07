@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle, XCircle } from "lucide-react";
+import { XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { formatDate, getStatusBadge, getCancellationReason } from "@/lib/utils";
-import { AdminAppointmentService, AppointmentService, Appointment, AppointmentStatus } from "@/services/admin-appointment";
+import { AdminAppointmentService, AppointmentService, Appointment } from "@/services/admin-appointment";
 import { AppointmentTypeOption, Filters } from "./filters/AppointmentListFilter";
 import CancelReasonModal from "@/components/CancelReasonModal";
 import ConfirmActionModal from "@/components/ConfirmActionModal";
@@ -31,7 +31,6 @@ export default function AdminAppointmentList({
   const [reason, setReason] = useState("");
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmType, setConfirmType] = useState<"confirm" | "cancel" | null>(null);
 
   const [page, setPage] = useState(1);
 
@@ -105,29 +104,8 @@ export default function AdminAppointmentList({
   const resetModalState = () => {
     setShowCancelModal(false);
     setShowConfirmModal(false);
-    setConfirmType(null);
     setSelectedAppointment(null);
     setReason("");
-  };
-
-  const confirmAppointment = async () => {
-    if (!selectedAppointment) return;
-
-    try {
-      await AppointmentService.confirmAppointment(selectedAppointment.id);
-      toast.success("Appointment confirmed");
-      fetchAppointments();
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message ||
-        error?.response?.data?.errors?.date?.[0] ||
-        error?.response?.data?.errors?.status?.[0] ||
-        "Failed to confirm appointment";
-
-      toast.error(message);
-    } finally {
-      resetModalState();
-    }
   };
 
   const finalizeCancellation = async () => {
@@ -144,7 +122,7 @@ export default function AdminAppointmentList({
     }
   };
 
-  const canAct = (status: AppointmentStatus) => status === "pending";
+  const canCancel = (status: string) => status === "confirmed";
 
   return (
     <>
@@ -225,32 +203,18 @@ export default function AdminAppointmentList({
                       </td>
 
                       <td className="px-4 py-3 text-center">
-                        {canAct(appt.status) ? (
-                          <div className="flex justify-center gap-3">
-                            <button
-                              title="Confirm appointment"
-                              className="text-green-600 hover:text-green-700 transition"
-                              onClick={() => {
-                                setSelectedAppointment(appt);
-                                setConfirmType("confirm");
-                                setShowConfirmModal(true);
-                              }}
-                            >
-                              <CheckCircle size={18} />
-                            </button>
-
-                            <button
-                              title="Cancel appointment"
-                              className="text-red-600 hover:text-red-700 transition"
-                              onClick={() => {
-                                setSelectedAppointment(appt);
-                                setReason("");
-                                setShowCancelModal(true);
-                              }}
-                            >
-                              <XCircle size={18} />
-                            </button>
-                          </div>
+                        {canCancel(appt.status) ? (
+                          <button
+                            title="Cancel appointment"
+                            className="text-red-600 hover:text-red-700 transition"
+                            onClick={() => {
+                              setSelectedAppointment(appt);
+                              setReason("");
+                              setShowCancelModal(true);
+                            }}
+                          >
+                            <XCircle size={18} />
+                          </button>
                         ) : (
                           <span className="text-gray-400 text-sm">—</span>
                         )}
@@ -297,32 +261,18 @@ export default function AdminAppointmentList({
                         )}
                       </div>
 
-                      {canAct(appt.status) && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            title="Confirm appointment"
-                            className="text-green-600 hover:text-green-700 transition p-1"
-                            onClick={() => {
-                              setSelectedAppointment(appt);
-                              setConfirmType("confirm");
-                              setShowConfirmModal(true);
-                            }}
-                          >
-                            <CheckCircle size={18} />
-                          </button>
-
-                          <button
-                            title="Cancel appointment"
-                            className="text-red-600 hover:text-red-700 transition p-1"
-                            onClick={() => {
-                              setSelectedAppointment(appt);
-                              setReason("");
-                              setShowCancelModal(true);
-                            }}
-                          >
-                            <XCircle size={18} />
-                          </button>
-                        </div>
+                      {canCancel(appt.status) && (
+                        <button
+                          title="Cancel appointment"
+                          className="text-red-600 hover:text-red-700 transition p-1"
+                          onClick={() => {
+                            setSelectedAppointment(appt);
+                            setReason("");
+                            setShowCancelModal(true);
+                          }}
+                        >
+                          <XCircle size={18} />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -370,17 +320,11 @@ export default function AdminAppointmentList({
         />
       )}
 
-      {showConfirmModal && confirmType && (
+      {showConfirmModal && (
         <ConfirmActionModal
-          type={confirmType}
+          type="cancel"
           onClose={resetModalState}
-          onConfirm={async () => {
-            if (confirmType === "confirm") {
-              await confirmAppointment();
-            } else {
-              await finalizeCancellation();
-            }
-          }}
+          onConfirm={finalizeCancellation}
         />
       )}
     </>

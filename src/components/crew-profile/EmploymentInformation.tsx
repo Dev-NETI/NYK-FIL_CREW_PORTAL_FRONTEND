@@ -9,6 +9,7 @@ interface EmploymentInformationProps {
   isEditing: boolean;
   saving: boolean;
   canEdit?: boolean;
+  onIsIndustrialChange?: (value: boolean) => Promise<void>;
   programs: Program[];
   employmentRecords: EmploymentRecord[];
   editingEmploymentId: number | null;
@@ -36,9 +37,11 @@ interface EmploymentInformationProps {
 }
 
 export default function EmploymentInformation({
+  profile,
   isEditing,
   saving,
   canEdit = true,
+  onIsIndustrialChange,
   programs,
   employmentRecords,
   editingEmploymentId,
@@ -72,6 +75,44 @@ export default function EmploymentInformation({
           <p className="text-gray-600 mt-1 text-sm sm:text-base">
             Work history and employment records
           </p>
+        </div>
+      </div>
+
+      {/* Crew Type Toggle */}
+      <div className="bg-blue-50 rounded-xl p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Crew Type</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Determines if the crew member belongs to Industrial or Cruise fleet
+            </p>
+          </div>
+          <div className="flex items-center space-x-1 bg-white rounded-xl p-1 border border-blue-200 shadow-sm">
+            <button
+              onClick={() => onIsIndustrialChange?.(true)}
+              disabled={!canEdit || profile.is_industrial === true}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                profile.is_industrial !== false
+                  ? "bg-blue-600 text-white shadow"
+                  : "text-gray-500 hover:text-gray-700"
+              } disabled:cursor-not-allowed`}
+            >
+              <i className="bi bi-building mr-1.5"></i>
+              Industrial
+            </button>
+            <button
+              onClick={() => onIsIndustrialChange?.(false)}
+              disabled={!canEdit || profile.is_industrial === false}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                profile.is_industrial === false
+                  ? "bg-blue-600 text-white shadow"
+                  : "text-gray-500 hover:text-gray-700"
+              } disabled:cursor-not-allowed`}
+            >
+              <i className="bi bi-water mr-1.5"></i>
+              Cruise
+            </button>
+          </div>
         </div>
       </div>
 

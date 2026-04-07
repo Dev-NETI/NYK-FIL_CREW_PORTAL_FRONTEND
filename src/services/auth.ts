@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import { getOrCreateDeviceId, getDeviceName } from "@/lib/device";
 import toast from "react-hot-toast";
 import {
   LoginInitiateRequest,
@@ -24,13 +25,22 @@ export class AuthService {
   }
 
   /**
-   * Initiate login by sending email and receiving OTP
+   * Initiate login by sending email and receiving OTP.
+   * Device fingerprint is sent here so the backend can block immediately
+   * if the account is already registered on another device.
    */
   static async initiateLogin(
-    data: LoginInitiateRequest
+    data: LoginInitiateRequest,
   ): Promise<LoginInitiateResponse> {
     await this.getCsrfCookie();
-    const response = await api.post<LoginInitiateResponse>("/auth/login", data);
+    const deviceData =
+      typeof window !== "undefined"
+        ? { device_fingerprint: getOrCreateDeviceId() }
+        : {};
+    const response = await api.post<LoginInitiateResponse>("/auth/login", {
+      ...data,
+      ...deviceData,
+    });
     return response.data;
   }
 
@@ -38,10 +48,20 @@ export class AuthService {
    * Verify OTP and complete login
    */
   static async verifyOtp(
-    data: LoginVerifyRequest
+    data: LoginVerifyRequest,
   ): Promise<LoginVerifyResponse> {
     await this.getCsrfCookie();
-    const response = await api.post<LoginVerifyResponse>("/auth/verify", data);
+    const deviceData =
+      typeof window !== "undefined"
+        ? {
+            device_fingerprint: getOrCreateDeviceId(),
+            device_name: getDeviceName(),
+          }
+        : {};
+    const response = await api.post<LoginVerifyResponse>("/auth/verify", {
+      ...data,
+      ...deviceData,
+    });
     return response.data;
   }
 
@@ -52,7 +72,7 @@ export class AuthService {
     await this.getCsrfCookie();
     const response = await api.post<ResendOtpResponse>(
       "/auth/resend-otp",
-      data
+      data,
     );
     return response.data;
   }
@@ -85,7 +105,7 @@ export class AuthService {
       // Also store in cookies for middleware access
       document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Lax`;
       document.cookie = `user=${encodeURIComponent(
-        JSON.stringify(user)
+        JSON.stringify(user),
       )}; path=/; max-age=86400; SameSite=Lax`;
     }
   }
@@ -102,6 +122,8 @@ export class AuthService {
       document.cookie =
         "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       document.cookie = "user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+      sessionStorage.removeItem("privacy_consented");
     }
   }
 
@@ -146,7 +168,7 @@ export class AuthService {
   static handleLoginSuccess(
     token: string,
     user: User,
-    redirectTo?: string
+    redirectTo?: string,
   ): void {
     this.storeAuthData(token, user);
 

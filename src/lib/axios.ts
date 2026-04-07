@@ -54,6 +54,9 @@ api.interceptors.response.use(
       if (typeof window !== "undefined") {
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user");
+        // Clear cookies so the middleware no longer sees a stale token
+        document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = "user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         // Only redirect if we're not already on the login page
         if (!window.location.pathname.includes("/login")) {
           window.location.href = "/login";

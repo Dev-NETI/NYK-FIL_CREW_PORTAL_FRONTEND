@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AuthService } from "@/services/auth";
+import { UserService } from "@/services/user";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { User } from "@/types/api";
 import { useCrewUnreadCount } from "@/contexts/CrewUnreadCountContext";
+import nyklogo from "@/lib/assets/nykfil.png";
 
 interface NavigationProps {
   currentPath?: string;
@@ -44,6 +46,28 @@ export default function Navigation({
       setCurrentUser(storedUser);
     }
   }, [user]);
+
+  // Fetch fresh profile to get latest image_path (localStorage may be stale)
+  useEffect(() => {
+    const syncProfileImage = async () => {
+      const crewId = currentUser?.profile?.crew_id;
+      if (!crewId) return;
+      try {
+        const res = await UserService.getUserProfile(crewId);
+        if (res.success && res.user?.profile?.image_path != null) {
+          setCurrentUser((prev) =>
+            prev
+              ? { ...prev, profile: { ...(prev.profile ?? {}), image_path: res.user!.profile!.image_path } }
+              : prev
+          );
+        }
+      } catch {
+        // silent – Navigation should never break due to a failed profile fetch
+      }
+    };
+    syncProfileImage();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.profile?.crew_id]);
 
   // Update previousActive when the route changes
   useEffect(() => {
@@ -102,6 +126,10 @@ export default function Navigation({
     await AuthService.handleLogout();
   };
 
+  const profileImageUrl = currentUser?.profile?.image_path
+    ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${currentUser.profile.image_path}`
+    : null;
+
   return (
     <>
       {/* Top Navigation Bar */}
@@ -118,10 +146,11 @@ export default function Navigation({
               >
                 <div className="absolute -inset-2 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <Image
-                  src="/nykfil.png"
+                  // src="/nykfil.png"
+                  src={nyklogo}
                   alt="Logo"
-                  width={150}
-                  height={100}
+                  width={200}
+                  height={150}
                   className="relative w-full h-full object-contain max-w-[120px] sm:max-w-[150px] lg:max-w-[180px] transition-transform duration-300 group-hover:scale-105"
                 />
               </Link>
@@ -202,7 +231,7 @@ export default function Navigation({
                   <button className="flex items-center gap-3 p-2 pr-4 rounded-2xl bg-white/10 hover:bg-white/15 active:bg-white/20 transition-all duration-300 text-white group">
                     <div className="relative">
                       <Avatar className="w-10 h-10 ring-2 ring-white/30 group-hover:ring-white/50 transition-all duration-300">
-                        <AvatarImage src="/USER.svg" alt="User Avatar" />
+                        <AvatarImage src={profileImageUrl ?? "/USER.svg"} alt="User Avatar" />
                         <AvatarFallback className="text-sm font-semibold bg-gradient-to-br from-blue-400 to-blue-600 text-white">
                           {currentUser?.name
                             ? currentUser.name.charAt(0).toUpperCase()
@@ -235,7 +264,7 @@ export default function Navigation({
                   <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-5">
                     <div className="flex items-center gap-4">
                       <Avatar className="w-14 h-14 ring-3 ring-white/30">
-                        <AvatarImage src="/USER.svg" alt="User Avatar" />
+                        <AvatarImage src={profileImageUrl ?? "/USER.svg"} alt="User Avatar" />
                         <AvatarFallback className="text-lg font-bold bg-white text-blue-600">
                           {currentUser?.name
                             ? currentUser.name.charAt(0).toUpperCase()
@@ -318,7 +347,7 @@ export default function Navigation({
               >
                 <div className="relative">
                   <Avatar className="w-12 h-12 ring-2 ring-white/30">
-                    <AvatarImage src="/USER.svg" alt="User Avatar" />
+                    <AvatarImage src={profileImageUrl ?? "/USER.svg"} alt="User Avatar" />
                     <AvatarFallback className="text-base font-bold bg-gradient-to-br from-blue-400 to-blue-600 text-white">
                       {currentUser?.name
                         ? currentUser.name.charAt(0).toUpperCase()

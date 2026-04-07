@@ -43,21 +43,15 @@ export default function PersonalInfoSection({
         />
 
         <Input
-          label={<RequiredMark label="Phone Number" />}
+          label="Phone Number"
           value={String(form.phone_number ?? "")}
-          onChange={(v) => setField("phone_number", v)}
-          disabled={readOnlyPersonal || isLocked}
-          error={errors.phone_number}
-          placeholder="e.g., 09XXXXXXXXX"
+          disabled
         />
 
         <Input
-          label={<RequiredMark label="Email" />}
+          label="Email"
           value={String(form.email ?? "")}
-          onChange={(v) => setField("email", v)}
-          disabled={readOnlyPersonal || isLocked}
-          error={errors.email}
-          placeholder="name@email.com"
+          disabled
         />
 
         <Input

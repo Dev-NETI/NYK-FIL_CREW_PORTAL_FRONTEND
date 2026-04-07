@@ -64,7 +64,6 @@ export default function DebriefingFilters({ value, onChange, onClear }: Props) {
               className="w-full h-[42px] px-3 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Status</option>
-              <option value="draft">Draft</option>
               <option value="submitted">Submitted</option>
               <option value="confirmed">Confirmed</option>
             </select>

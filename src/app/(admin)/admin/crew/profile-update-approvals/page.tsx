@@ -34,6 +34,7 @@ export default function ProfileUpdateApprovalsPage() {
   const [showModal, setShowModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadRequests();
@@ -107,6 +108,11 @@ export default function ProfileUpdateApprovalsPage() {
     }
   };
 
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+
+  const getStorageUrl = (path?: string | null) =>
+    path ? `${backendUrl}/storage/${path}` : null;
+
   const getSectionLabel = (section: string) => {
     switch (section) {
       case "basic":
@@ -117,6 +123,8 @@ export default function ProfileUpdateApprovalsPage() {
         return "Physical Traits";
       case "education":
         return "Education Information";
+      case "image":
+        return "Profile Photo";
       default:
         return section;
     }
@@ -228,15 +236,32 @@ export default function ProfileUpdateApprovalsPage() {
                     {requests.map((request) => (
                       <tr key={request.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {formatFullName(request.current_data?.profile) ||
-                                "N/A"}
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10">
+                              <div className="h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-medium text-white">
+                                  {(
+                                    request.crew?.profile?.full_name ||
+                                    request.crew?.name ||
+                                    request.crew?.email
+                                  )
+                                    ?.split(" ")
+                                    .map((n) => n[0])
+                                    .join("") || "?"}
+                                </span>
+                              </div>
                             </div>
-                            <div className="text-sm text-gray-500">
-                              {request.crew?.profile?.crew_id
-                                ? `ID: ${request.crew.profile.crew_id}`
-                                : request.crew?.email}
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {request.crew?.profile?.full_name ||
+                                  request.crew?.name ||
+                                  "Unknown"}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {request.crew?.profile?.crew_id
+                                  ? `ID: ${request.crew.profile.crew_id}`
+                                  : request.crew?.email}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -272,7 +297,7 @@ export default function ProfileUpdateApprovalsPage() {
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             {/* Background overlay */}
             <div
-              className="fixed inset-0 bg-gray-950/90 transition-opacity"
+              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
               aria-hidden="true"
               onClick={() => setShowModal(false)}
             ></div>
@@ -323,28 +348,95 @@ export default function ProfileUpdateApprovalsPage() {
                   <h4 className="text-sm font-medium text-gray-700 mb-2">
                     Requested Changes
                   </h4>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    {formatChanges(
-                      selectedRequest.current_data,
-                      selectedRequest.requested_data,
-                    ).length > 0 ? (
-                      formatChanges(
+                  {selectedRequest.section === "image" ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Current photo */}
+                      <div className="text-center">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                          Current Photo
+                        </p>
+                        <div className="w-32 h-32 rounded-full overflow-hidden mx-auto ring-2 ring-gray-200">
+                          {getStorageUrl(
+                            selectedRequest.current_data?.image_path,
+                          ) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={
+                                getStorageUrl(
+                                  selectedRequest.current_data.image_path,
+                                )!
+                              }
+                              alt="Current profile"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
+                              <span className="text-gray-500 text-xs">
+                                No photo
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {/* New photo */}
+                      <div className="text-center">
+                        <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-2">
+                          New Photo
+                        </p>
+                        {(() => {
+                          const newUrl = getStorageUrl(
+                            selectedRequest.requested_data?.pending_image_path,
+                          );
+                          return newUrl ? (
+                            <div
+                              className="w-32 h-32 rounded-full overflow-hidden mx-auto ring-2 ring-blue-400 cursor-zoom-in relative group"
+                              onClick={() => setLightboxUrl(newUrl)}
+                              title="Click to view full image"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={newUrl}
+                                alt="Proposed profile"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <i className="bi bi-zoom-in text-white text-xl"></i>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-32 h-32 rounded-full overflow-hidden mx-auto ring-2 ring-blue-400 bg-gradient-to-br from-blue-300 to-blue-400 flex items-center justify-center">
+                              <span className="text-white text-xs">
+                                No image
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      {formatChanges(
                         selectedRequest.current_data,
                         selectedRequest.requested_data,
-                      ).map((change, index) => (
-                        <div
-                          key={index}
-                          className="text-sm text-gray-800 mb-1 font-mono"
-                        >
-                          {change}
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-gray-500">
-                        No specific changes detected
-                      </p>
-                    )}
-                  </div>
+                      ).length > 0 ? (
+                        formatChanges(
+                          selectedRequest.current_data,
+                          selectedRequest.requested_data,
+                        ).map((change, index) => (
+                          <div
+                            key={index}
+                            className="text-sm text-gray-800 mb-1 font-mono"
+                          >
+                            {change}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          No specific changes detected
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mb-6">
@@ -394,6 +486,28 @@ export default function ProfileUpdateApprovalsPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <XCircle className="w-6 h-6" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxUrl}
+            alt="Full profile photo"
+            className="max-w-full max-h-[90vh] rounded-xl shadow-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>

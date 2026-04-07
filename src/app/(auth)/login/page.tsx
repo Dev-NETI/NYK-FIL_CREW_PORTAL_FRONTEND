@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AuthService } from "@/services/auth";
@@ -8,6 +9,7 @@ import { AxiosError } from "axios";
 import { ApiErrorResponse } from "@/types/api";
 import toast from "react-hot-toast";
 import OTPInput from "@/components/OTPInput";
+import nykfillogo from "@/lib/assets/nykfil.png";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -76,7 +78,17 @@ export default function LoginPage() {
 
       if (err instanceof AxiosError) {
         const errorData = err.response?.data as ApiErrorResponse;
-        if (errorData) {
+        const statusCode = err.response?.status;
+
+        if (statusCode === 409 && errorData?.error_code === "DEVICE_CONFLICT") {
+          const deviceInfo = errorData.device_name
+            ? ` (${errorData.device_name})`
+            : "";
+          toast.error(
+            `Account already active on another device${deviceInfo}. Contact your administrator to reset your device.`,
+            { icon: "🔒", duration: 10000 },
+          );
+        } else if (errorData) {
           const errorMessage = errorData.retry_after
             ? `${errorData.message} Please wait ${errorData.retry_after} seconds.`
             : errorData.message || "Failed to send OTP";
@@ -104,6 +116,7 @@ export default function LoginPage() {
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setIsLoading(true);
 
     // Show loading toast
@@ -287,10 +300,11 @@ export default function LoginPage() {
           <div className="mx-auto flex items-center justify-center mb-6 sm:mb-8">
             <div className="text-center  rounded-2xl p-4 ">
               <Image
-                src="/nykfil.png"
-                alt="Logo"
-                width={120}
-                height={80}
+                // src="/nykfil.png"
+                src={nykfillogo}
+                alt="NYK-Fil Logo"
+                width={200}
+                height={150}
                 className="w-full h-full object-contain sm:w-[150px] sm:h-[100px] md:w-[180px] md:h-[120px] lg:w-[150px] lg:h-[100px]"
               />
             </div>
@@ -360,6 +374,19 @@ export default function LoginPage() {
                   </div>
                 )}
               </button>
+
+              <div className="pt-1 border-t border-blue-100 text-center">
+                <p className="text-xs text-gray-400">
+                  By signing in, you agree to our{" "}
+                  <Link
+                    href="/data-privacy"
+                    className="text-blue-600 hover:text-blue-800 font-medium underline underline-offset-2 transition-colors duration-200"
+                    rel="noopener noreferrer"
+                  >
+                    Data Privacy Policy
+                  </Link>
+                </p>
+              </div>
             </form>
           ) : (
             // OTP Verification Form
