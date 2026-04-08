@@ -40,11 +40,13 @@ export default function Dashboard() {
 
     // Fetch fresh profile data to get image_path (localStorage may be stale)
     if (user?.profile?.crew_id) {
-      UserService.getUserProfile(user.profile.crew_id).then((res) => {
-        if (res.user) {
-          setCurrentUser(res.user);
-        }
-      }).catch(() => {});
+      UserService.getUserProfile(user.profile.crew_id)
+        .then((res) => {
+          if (res.user) {
+            setCurrentUser(res.user);
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -131,7 +133,7 @@ export default function Dashboard() {
         onConsent={handlePrivacyConsent}
       />
       <div
-        className="min-h-screen pt-15 bg-cover bg-center bg-no-repeat bg-fixed relative"
+        className="min-h-screen flex flex-col pt-15 bg-cover bg-center bg-no-repeat bg-fixed relative"
         style={{ backgroundImage: "url('/home1.png')" }}
       >
         {/* Dark overlay */}
@@ -166,12 +168,11 @@ export default function Dashboard() {
             <DashboardStatsCard currentUser={currentUser} isLoaded={isLoaded} />
           </div>
         </div>
-        <div className="relative z-10 bg-blue-900/90 px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8 shadow-2xl rounded-t-4xl">
+        <div className="relative z-10 flex-1 bg-blue-900/90 px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-24 shadow-2xl rounded-t-4xl">
           {/* Quick Access */}
           <QuickAccess currentUser={currentUser} isLoaded={isLoaded} />
 
-          {/* Recent Activities and Helpful Tips inside white background */}
-          {/* <RecentActivities isLoaded={isLoaded} /> */}
+          {/* Helpful Tips */}
           <HelpfulTips isLoaded={isLoaded} />
         </div>
       </div>

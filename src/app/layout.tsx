@@ -31,25 +31,64 @@ export default function RootLayout({
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           {children}
           <Toaster
-            position="top-right"
+            position="bottom-center"
+            gutter={8}
+            containerStyle={{
+              bottom: 20,
+              left: 16,
+              right: 16,
+              top: 18,
+            }}
             toastOptions={{
               duration: 4000,
               style: {
-                background: "#363636",
-                color: "#fff",
+                background: "#ffffff",
+                color: "#111827",
+                fontSize: "0.875rem",
+                fontWeight: "500",
+                borderRadius: "10px",
+                border: "1px solid #e5e7eb",
+                boxShadow:
+                  "0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
+                padding: "12px 16px",
+                width: "100%",
+                maxWidth: "400px",
               },
               success: {
                 duration: 3000,
+                iconTheme: {
+                  primary: "#10b981",
+                  secondary: "#ffffff",
+                },
                 style: {
-                  background: "#10b981",
-                  color: "#fff",
+                  background: "#ffffff",
+                  color: "#111827",
+                  borderLeft: "4px solid #10b981",
+                  width: "100%",
+                  maxWidth: "400px",
                 },
               },
               error: {
                 duration: 5000,
+                iconTheme: {
+                  primary: "#ef4444",
+                  secondary: "#ffffff",
+                },
                 style: {
-                  background: "#ef4444",
-                  color: "#fff",
+                  background: "#ffffff",
+                  color: "#111827",
+                  borderLeft: "4px solid #ef4444",
+                  width: "100%",
+                  maxWidth: "400px",
+                },
+              },
+              loading: {
+                style: {
+                  background: "#ffffff",
+                  color: "#111827",
+                  borderLeft: "4px solid #3b82f6",
+                  width: "100%",
+                  maxWidth: "400px",
                 },
               },
             }}

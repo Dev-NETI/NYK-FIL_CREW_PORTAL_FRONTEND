@@ -8,6 +8,24 @@ import {
 import toast from "react-hot-toast";
 import { UserCheck, Clock, CheckCircle, XCircle } from "lucide-react";
 
+function formatFullName(profile?: {
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  suffix?: string | null;
+}): string {
+  if (!profile?.first_name && !profile?.last_name) return "";
+  const mi = profile.middle_name?.trim().charAt(0);
+  return [
+    profile.first_name?.trim(),
+    mi ? `${mi}.` : undefined,
+    profile.last_name?.trim(),
+    profile.suffix?.trim() || undefined,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export default function ProfileUpdateApprovalsPage() {
   const [requests, setRequests] = useState<ProfileUpdateRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +46,7 @@ export default function ProfileUpdateApprovalsPage() {
       const response = await ProfileUpdateRequestService.getPendingRequests();
       if (response.success && response.data) {
         setRequests(response.data);
+        console.log("Profile update requests:", response.data);
       } else {
         toast.error(response.message || "Failed to load requests");
       }

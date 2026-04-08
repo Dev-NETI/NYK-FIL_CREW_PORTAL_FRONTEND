@@ -4,17 +4,7 @@ import { useState, useEffect } from "react";
 import { User } from "@/types/api";
 import { UserService } from "@/services/user";
 import toast from "react-hot-toast";
-import {
-  TextField,
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  alpha,
-  useTheme,
-  Stack,
-} from "@mui/material";
+import { TextField, Box, Typography, useTheme } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -252,22 +242,6 @@ export default function EducationInformation({
     }));
   };
 
-  // Helper function to get appropriate icon for education level
-  const getEducationIcon = (
-    level: "high_school" | "college" | "higher_education"
-  ) => {
-    switch (level) {
-      case "high_school":
-        return "bi-building";
-      case "college":
-        return "bi-mortarboard-fill";
-      case "higher_education":
-        return "bi-award-fill";
-      default:
-        return "bi-book";
-    }
-  };
-
   const renderField = (
     label: string,
     level: "high_school" | "college" | "higher_education",
@@ -412,320 +386,195 @@ export default function EducationInformation({
     );
   };
 
-  return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <div className="space-y-8">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 sm:pb-6 border-b border-gray-200 space-y-3 sm:space-y-0">
-          <div className="flex-1">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
-              <i className="bi bi-mortarboard-fill text-blue-600 mr-2 sm:mr-3 text-lg sm:text-xl"></i>
-              <span className="leading-tight">Education Information</span>
-            </h2>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">
-              Academic qualifications and educational background
-            </p>
-          </div>
+  // ── Sub-components ────────────────────────────────────────────────────────
 
-          {/* Edit Controls - Mobile App Style */}
-          <div className="flex items-center space-x-2 sm:space-x-3 w-full sm:w-auto">
-            {!isEditing ? (
-              <button
-                onClick={handleEdit}
-                disabled={!canEdit}
-                className={`w-full sm:w-auto bg-orange-600 text-white px-6 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] ${
-                  canEdit
-                    ? "hover:bg-orange-700 active:bg-orange-800 shadow-sm active:shadow-none"
-                    : "opacity-50 cursor-not-allowed"
-                }`}
-              >
-                <i className="bi bi-pencil text-base"></i>
-                <span>Edit Education</span>
-              </button>
-            ) : (
-              <div className="flex space-x-2 w-full sm:w-auto">
-                <button
-                  onClick={handleCancel}
-                  className="flex-1 sm:flex-none bg-gray-100 text-gray-700 px-5 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] hover:bg-gray-200 active:bg-gray-300 border border-gray-200"
-                >
-                  <i className="bi bi-x-lg text-base"></i>
-                  <span className="sm:inline">Cancel</span>
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] shadow-sm active:shadow-none"
-                >
-                  {saving ? (
-                    <>
-                      <i className="bi bi-arrow-clockwise animate-spin text-base"></i>
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <i className="bi bi-check-lg text-base"></i>
-                      <span>Save</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
+  const LevelCard = ({
+    level,
+    title,
+    subtitle,
+    icon,
+    gradientFrom,
+    gradientTo,
+    accentBg,
+    accentText,
+    showDegree,
+  }: {
+    level: "high_school" | "college" | "higher_education";
+    title: string;
+    subtitle: string;
+    icon: string;
+    gradientFrom: string;
+    gradientTo: string;
+    accentBg: string;
+    accentText: string;
+    showDegree: boolean;
+  }) => {
+    const data = educationData[level];
+    const hasData = !!data.school_name;
+
+    return (
+      <div className="rounded-2xl border border-gray-200 overflow-hidden">
+        {/* Card header */}
+        <div
+          className="flex items-center gap-4 px-5 py-4"
+          style={{ background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})` }}
+        >
+          <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+            <i className={`bi ${icon} text-white text-xl`}></i>
           </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-base leading-tight">{title}</p>
+            <p className="text-white/70 text-xs">{subtitle}</p>
+          </div>
+          {!isEditing && (
+            <span
+              className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${
+                hasData ? "bg-white/20 text-white" : "bg-black/20 text-white/60"
+              }`}
+            >
+              {hasData ? "Filled" : "Empty"}
+            </span>
+          )}
         </div>
 
-        <Box sx={{ px: 1 }}>
-          {/* High School Section */}
-          <Card
-            elevation={2}
-            sx={{
-              mb: 4,
-              borderRadius: 3,
-              overflow: "hidden",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow: theme.shadows[8],
-              },
-            }}
-          >
-            {/* Green gradient header for High School */}
-            <Box
-              sx={{
-                background: "linear-gradient(135deg, #16a34a 0%, #22c55e 100%)",
-                p: 3,
-                color: "white",
-              }}
+        {/* Card body */}
+        <div className="p-5">
+          {isEditing ? (
+            <div className="space-y-4">
+              {renderField("School / Institution Name", level, "school_name", level === "high_school")}
+              {showDegree && renderField("Degree / Program", level, "degree", false, level === "college" ? "e.g., BS Marine Engineering" : "e.g., Master of Science")}
+              {renderDateField("Graduation Date", level)}
+            </div>
+          ) : (
+            hasData ? (
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${accentBg}`}>
+                    <i className="bi bi-building text-sm" style={{ color: accentText }}></i>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold leading-none mb-0.5">School / Institution</p>
+                    <p className="text-sm font-bold text-gray-900">{data.school_name}</p>
+                  </div>
+                </div>
+                {showDegree && data.degree && (
+                  <div className="flex items-start gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${accentBg}`}>
+                      <i className="bi bi-mortarboard text-sm" style={{ color: accentText }}></i>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold leading-none mb-0.5">Degree / Program</p>
+                      <p className="text-sm font-bold text-gray-900">{data.degree}</p>
+                    </div>
+                  </div>
+                )}
+                {data.date_graduated && (
+                  <div className="flex items-start gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${accentBg}`}>
+                      <i className="bi bi-calendar-check text-sm" style={{ color: accentText }}></i>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold leading-none mb-0.5">Graduated</p>
+                      <p className="text-sm font-bold text-gray-900">{data.date_graduated.format("MMMM YYYY")}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-300 font-semibold text-center py-2">No information provided</p>
+            )
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <div className="space-y-6">
+        {/* ── Header ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-gray-100">
+          <div>
+            <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
+              <i className="bi bi-mortarboard-fill text-amber-600"></i>
+              Education
+            </h2>
+            <p className="text-gray-400 text-sm mt-0.5">Academic qualifications and background</p>
+          </div>
+
+          {!isEditing ? (
+            <button
+              onClick={handleEdit}
+              disabled={!canEdit}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                canEdit
+                  ? "bg-slate-900 text-white hover:bg-slate-700 shadow-sm"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              }`}
             >
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
+              <i className="bi bi-pencil-fill text-xs"></i>
+              Edit Education
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCancel}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 transition-all"
               >
-                <Stack direction="row" alignItems="center" spacing={2}>
-                  <Box
-                    sx={{
-                      p: 1.5,
-                      borderRadius: 2,
-                      backgroundColor: alpha("#ffffff", 0.2),
-                      backdropFilter: "blur(10px)",
-                    }}
-                  >
-                    <i
-                      className={getEducationIcon("high_school")}
-                      style={{
-                        fontSize: "1.5rem",
-                        color: "#ffffff",
-                      }}
-                    ></i>
-                  </Box>
-                  <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
-                      High School Education
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      Secondary education foundation
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Stack>
-            </Box>
-
-            <CardContent sx={{ p: 4 }}>
-              <Grid container spacing={3}>
-                <Grid size={12}>
-                  {renderField(
-                    "School Name",
-                    "high_school",
-                    "school_name",
-                    true,
-                    "Enter the full name of your high school"
-                  )}
-                </Grid>
-                <Grid size={12}>
-                  {renderDateField(
-                    "Graduation Date",
-                    "high_school",
-                    "Month and year of graduation"
-                  )}
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-
-          {/* College Section */}
-          <Card
-            elevation={2}
-            sx={{
-              mb: 4,
-              borderRadius: 3,
-              overflow: "hidden",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow: theme.shadows[8],
-              },
-            }}
-          >
-            {/* Blue gradient header for College */}
-            <Box
-              sx={{
-                background: "linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)",
-                p: 3,
-                color: "white",
-              }}
-            >
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
+                <i className="bi bi-x-lg text-xs"></i>
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
               >
-                <Stack direction="row" alignItems="center" spacing={2}>
-                  <Box
-                    sx={{
-                      p: 1.5,
-                      borderRadius: 2,
-                      backgroundColor: alpha("#ffffff", 0.2),
-                      backdropFilter: "blur(10px)",
-                    }}
-                  >
-                    <i
-                      className={getEducationIcon("college")}
-                      style={{
-                        fontSize: "1.5rem",
-                        color: "#ffffff",
-                      }}
-                    ></i>
-                  </Box>
-                  <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
-                      College Education
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      Higher education and bachelor's degree
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Stack>
-            </Box>
+                {saving ? (
+                  <><i className="bi bi-arrow-clockwise animate-spin text-xs"></i>Saving…</>
+                ) : (
+                  <><i className="bi bi-check-lg text-xs"></i>Save Changes</>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
 
-            <CardContent sx={{ p: 4 }}>
-              <Grid container spacing={3}>
-                <Grid size={12}>
-                  {renderField(
-                    "University/College Name",
-                    "college",
-                    "school_name",
-                    false,
-                    "Name of the university or college attended"
-                  )}
-                </Grid>
-                <Grid size={6}>
-                  {renderField(
-                    "Degree Earned",
-                    "college",
-                    "degree",
-                    false,
-                    "e.g., Bachelor of Science in Marine Engineering"
-                  )}
-                </Grid>
-                <Grid size={6}>
-                  {renderDateField(
-                    "Graduation Date",
-                    "college",
-                    "Month and year of graduation"
-                  )}
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-
-          {/* Higher Education Section */}
-          <Card
-            elevation={2}
-            sx={{
-              mb: 4,
-              borderRadius: 3,
-              overflow: "hidden",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow: theme.shadows[8],
-              },
-            }}
-          >
-            {/* Purple gradient header for Higher Education */}
-            <Box
-              sx={{
-                background: "linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%)",
-                p: 3,
-                color: "white",
-              }}
-            >
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <Stack direction="row" alignItems="center" spacing={2}>
-                  <Box
-                    sx={{
-                      p: 1.5,
-                      borderRadius: 2,
-                      backgroundColor: alpha("#ffffff", 0.2),
-                      backdropFilter: "blur(10px)",
-                    }}
-                  >
-                    <i
-                      className={getEducationIcon("higher_education")}
-                      style={{
-                        fontSize: "1.5rem",
-                        color: "#ffffff",
-                      }}
-                    ></i>
-                  </Box>
-                  <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
-                      Higher Education
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      Post-graduate studies and advanced degrees
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Stack>
-            </Box>
-
-            <CardContent sx={{ p: 4 }}>
-              <Grid container spacing={3}>
-                <Grid size={12}>
-                  {renderField(
-                    "Institution Name",
-                    "higher_education",
-                    "school_name",
-                    false,
-                    "Graduate school or university name"
-                  )}
-                </Grid>
-                <Grid size={6}>
-                  {renderField(
-                    "Degree/Program",
-                    "higher_education",
-                    "degree",
-                    false,
-                    "e.g., Master of Science, Ph.D., Professional Certificate"
-                  )}
-                </Grid>
-                <Grid size={6}>
-                  {renderDateField(
-                    "Graduation Date",
-                    "higher_education",
-                    "Month and year of graduation or completion"
-                  )}
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Box>
+        {/* ── Education level cards ── */}
+        <div className="space-y-4">
+          <LevelCard
+            level="high_school"
+            title="High School"
+            subtitle="Secondary education"
+            icon="bi-building"
+            gradientFrom="#16a34a"
+            gradientTo="#22c55e"
+            accentBg="bg-green-100"
+            accentText="#16a34a"
+            showDegree={false}
+          />
+          <LevelCard
+            level="college"
+            title="College / University"
+            subtitle="Bachelor's degree"
+            icon="bi-mortarboard-fill"
+            gradientFrom="#2563eb"
+            gradientTo="#3b82f6"
+            accentBg="bg-blue-100"
+            accentText="#2563eb"
+            showDegree={true}
+          />
+          <LevelCard
+            level="higher_education"
+            title="Higher Education"
+            subtitle="Post-graduate / advanced degree"
+            icon="bi-award-fill"
+            gradientFrom="#7c3aed"
+            gradientTo="#8b5cf6"
+            accentBg="bg-violet-100"
+            accentText="#7c3aed"
+            showDegree={true}
+          />
+        </div>
       </div>
     </LocalizationProvider>
   );
