@@ -180,10 +180,10 @@ export default function CrewIdCard({ user, isLoaded = true }: CrewIdCardProps) {
                       </div>
                       <div>
                         <div className="text-xs text-gray-500 uppercase font-semibold">
-                          SRN
+                          Seaman Book
                         </div>
                         <div className="text-xs font-mono font-bold text-gray-900">
-                          {user?.profile?.srn || "N/A"}
+                          {user?.employment?.seaman_book_number || "N/A"}
                         </div>
                       </div>
                     </div>
@@ -306,10 +306,9 @@ export default function CrewIdCard({ user, isLoaded = true }: CrewIdCardProps) {
           </div>
 
           {/* Instructions */}
-          <div className="text-center mt-2">
-            <div className="text-xs text-gray-500">
-              💡 Click the card to flip and view QR code
-            </div>
+          <div className="flex items-center justify-center gap-1.5 mt-2">
+            <i className="bi bi-arrow-repeat text-white/40 text-xs"></i>
+            <span className="text-white/40 text-xs">Tap to flip</span>
           </div>
         </div>
       </div>

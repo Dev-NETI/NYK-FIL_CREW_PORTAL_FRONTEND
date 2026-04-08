@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -34,20 +34,18 @@ export default function Navigation({
   const [previousActive, setPreviousActive] = useState<string | null>(
     currentRoute,
   );
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isSheetVisible, setIsSheetVisible] = useState(false); // controls slide-up animation
   const [currentUser, setCurrentUser] = useState<User | null>(user || null);
-  const [isScrolled, setIsScrolled] = useState(false);
   const { unreadCount } = useCrewUnreadCount();
+  const sheetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Get user from localStorage if not provided as prop
   useEffect(() => {
     if (!user && typeof window !== "undefined") {
-      const storedUser = AuthService.getStoredUser();
-      setCurrentUser(storedUser);
+      setCurrentUser(AuthService.getStoredUser());
     }
   }, [user]);
 
-  // Fetch fresh profile to get latest image_path (localStorage may be stale)
   useEffect(() => {
     const syncProfileImage = async () => {
       const crewId = currentUser?.profile?.crew_id;
@@ -57,31 +55,43 @@ export default function Navigation({
         if (res.success && res.user?.profile?.image_path != null) {
           setCurrentUser((prev) =>
             prev
-              ? { ...prev, profile: { ...(prev.profile ?? {}), image_path: res.user!.profile!.image_path } }
-              : prev
+              ? {
+                  ...prev,
+                  profile: {
+                    ...(prev.profile ?? {}),
+                    image_path: res.user!.profile!.image_path,
+                  },
+                }
+              : prev,
           );
         }
       } catch {
-        // silent – Navigation should never break due to a failed profile fetch
+        /* silent */
       }
     };
     syncProfileImage();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.profile?.crew_id]);
 
-  // Update previousActive when the route changes
   useEffect(() => {
     setPreviousActive(currentRoute);
   }, [currentRoute]);
 
-  // Track scroll for navbar styling
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // ── Bottom-sheet open/close helpers ────────────────────────────────────────
+  const openSheet = () => {
+    setIsSheetOpen(true);
+    // Defer so the DOM mounts first, then trigger the slide-up transition
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIsSheetVisible(true));
+    });
+  };
+
+  const closeSheet = () => {
+    setIsSheetVisible(false);
+    // Wait for slide-down animation before unmounting
+    if (sheetTimerRef.current) clearTimeout(sheetTimerRef.current);
+    sheetTimerRef.current = setTimeout(() => setIsSheetOpen(false), 350);
+  };
 
   const navItems = [
     {
@@ -95,6 +105,12 @@ export default function Navigation({
       label: "Documents",
       icon: "file-earmark",
       activeIcon: "file-earmark-fill",
+    },
+    {
+      href: "/crew/appointment-schedule",
+      label: "Appointment",
+      icon: "calendar2-check",
+      activeIcon: "calendar2-check-fill",
     },
     {
       href: "/crew/inbox",
@@ -112,17 +128,19 @@ export default function Navigation({
     },
   ];
 
-  const isActive = (path: string) => currentRoute === path;
+  const isActive = (path: string) =>
+    path === "/crew/home"
+      ? currentRoute === path
+      : currentRoute.startsWith(path);
 
   const handleNavClick = (href: string) => {
-    if (previousActive !== href) {
-      setPreviousActive(href);
-    }
+    if (previousActive !== href) setPreviousActive(href);
     setClickedItem(href);
     setTimeout(() => setClickedItem(null), 200);
   };
 
   const handleLogout = async () => {
+    closeSheet();
     await AuthService.handleLogout();
   };
 
@@ -130,59 +148,51 @@ export default function Navigation({
     ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${currentUser.profile.image_path}`
     : null;
 
+  const displayName =
+    currentUser?.profile?.first_name || currentUser?.name || "Crew Member";
+  const initials = displayName.charAt(0).toUpperCase();
+
   return (
     <>
-      {/* Top Navigation Bar */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 pt-7 sm:pt-0 bg-blue-900`}
-      >
+      {/* ══════════════════════════════ TOP NAV ══════════════════════════════ */}
+      <nav className="fixed top-0 left-0 right-0 z-50 pt-7 sm:pt-0 bg-blue-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <div className="flex items-center">
-              <Link
-                href="/crew/home"
-                className="flex items-center group relative"
-              >
-                <div className="absolute -inset-2 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <Image
-                  // src="/nykfil.png"
-                  src={nyklogo}
-                  alt="Logo"
-                  width={200}
-                  height={150}
-                  className="relative w-full h-full object-contain max-w-[120px] sm:max-w-[150px] lg:max-w-[180px] transition-transform duration-300 group-hover:scale-105"
-                />
-              </Link>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden relative flex items-center justify-center w-11 h-11 rounded-xl text-white hover:bg-white/10 active:bg-white/20 transition-all duration-300"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle menu"
+            <Link
+              href="/crew/home"
+              className="flex items-center group relative"
             >
-              <div className="relative w-5 h-4 flex flex-col justify-between">
-                <span
-                  className={`block h-0.5 w-5 bg-white rounded-full transition-all duration-300 origin-center ${
-                    isMobileMenuOpen
-                      ? "rotate-45 translate-y-[7px]"
-                      : "rotate-0"
-                  }`}
+              <div className="absolute -inset-2 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Image
+                src={nyklogo}
+                alt="Logo"
+                width={200}
+                height={150}
+                className="relative w-full h-full object-contain max-w-[120px] sm:max-w-[150px] lg:max-w-[180px] transition-transform duration-300 group-hover:scale-105"
+              />
+            </Link>
+
+            {/* Mobile: avatar button → opens bottom sheet */}
+            <button
+              className="md:hidden relative flex items-center justify-center w-10 h-10 rounded-full ring-2 ring-white/30 active:ring-white/60 transition-all duration-200 overflow-hidden"
+              onClick={openSheet}
+              aria-label="Open menu"
+            >
+              {profileImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={profileImageUrl}
+                  alt="avatar"
+                  className="w-full h-full object-cover"
                 />
-                <span
-                  className={`block h-0.5 w-5 bg-white rounded-full transition-all duration-300 ${
-                    isMobileMenuOpen ? "opacity-0 scale-0" : "opacity-100"
-                  }`}
-                />
-                <span
-                  className={`block h-0.5 w-5 bg-white rounded-full transition-all duration-300 origin-center ${
-                    isMobileMenuOpen
-                      ? "-rotate-45 -translate-y-[7px]"
-                      : "rotate-0"
-                  }`}
-                />
-              </div>
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                  <span className="text-white text-sm font-black">
+                    {initials}
+                  </span>
+                </div>
+              )}
             </button>
 
             {/* Desktop Navigation */}
@@ -203,13 +213,8 @@ export default function Navigation({
                   >
                     <div className="relative">
                       <i
-                        className={`bi bi-${
-                          isActive(item.href) ? item.activeIcon : item.icon
-                        } text-lg transition-transform duration-300 ${
-                          clickedItem === item.href ? "scale-90" : "scale-100"
-                        }`}
+                        className={`bi bi-${isActive(item.href) ? item.activeIcon : item.icon} text-lg`}
                       />
-                      {/* Unread Badge for Chat */}
                       {item.label === "Chat" && unreadCount > 0 && (
                         <span className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow-lg ring-2 ring-white animate-pulse">
                           {unreadCount > 99 ? "99+" : unreadCount}
@@ -224,32 +229,30 @@ export default function Navigation({
               </div>
             </div>
 
-            {/* Desktop User Menu */}
+            {/* Desktop User Dropdown */}
             <div className="hidden md:flex items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-3 p-2 pr-4 rounded-2xl bg-white/10 hover:bg-white/15 active:bg-white/20 transition-all duration-300 text-white group">
                     <div className="relative">
                       <Avatar className="w-10 h-10 ring-2 ring-white/30 group-hover:ring-white/50 transition-all duration-300">
-                        <AvatarImage src={profileImageUrl ?? "/USER.svg"} alt="User Avatar" />
+                        <AvatarImage
+                          src={profileImageUrl ?? "/USER.svg"}
+                          alt="User Avatar"
+                        />
                         <AvatarFallback className="text-sm font-semibold bg-gradient-to-br from-blue-400 to-blue-600 text-white">
-                          {currentUser?.name
-                            ? currentUser.name.charAt(0).toUpperCase()
-                            : "P"}
+                          {initials}
                         </AvatarFallback>
                       </Avatar>
-                      {/* Online indicator */}
                       <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full" />
                     </div>
                     <div className="hidden lg:block text-left">
                       <p className="text-white font-semibold text-sm leading-tight">
-                        {currentUser?.name
-                          ? `${currentUser.profile?.first_name || currentUser.name}`
-                          : "Welcome!"}
+                        {displayName}
                       </p>
                       <p className="text-blue-200 text-xs">
                         {currentUser?.profile?.crew_id
-                          ? `ID: ${currentUser.profile?.crew_id}`
+                          ? `ID: ${currentUser.profile.crew_id}`
                           : "Portal User"}
                       </p>
                     </div>
@@ -260,33 +263,29 @@ export default function Navigation({
                   className="w-72 mt-3 p-0 bg-white border-0 shadow-2xl shadow-black/20 rounded-2xl overflow-hidden"
                   align="end"
                 >
-                  {/* User Header */}
                   <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-5">
                     <div className="flex items-center gap-4">
-                      <Avatar className="w-14 h-14 ring-3 ring-white/30">
-                        <AvatarImage src={profileImageUrl ?? "/USER.svg"} alt="User Avatar" />
+                      <Avatar className="w-14 h-14 ring-2 ring-white/30">
+                        <AvatarImage
+                          src={profileImageUrl ?? "/USER.svg"}
+                          alt="User Avatar"
+                        />
                         <AvatarFallback className="text-lg font-bold bg-white text-blue-600">
-                          {currentUser?.name
-                            ? currentUser.name.charAt(0).toUpperCase()
-                            : "P"}
+                          {initials}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-white font-bold text-base truncate">
-                          {currentUser?.name
-                            ? `${currentUser.profile?.first_name || currentUser.name}`
-                            : "Welcome!"}
+                          {displayName}
                         </p>
                         <p className="text-blue-100 text-sm truncate">
                           {currentUser?.profile?.crew_id
-                            ? `Crew ID: ${currentUser.profile?.crew_id}`
+                            ? `Crew ID: ${currentUser.profile.crew_id}`
                             : currentUser?.email || "Portal User"}
                         </p>
                       </div>
                     </div>
                   </div>
-
-                  {/* Menu Items */}
                   <div className="p-2">
                     <DropdownMenuItem asChild>
                       <Link
@@ -327,120 +326,186 @@ export default function Navigation({
             </div>
           </div>
         </div>
+      </nav>
 
-        {/* Mobile Dropdown Menu */}
-        <div
-          className={`md:hidden overflow-hidden transition-all duration-400 ease-out ${
-            isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-          }`}
-        >
-          <div className="bg-gradient-to-b from-blue-600/50 to-blue-700/80 backdrop-blur-xl border-t border-white/10">
-            <div className="px-4 py-4 space-y-3">
-              {/* User Welcome Card */}
-              <div
-                className={`flex items-center gap-4 p-4 bg-white/10 rounded-2xl border border-white/10 transition-all duration-300 ${
-                  isMobileMenuOpen
-                    ? "translate-y-0 opacity-100"
-                    : "-translate-y-4 opacity-0"
-                }`}
-                style={{ transitionDelay: "100ms" }}
-              >
-                <div className="relative">
-                  <Avatar className="w-12 h-12 ring-2 ring-white/30">
-                    <AvatarImage src={profileImageUrl ?? "/USER.svg"} alt="User Avatar" />
-                    <AvatarFallback className="text-base font-bold bg-gradient-to-br from-blue-400 to-blue-600 text-white">
-                      {currentUser?.name
-                        ? currentUser.name.charAt(0).toUpperCase()
-                        : "P"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-blue-600 rounded-full" />
+      {/* ═══════════════════════ iOS-STYLE BOTTOM SHEET (mobile only) ═══════ */}
+      {isSheetOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className={`fixed inset-0 z-[150] md:hidden transition-opacity duration-350 ${
+              isSheetVisible ? "opacity-100" : "opacity-0"
+            }`}
+            style={{
+              background: "rgba(0,0,0,0.45)",
+              backdropFilter: "blur(3px)",
+            }}
+            onClick={closeSheet}
+            aria-hidden="true"
+          />
+
+          {/* Sheet */}
+          <div
+            className={`fixed bottom-0 left-0 right-0 z-[160] md:hidden transition-transform duration-350 ease-out ${
+              isSheetVisible ? "translate-y-0" : "translate-y-full"
+            }`}
+            style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
+          >
+            <div className="bg-white rounded-t-3xl overflow-hidden shadow-2xl">
+              {/* Drag handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-gray-300" />
+              </div>
+
+              {/* User card */}
+              <div className="mx-4 mt-3 mb-4 flex items-center gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                <div className="relative flex-shrink-0">
+                  <div className="w-14 h-14 rounded-2xl overflow-hidden ring-2 ring-blue-100">
+                    {profileImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={profileImageUrl}
+                        alt="avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                        <span className="text-white text-xl font-black">
+                          {initials}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold text-base truncate">
-                    {currentUser?.name
-                      ? `Hello, ${currentUser.profile?.first_name || currentUser.name}!`
-                      : "Welcome back!"}
+                  <p className="text-gray-900 font-black text-base truncate">
+                    {displayName}
                   </p>
-                  <p className="text-blue-200 text-sm truncate">
+                  <p className="text-gray-500 text-sm truncate">
                     {currentUser?.profile?.crew_id
-                      ? `Crew ID: ${currentUser.profile?.crew_id}`
-                      : currentUser?.email || "Portal User"}
+                      ? `Crew ID: ${currentUser.profile.crew_id}`
+                      : currentUser?.email || "Crew Member"}
                   </p>
+                </div>
+                {/* Verified badge */}
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <i className="bi bi-patch-check-fill text-blue-600 text-base"></i>
                 </div>
               </div>
 
-              {/* Quick Actions */}
-              <div className="space-y-1">
+              {/* Actions group — iOS grouped style */}
+              <div className="mx-4 rounded-2xl overflow-hidden border border-gray-100 bg-white mb-3">
+                {/* View Profile */}
                 <Link
                   href={`/crew/profile/${currentUser?.profile?.crew_id || ""}`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-4 px-4 py-3.5 rounded-xl text-white hover:bg-white/10 active:bg-white/20 transition-all duration-300 ${
-                    isMobileMenuOpen
-                      ? "translate-y-0 opacity-100"
-                      : "-translate-y-4 opacity-0"
-                  }`}
-                  style={{ transitionDelay: "150ms" }}
+                  onClick={closeSheet}
+                  className="flex items-center gap-4 px-5 py-4 active:bg-gray-50 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-                    <i className="bi bi-person-circle text-lg" />
+                  <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <i className="bi bi-person-fill text-blue-600 text-base"></i>
                   </div>
-                  <span className="font-medium">View Profile</span>
-                  <i className="bi bi-chevron-right text-white/50 ml-auto" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">
+                      My Profile
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      View and edit your information
+                    </p>
+                  </div>
+                  <i className="bi bi-chevron-right text-gray-300 text-sm"></i>
                 </Link>
+              </div>
+
+              {/* Sign Out — separate group (iOS pattern) */}
+              <div className="mx-4 rounded-2xl overflow-hidden border border-red-100 bg-white mb-3">
                 <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-white hover:bg-red-500/20 active:bg-red-500/30 transition-all duration-300 ${
-                    isMobileMenuOpen
-                      ? "translate-y-0 opacity-100"
-                      : "-translate-y-4 opacity-0"
-                  }`}
-                  style={{ transitionDelay: "200ms" }}
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-4 px-5 py-4 active:bg-red-50 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                    <i className="bi bi-box-arrow-right text-lg text-red-300" />
+                  <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <i className="bi bi-box-arrow-right text-red-500 text-base"></i>
                   </div>
-                  <span className="font-medium">Sign Out</span>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-red-600">
+                      Sign Out
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Log out of your account
+                    </p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Cancel — iOS-style standalone pill */}
+              <div className="mx-4 mb-4">
+                <button
+                  onClick={closeSheet}
+                  className="w-full py-4 rounded-2xl bg-gray-100 active:bg-gray-200 transition-colors text-sm font-black text-gray-800"
+                >
+                  Cancel
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </>
+      )}
 
-      {/* Mobile Bottom Navigation */}
+      {/* ══════════════════════════ BOTTOM NAV (mobile) ══════════════════════ */}
       {!hideBottomNav && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden pb-safe">
-          <div className="">
-            <div className="bg-white/95 backdrop-blur-xl rounded-t-xl shadow-lg shadow-black/10 border border-gray-100 px-2 py-2">
-              <div className="grid grid-cols-4 gap-1">
-                {navItems.map((item) => (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t border-gray-100"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          <div className="px-2 py-2">
+            <div className="grid grid-cols-5 gap-1 items-end">
+              {navItems.map((item) => {
+                const active = isActive(item.href);
+                const isAppointment = item.label === "Appointment";
+
+                if (isAppointment) {
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => handleNavClick(item.href)}
+                      className={`flex flex-col items-center transition-all duration-300 relative -mt-5 ${
+                        clickedItem === item.href ? "scale-90" : "scale-100"
+                      }`}
+                    >
+                      <div
+                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40 transition-all duration-300 ${
+                          active
+                            ? "bg-blue-700 scale-105"
+                            : "bg-blue-600 active:scale-95"
+                        }`}
+                      >
+                        <i
+                          className={`bi bi-${active ? item.activeIcon : item.icon} text-2xl text-white`}
+                        />
+                      </div>
+                      <span className="text-[11px] font-semibold mt-1 text-blue-600">
+                        {item.label}
+                      </span>
+                    </Link>
+                  );
+                }
+
+                return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => handleNavClick(item.href)}
                     className={`flex flex-col items-center py-2.5 px-2 rounded-xl transition-all duration-300 relative ${
                       clickedItem === item.href ? "scale-90" : "scale-100"
-                    } ${
-                      isActive(item.href)
-                        ? "bg-blue-50"
-                        : "hover:bg-gray-50 active:bg-gray-100"
-                    }`}
+                    } ${active ? "bg-blue-50" : "hover:bg-gray-50 active:bg-gray-100"}`}
                   >
                     <div className="relative mb-1">
                       <i
-                        className={`bi bi-${
-                          isActive(item.href) ? item.activeIcon : item.icon
-                        } text-xl transition-all duration-300 ${
-                          isActive(item.href)
-                            ? "text-blue-600"
-                            : "text-gray-400"
+                        className={`bi bi-${active ? item.activeIcon : item.icon} text-xl transition-all duration-300 ${
+                          active ? "text-blue-600" : "text-gray-400"
                         }`}
                       />
-                      {/* Unread Badge for Chat */}
                       {item.label === "Chat" && unreadCount > 0 && (
                         <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center shadow-sm ring-2 ring-white">
                           {unreadCount > 99 ? "99+" : unreadCount}
@@ -449,25 +514,29 @@ export default function Navigation({
                     </div>
                     <span
                       className={`text-[11px] font-medium transition-colors duration-300 ${
-                        isActive(item.href) ? "text-blue-600" : "text-gray-500"
+                        active ? "text-blue-600" : "text-gray-500"
                       }`}
                     >
                       {item.label}
                     </span>
-                    {/* Active indicator line */}
-                    {isActive(item.href) && (
+                    {active && (
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full" />
                     )}
                   </Link>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
         </div>
       )}
 
       {/* Spacer for mobile bottom nav */}
-      {!hideBottomNav && <div className="h-23 md:h-0" />}
+      {!hideBottomNav && (
+        <div
+          className="md:hidden"
+          style={{ height: "calc(4.5rem + env(safe-area-inset-bottom, 0px))" }}
+        />
+      )}
     </>
   );
 }

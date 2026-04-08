@@ -15,20 +15,53 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 import AvatarUpload from "@/components/AvatarUpload";
-
-// Import modular components
 import BasicInformation from "@/components/crew-profile/BasicInformation";
 import ContactInformation from "@/components/crew-profile/ContactInformation";
 import PhysicalTraits from "@/components/crew-profile/PhysicalTraits";
 import EducationInformation from "@/components/crew-profile/EducationInformation";
 
 interface ProfilePageProps {
-  params: Promise<{
-    crew_id: string;
-  }>;
+  params: Promise<{ crew_id: string }>;
 }
 
 type ProfileSection = "basic" | "contact" | "physical" | "education";
+
+const NAV_ITEMS: {
+  key: ProfileSection;
+  label: string;
+  icon: string;
+  color: string;
+  iconBg: string;
+}[] = [
+  {
+    key: "basic",
+    label: "Basic Information",
+    icon: "bi-person-lines-fill",
+    color: "text-blue-600",
+    iconBg: "bg-blue-100",
+  },
+  {
+    key: "physical",
+    label: "Physical Traits",
+    icon: "bi-body-text",
+    color: "text-violet-600",
+    iconBg: "bg-violet-100",
+  },
+  {
+    key: "contact",
+    label: "Contact & Address",
+    icon: "bi-geo-alt-fill",
+    color: "text-emerald-600",
+    iconBg: "bg-emerald-100",
+  },
+  {
+    key: "education",
+    label: "Education",
+    icon: "bi-mortarboard-fill",
+    color: "text-amber-600",
+    iconBg: "bg-amber-100",
+  },
+];
 
 export default function ProfilePage({ params }: ProfilePageProps) {
   const [loading, setLoading] = useState(true);
@@ -56,7 +89,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   useEffect(() => {
     const initializePage = async () => {
       try {
-        // Get current user to check permissions
         const currentUserData = AuthService.getStoredUser();
         if (!currentUserData) {
           toast.error("Authentication required");
@@ -65,7 +97,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         }
         setCurrentUser(currentUserData);
 
-        // Check if user can view this profile
         const currentUserCrewId = currentUserData.profile?.crew_id;
         const canAccess =
           currentUserCrewId === crewId || currentUserData.is_crew === false;
@@ -75,7 +106,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           return;
         }
 
-        // Load profile data, nationalities, ranks, and fleets
         const [
           profileResponse,
           nationalitiesResponse,
@@ -100,17 +130,17 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           toast.error(profileResponse.message || "Failed to load profile");
         }
 
-        if (nationalitiesResponse.success) {
+        if (nationalitiesResponse.success)
           setNationalities(nationalitiesResponse.data);
-        }
         if (rankRes.success) setRanks(rankRes.data);
         if (fleetRes.success) setFleets(fleetRes.data);
         if (companyRes.success) setCompanies(companyRes.data);
         if (updateRequestsRes.success && updateRequestsRes.data) {
-          const pendingImage = updateRequestsRes.data.some(
-            (r) => r.section === "image" && r.status === "pending",
+          setHasPendingImage(
+            updateRequestsRes.data.some(
+              (r) => r.section === "image" && r.status === "pending",
+            ),
           );
-          setHasPendingImage(pendingImage);
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -125,15 +155,10 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
   const handleEdit = (section: ProfileSection) => {
     if (!profile) return;
-
     setEditingSection(section);
-
-    // Create edited profile with address fields properly populated
     const newEditedProfile = { ...profile };
 
-    // If editing contact section, populate address fields from relationships
     if (section === "contact") {
-      // Populate permanent address fields
       if (profile.permanent_address) {
         newEditedProfile.permanent_region = profile.permanent_address.region_id;
         newEditedProfile.permanent_province =
@@ -145,8 +170,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         newEditedProfile.permanent_postal_code =
           profile.permanent_address.zip_code;
       }
-
-      // Populate current address fields
       if (profile.current_address) {
         newEditedProfile.current_region = profile.current_address.region_id;
         newEditedProfile.current_province = profile.current_address.province_id;
@@ -159,7 +182,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     }
 
     setEditedProfile(newEditedProfile);
-
     setValidationErrors({});
   };
 
@@ -203,27 +225,20 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           };
           break;
         case "physical":
-          requestedData = {
-            physical_traits: editedProfile.physical_traits,
-          };
+          requestedData = { physical_traits: editedProfile.physical_traits };
           break;
         case "education":
-          requestedData = {
-            education: editedProfile.education,
-          };
+          requestedData = { education: editedProfile.education };
           break;
         default:
           throw new Error("Invalid section");
       }
 
-      // Check if user is admin - if so, allow direct update
       if (currentUser.is_crew === false) {
-        // Admin can update directly - keep original logic
         const response = await UserService.updateUserProfile(
           editedProfile.id.toString(),
           requestedData,
         );
-
         if (response.success && response.user) {
           setProfile(response.user);
           setEditingSection(null);
@@ -233,13 +248,11 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           throw new Error(response.message || "Failed to update profile");
         }
       } else {
-        // Crew member - submit update request for approval
         const response = await ProfileUpdateRequestService.submitUpdateRequest(
           editedProfile.id,
           editingSection,
           requestedData,
         );
-
         if (response.success) {
           setEditingSection(null);
           setEditedProfile(null);
@@ -254,16 +267,15 @@ export default function ProfilePage({ params }: ProfilePageProps) {
       }
     } catch (error: any) {
       console.error("Error saving profile:", error);
-
       if (error?.response?.status === 422 && error?.response?.data?.errors) {
         setValidationErrors(error.response.data.errors);
         toast.error("Please fix validation errors and try again");
       } else {
-        const errorMessage =
+        toast.error(
           error?.response?.data?.message ||
-          error?.message ||
-          "Failed to save profile changes";
-        toast.error(errorMessage);
+            error?.message ||
+            "Failed to save profile changes",
+        );
       }
     } finally {
       setSaving(false);
@@ -272,11 +284,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
   const handleInputChange = (field: string, value: string) => {
     if (!editedProfile) return;
-
-    setEditedProfile((prev) => ({
-      ...prev!,
-      [field]: value,
-    }));
+    setEditedProfile((prev) => ({ ...prev!, [field]: value }));
   };
 
   const handleNestedInputChange = (
@@ -285,30 +293,23 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     value: string | number | null,
   ) => {
     if (!editedProfile) return;
-
     setEditedProfile((prev) => ({
       ...prev!,
-      [parent]: {
-        ...(prev![parent as keyof User] as any),
-        [field]: value,
-      },
+      [parent]: { ...(prev![parent as keyof User] as any), [field]: value },
     }));
   };
 
-  const handleProfileUpdate = (updatedProfile: User) => {
+  const handleProfileUpdate = (updatedProfile: User) =>
     setProfile(updatedProfile);
-  };
 
   const getImageUrl = (imagePath?: string | null): string | null => {
     if (!imagePath) return null;
-    const base = process.env.NEXT_PUBLIC_BACKEND_URL;
-    return `${base}/storage/${imagePath}`;
+    return `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${imagePath}`;
   };
 
   const handleProfileImageUpload = async (file: File) => {
     if (!profile) return;
     if (currentUser?.is_crew === false) {
-      // Admin visiting crew profile — direct upload
       const response = await UserService.uploadProfileImage(
         profile.id.toString(),
         file,
@@ -330,7 +331,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         throw new Error(response.message ?? "Upload failed");
       }
     } else {
-      // Crew member — submit for approval
       const response = await ProfileUpdateRequestService.submitImageRequest(
         profile.id,
         file,
@@ -349,12 +349,24 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   const canEdit =
     currentUser?.is_crew === false || currentUser?.id === profile?.id;
 
+  // ── Loading ──────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
+      <div className="min-h-screen bg-[#0a1628] flex items-center justify-center">
+        <div className="text-center space-y-5">
+          <div className="relative mx-auto w-24 h-24">
+            <div className="absolute inset-0 rounded-full border-[3px] border-blue-900"></div>
+            <div className="absolute inset-0 rounded-full border-[3px] border-t-blue-400 animate-spin"></div>
+            <div className="absolute inset-4 rounded-full bg-blue-500/10 flex items-center justify-center">
+              <i className="bi bi-person-circle text-blue-400 text-3xl"></i>
+            </div>
+          </div>
+          <div>
+            <p className="text-white font-bold text-xl tracking-wide">
+              Loading Crew Profile
+            </p>
+            <p className="text-blue-400 text-sm mt-1">Please wait…</p>
+          </div>
         </div>
       </div>
     );
@@ -362,9 +374,15 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Profile not found</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center p-10">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="bi bi-person-x-fill text-red-500 text-3xl"></i>
+          </div>
+          <p className="text-gray-800 font-bold text-xl">Profile Not Found</p>
+          <p className="text-gray-400 text-sm mt-1">
+            The requested crew profile could not be loaded.
+          </p>
         </div>
       </div>
     );
@@ -372,222 +390,237 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <div className="min-h-screen bg-gray-50">
-        {/* Hero Section */}
-        <div className="relative overflow-hidden">
-          {/* Background with better contrast */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800"></div>
+      <div className="min-h-screen bg-slate-100 pt-[20px] sm:pt-16">
+        {/* ════════════════════════════════════════════
+            HERO BANNER
+        ════════════════════════════════════════════ */}
+        <div className="relative bg-[#0a1628] overflow-hidden">
+          {/* Background texture */}
           <div
-            className="absolute inset-0 opacity-10"
+            className="absolute inset-0 opacity-[0.06]"
             style={{
               backgroundImage: 'url("/home1.png")',
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
-          ></div>
+          />
+          {/* Grid lines */}
+          <div
+            className="absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px)",
+              backgroundSize: "48px 48px",
+            }}
+          />
+          {/* Glow orbs */}
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-cyan-500/10 rounded-full blur-[80px] pointer-events-none" />
 
-          {/* Content with improved readability */}
-          <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-12">
-                {/* Avatar with upload */}
-                <div className="flex-shrink-0 text-center lg:text-left mb-8 lg:mb-0">
-                  <div className="relative inline-block mx-auto lg:mx-0">
-                    <AvatarUpload
-                      displayName={
-                        profile.profile?.full_name ||
-                        profile.name ||
-                        profile.email
-                      }
-                      imageUrl={getImageUrl(profile.profile?.image_path)}
-                      onUpload={handleProfileImageUpload}
-                      className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48"
-                      readOnly={!canEdit}
-                      pendingApproval={hasPendingImage}
-                    />
-                    {/* Status indicator */}
-                    {hasPendingImage ? (
-                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full border-4 border-white shadow-lg flex items-center justify-center" title="Photo update pending approval">
-                        <i className="bi bi-hourglass-split text-white text-xs font-bold"></i>
-                      </div>
-                    ) : (
-                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                        <i className="bi bi-check text-white text-sm font-bold"></i>
-                      </div>
-                    )}
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-8">
+              {/* ── Avatar ───────────────────────────────────── */}
+              <div className="relative flex-shrink-0 mx-auto sm:mx-0">
+                {/* Ring decoration */}
+                <div className="absolute -inset-2 rounded-[22px] bg-gradient-to-br from-blue-400/30 via-cyan-400/20 to-transparent blur-sm"></div>
+                <div className="relative rounded-2xl overflow-hidden ring-2 ring-white/10 shadow-2xl">
+                  <AvatarUpload
+                    displayName={
+                      profile.profile?.full_name ||
+                      profile.name ||
+                      profile.email
+                    }
+                    imageUrl={getImageUrl(profile.profile?.image_path)}
+                    onUpload={handleProfileImageUpload}
+                    className="w-28 h-28 sm:w-32 sm:h-32 lg:w-36 lg:h-36 rounded-2xl"
+                    readOnly={!canEdit}
+                    pendingApproval={hasPendingImage}
+                  />
+                </div>
+                {/* Status pill */}
+                <div
+                  className={`absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold shadow-lg whitespace-nowrap border ${
+                    hasPendingImage
+                      ? "bg-amber-400 text-amber-900 border-amber-300"
+                      : "bg-emerald-400 text-emerald-900 border-emerald-300"
+                  }`}
+                >
+                  <i
+                    className={`bi ${hasPendingImage ? "bi-hourglass-split" : "bi-shield-check"}`}
+                  ></i>
+                  {hasPendingImage ? "Photo Pending" : "Verified"}
+                </div>
+              </div>
+
+              {/* ── Info ─────────────────────────────────────── */}
+              <div className="flex-1 text-center sm:text-left mt-4 sm:mt-0">
+                {/* Crew ID */}
+                {profile.profile?.crew_id && (
+                  <div className="inline-flex items-center gap-2 mb-3 bg-white/5 border border-white/10 rounded-full px-3.5 py-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span className="text-cyan-300 text-xs font-mono font-semibold tracking-widest">
+                      CREW ID: {profile.profile.crew_id}
+                    </span>
                   </div>
+                )}
+
+                {/* Name */}
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-none tracking-tight mb-3">
+                  {profile.profile?.full_name || profile.name || profile.email}
+                </h1>
+
+                {/* Badge row */}
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-5">
+                  <span className="inline-flex items-center gap-1.5 bg-blue-500/15 border border-blue-400/30 text-blue-200 text-sm font-semibold px-3.5 py-1.5 rounded-full backdrop-blur-sm">
+                    <i className="bi bi-award-fill text-blue-300 text-xs"></i>
+                    {profile.employment?.rank_name || "Rank not assigned"}
+                  </span>
+                  {profile.employment?.fleet_name && (
+                    <span className="inline-flex items-center gap-1.5 bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 text-sm font-semibold px-3.5 py-1.5 rounded-full backdrop-blur-sm">
+                      <i className="bi bi-ship text-cyan-300 text-xs"></i>
+                      {profile.employment.fleet_name}
+                    </span>
+                  )}
+                  {profile.profile?.company_name && (
+                    <span className="inline-flex items-center gap-1.5 bg-slate-500/20 border border-slate-400/20 text-slate-300 text-sm font-semibold px-3.5 py-1.5 rounded-full backdrop-blur-sm">
+                      <i className="bi bi-building text-slate-400 text-xs"></i>
+                      {profile.profile.company_name}
+                    </span>
+                  )}
                 </div>
 
-                {/* Profile Info with better contrast */}
-                <div className="flex-1 text-center lg:text-left">
-                  <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg">
-                      {profile.profile?.full_name ||
-                        profile.name ||
-                        profile.email}
-                    </h1>
-
-                    <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-4">
-                      <div className="bg-blue-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-blue-400/30">
-                        <p className="text-sm sm:text-base text-blue-100 font-semibold">
-                          {profile.employment?.rank_name || "Not assigned"}
-                        </p>
-                      </div>
-                      {profile.profile?.crew_id && (
-                        <div className="bg-emerald-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-emerald-400/30">
-                          <p className="text-sm sm:text-base text-emerald-100 font-semibold">
-                            Crew ID: {profile.profile?.crew_id}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-white/90">
-                      <div className="bg-white/5 backdrop-blur-sm p-3 rounded-lg border border-white/10">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                            <i className="bi bi-envelope text-blue-300"></i>
-                          </div>
-                          <div>
-                            <p className="text-xs text-blue-200 uppercase tracking-wide">
-                              Email
-                            </p>
-                            <p className="text-sm font-medium truncate">
-                              {profile.email}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {profile.employment?.fleet_name && (
-                        <div className="bg-white/5 backdrop-blur-sm p-3 rounded-lg border border-white/10">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center">
-                              <i className="bi bi-ship text-cyan-300"></i>
-                            </div>
-                            <div>
-                              <p className="text-xs text-cyan-200 uppercase tracking-wide">
-                                Fleet
-                              </p>
-                              <p className="text-sm font-medium">
-                                {profile.employment?.fleet_name}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                {/* Quick info chips */}
+                <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/8 rounded-xl px-3.5 py-2">
+                    <i className="bi bi-envelope-fill text-blue-400 text-xs"></i>
+                    <span className="text-white/70 text-xs">
+                      {profile.email}
+                    </span>
                   </div>
+                  {profile.profile?.nationality && (
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/8 rounded-xl px-3.5 py-2">
+                      <i className="bi bi-flag-fill text-emerald-400 text-xs"></i>
+                      <span className="text-white/70 text-xs">
+                        {profile.profile.nationality}
+                      </span>
+                    </div>
+                  )}
+                  {profile.profile?.civil_status && (
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/8 rounded-xl px-3.5 py-2">
+                      <i className="bi bi-heart-fill text-pink-400 text-xs"></i>
+                      <span className="text-white/70 text-xs">
+                        {profile.profile.civil_status}
+                      </span>
+                    </div>
+                  )}
+                  {profile.physical_traits?.blood_type && (
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/8 rounded-xl px-3.5 py-2">
+                      <i className="bi bi-droplet-fill text-red-400 text-xs"></i>
+                      <span className="text-white/70 text-xs">
+                        Blood Type: {profile.physical_traits.blood_type}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-blue-400/10 to-transparent rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-cyan-400/10 to-transparent rounded-full blur-3xl"></div>
         </div>
 
-        {/* Navigation Tabs - Mobile Responsive */}
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
-              <nav className="flex space-x-1 overflow-x-auto" aria-label="Tabs">
-                {[
-                  {
-                    key: "basic",
-                    label: "Basic Info",
-                    icon: "bi-person-lines-fill",
-                  },
-                  { key: "physical", label: "Physical", icon: "bi-body-text" },
-                  { key: "contact", label: "Contact", icon: "bi-geo-alt" },
-                  {
-                    key: "education",
-                    label: "Education",
-                    icon: "bi-mortarboard-fill",
-                  },
-                ].map((tab) => (
+        {/* ── Sticky Tab Bar ───────────────────────────────────────────── */}
+        <div className="sticky top-[92px] sm:top-16 z-20 bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-4xl mx-auto px-2 sm:px-6">
+            <div className="flex">
+              {NAV_ITEMS.map((item) => {
+                const isActive = activeSection === item.key;
+                return (
                   <button
-                    key={tab.key}
-                    onClick={() => setActiveSection(tab.key as ProfileSection)}
-                    className={`flex items-center space-x-2 py-4 px-3 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                      activeSection === tab.key
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    key={item.key}
+                    onClick={() => setActiveSection(item.key)}
+                    className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold border-b-2 transition-all duration-150 ${
+                      isActive
+                        ? `border-blue-600 ${item.color}`
+                        : "border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-300"
                     }`}
                   >
-                    <i className={tab.icon}></i>
-                    <span className="hidden sm:inline">{tab.label}</span>
+                    <i className={`bi ${item.icon} text-base sm:text-sm`}></i>
+                    <span className="leading-none">
+                      {item.label.split(" ")[0]}
+                    </span>
                   </button>
-                ))}
-              </nav>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="px-4 sm:px-6 lg:px-8 py-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6">
-                {/* Render the appropriate component based on active section */}
-                {activeSection === "basic" && (
-                  <BasicInformation
-                    profile={profile}
-                    editedProfile={editedProfile}
-                    isEditing={editingSection === "basic"}
-                    saving={saving}
-                    canEdit={canEdit}
-                    onEdit={() => handleEdit("basic")}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    onNestedInputChange={handleNestedInputChange}
-                    nationalities={nationalities}
-                    ranks={ranks}
-                    fleets={fleets}
-                    companies={companies}
-                    validationErrors={validationErrors}
-                  />
-                )}
+        {/* ── Content ──────────────────────────────────────────────────── */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 pb-28 md:pb-8">
+          {/* Approval notice for crew */}
+          {currentUser?.is_crew === true && (
+            <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
+              <i className="bi bi-shield-exclamation text-amber-500 flex-shrink-0"></i>
+              <p className="text-amber-800 text-sm font-medium">
+                Changes need admin approval before they take effect.
+              </p>
+            </div>
+          )}
 
-                {activeSection === "physical" && (
-                  <PhysicalTraits
-                    profile={profile}
-                    editedProfile={editedProfile}
-                    isEditing={editingSection === "physical"}
-                    saving={saving}
-                    canEdit={canEdit}
-                    onEdit={() => handleEdit("physical")}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    onNestedInputChange={handleNestedInputChange}
-                    validationErrors={validationErrors}
-                  />
-                )}
-
-                {activeSection === "contact" && (
-                  <ContactInformation
-                    profile={profile}
-                    editedProfile={editedProfile}
-                    isEditing={editingSection === "contact"}
-                    saving={saving}
-                    canEdit={canEdit}
-                    onEdit={() => handleEdit("contact")}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    onInputChange={handleInputChange}
-                    validationErrors={validationErrors}
-                  />
-                )}
-
-                {activeSection === "education" && (
-                  <EducationInformation
-                    profile={profile}
-                    onProfileUpdate={handleProfileUpdate}
-                    canEdit={canEdit}
-                  />
-                )}
-              </div>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+            <div className="p-4 sm:p-6">
+              {activeSection === "basic" && (
+                <BasicInformation
+                  profile={profile}
+                  editedProfile={editedProfile}
+                  isEditing={editingSection === "basic"}
+                  saving={saving}
+                  canEdit={canEdit}
+                  onEdit={() => handleEdit("basic")}
+                  onSave={handleSave}
+                  onCancel={handleCancel}
+                  onNestedInputChange={handleNestedInputChange}
+                  nationalities={nationalities}
+                  ranks={ranks}
+                  fleets={fleets}
+                  companies={companies}
+                  validationErrors={validationErrors}
+                />
+              )}
+              {activeSection === "physical" && (
+                <PhysicalTraits
+                  profile={profile}
+                  editedProfile={editedProfile}
+                  isEditing={editingSection === "physical"}
+                  saving={saving}
+                  canEdit={canEdit}
+                  onEdit={() => handleEdit("physical")}
+                  onSave={handleSave}
+                  onCancel={handleCancel}
+                  onNestedInputChange={handleNestedInputChange}
+                  validationErrors={validationErrors}
+                />
+              )}
+              {activeSection === "contact" && (
+                <ContactInformation
+                  profile={profile}
+                  editedProfile={editedProfile}
+                  isEditing={editingSection === "contact"}
+                  saving={saving}
+                  canEdit={canEdit}
+                  onEdit={() => handleEdit("contact")}
+                  onSave={handleSave}
+                  onCancel={handleCancel}
+                  onInputChange={handleInputChange}
+                  validationErrors={validationErrors}
+                />
+              )}
+              {activeSection === "education" && (
+                <EducationInformation
+                  profile={profile}
+                  onProfileUpdate={handleProfileUpdate}
+                  canEdit={canEdit}
+                />
+              )}
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { User, Region, Province, City, Barangay } from "@/types/api";
 import { GeographyService, AddressService } from "@/services";
 import { AuthService } from "@/services/auth";
@@ -8,8 +9,6 @@ import toast from "react-hot-toast";
 import {
   TextField,
   Autocomplete,
-  Box,
-  Typography,
   CircularProgress,
   Grid,
   Checkbox,
@@ -302,24 +301,6 @@ export default function ContactInformation({
     const item = options.find((option) => option.code === code);
     return item?.desc;
   };
-
-  // Component for displaying field with label and value (copied from BasicInformation)
-  const DisplayField = ({
-    label,
-    value,
-    className = "",
-  }: {
-    label: string;
-    value: string | null | undefined;
-    className?: string;
-  }) => (
-    <div className={`space-y-1 ${className}`}>
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border">
-        {value || "Not specified"}
-      </p>
-    </div>
-  );
 
   // Save button content component for cleaner rendering
   const SaveButtonContent = ({ loading }: { loading: boolean }) => {
@@ -634,7 +615,7 @@ export default function ContactInformation({
       options.find((option) => option.code === value) || null;
 
     return (
-      <Box>
+      <div>
         {isEditing ? (
           <Autocomplete
             options={options}
@@ -671,44 +652,24 @@ export default function ContactInformation({
             renderOption={(props, option) => {
               const { key, ...otherProps } = props;
               return (
-                <Box component="li" key={key} {...otherProps}>
+                <li key={key} {...otherProps}>
                   {option.desc}
-                </Box>
+                </li>
               );
             }}
             noOptionsText={loading ? "Loading..." : "No options"}
           />
         ) : (
-          <Box sx={{ mb: 2 }}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 1, fontWeight: 600 }}
-            >
-              {label} {required && <span style={{ color: "red" }}>*</span>}
-            </Typography>
-            <Box
-              sx={{
-                p: 2,
-                bgcolor: "grey.50",
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: "grey.200",
-                minHeight: "56px",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <Typography
-                variant="body1"
-                color={value ? "text.primary" : "text.secondary"}
-              >
-                {getGeographyDisplayText(value, options) || "Not provided"}
-              </Typography>
-            </Box>
-          </Box>
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+            </p>
+            <p className={`text-sm font-semibold px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 ${value ? "text-gray-800" : "text-gray-300"}`}>
+              {getGeographyDisplayText(value, options) || "Not provided"}
+            </p>
+          </div>
         )}
-      </Box>
+      </div>
     );
   };
   const renderField = (
@@ -745,7 +706,7 @@ export default function ContactInformation({
       : field;
 
     return (
-      <Box>
+      <div>
         {isEditing ? (
           <div>
             <TextField
@@ -763,467 +724,319 @@ export default function ContactInformation({
             <ValidationError errors={getValidationError(validationField)} />
           </div>
         ) : (
-          <DisplayField
-            label={label + (required ? " *" : "")}
-            value={value !== "Not provided" ? value : undefined}
-          />
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+            </p>
+            <p className={`text-sm font-semibold px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 ${value && value !== "Not provided" ? "text-gray-800" : "text-gray-300"}`}>
+              {value && value !== "Not provided" ? value : "Not specified"}
+            </p>
+          </div>
         )}
-      </Box>
+      </div>
     );
   };
 
+  // ── Reusable display row ──────────────────────────────────────────────────
+  const ViewRow = ({
+    icon,
+    iconColor,
+    label,
+    value,
+  }: {
+    icon: string;
+    iconColor: string;
+    label: string;
+    value: string | null | undefined;
+  }) => (
+    <div className="flex items-start gap-3 py-3 border-b border-gray-100 last:border-0">
+      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+        <i className={`bi ${icon} ${iconColor} text-sm`}></i>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] text-gray-400 uppercase tracking-wider font-semibold leading-none mb-0.5">{label}</p>
+        <p className={`text-sm font-semibold leading-snug ${value ? "text-gray-800" : "text-gray-300"}`}>
+          {value || "Not specified"}
+        </p>
+      </div>
+    </div>
+  );
+
+  // ── Section card wrapper ──────────────────────────────────────────────────
+  const Card = ({
+    icon,
+    iconBg,
+    iconColor,
+    title,
+    children,
+  }: {
+    icon: string;
+    iconBg: string;
+    iconColor: string;
+    title: string;
+    children: React.ReactNode;
+  }) => (
+    <div className="rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="flex items-center gap-3 px-5 py-3.5 bg-gray-50 border-b border-gray-200">
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${iconBg}`}>
+          <i className={`bi ${icon} ${iconColor} text-sm`}></i>
+        </div>
+        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">{title}</h3>
+      </div>
+      <div className="px-5">{children}</div>
+    </div>
+  );
+
+  // ── Edit section card ─────────────────────────────────────────────────────
+  const EditCard = ({
+    icon,
+    iconBg,
+    iconColor,
+    title,
+    children,
+  }: {
+    icon: string;
+    iconBg: string;
+    iconColor: string;
+    title: string;
+    children: React.ReactNode;
+  }) => (
+    <div className="rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="flex items-center gap-3 px-5 py-3.5 bg-gray-50 border-b border-gray-200">
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${iconBg}`}>
+          <i className={`bi ${icon} ${iconColor} text-sm`}></i>
+        </div>
+        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">{title}</h3>
+      </div>
+      <div className="p-5 space-y-4">{children}</div>
+    </div>
+  );
+
   return (
-    <div className="space-y-8">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 sm:pb-6 border-b border-gray-200 space-y-3 sm:space-y-0">
-        <div className="flex-1">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
-            <i className="bi bi-geo-alt text-blue-600 mr-2 sm:mr-3 text-lg sm:text-xl"></i>
-            <span className="leading-tight">Contact Information</span>
+    <div className="space-y-6">
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-gray-100">
+        <div>
+          <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
+            <i className="bi bi-geo-alt-fill text-emerald-600"></i>
+            Contact & Address
           </h2>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            Address details and contact methods
-          </p>
+          <p className="text-gray-400 text-sm mt-0.5">Your addresses and contact details</p>
         </div>
 
-        {/* Edit Controls - Mobile App Style */}
-        <div className="flex items-center space-x-2 sm:space-x-3 w-full sm:w-auto">
-          {!isEditing ? (
+        {!isEditing ? (
+          <button
+            onClick={onEdit}
+            disabled={!canEdit}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              canEdit
+                ? "bg-slate-900 text-white hover:bg-slate-700 shadow-sm"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            <i className="bi bi-pencil-fill text-xs"></i>
+            Edit Contact
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
             <button
-              onClick={onEdit}
-              disabled={!canEdit}
-              className={`w-full sm:w-auto bg-green-600 text-white px-6 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] ${
-                canEdit
-                  ? "hover:bg-green-700 active:bg-green-800 shadow-sm active:shadow-none"
-                  : "opacity-50 cursor-not-allowed"
-              }`}
-              title={
-                !canEdit ? "You don't have permission to edit this section" : ""
-              }
+              onClick={onCancel}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 transition-all"
             >
-              <i className="bi bi-pencil text-base"></i>
-              <span>Edit Contact</span>
+              <i className="bi bi-x-lg text-xs"></i>
+              Cancel
             </button>
-          ) : (
-            <div className="flex space-x-2 w-full sm:w-auto">
-              <button
-                onClick={onCancel}
-                className="flex-1 sm:flex-none bg-gray-100 text-gray-700 px-5 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] hover:bg-gray-200 active:bg-gray-300 border border-gray-200"
-              >
-                <i className="bi bi-x-lg text-base"></i>
-                <span className="sm:inline">Cancel</span>
-              </button>
-              <button
-                onClick={handleSaveClick}
-                disabled={saving}
-                className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-3 rounded-2xl transition-all duration-200 font-medium text-base flex items-center justify-center space-x-2 min-h-[48px] touch-manipulation active:scale-[0.98] shadow-sm active:shadow-none"
-              >
-                {saving ? (
-                  <SaveButtonContent loading={true} />
-                ) : (
-                  <SaveButtonContent loading={false} />
-                )}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Mailing/Permanent Address Section */}
-      <div className="bg-blue-50 rounded-xl p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Mailing Address / Permanent Address
-        </h3>
-        <Grid container spacing={3}>
-          {isEditing ? (
-            <>
-              <Grid size={12}>
-                {renderGeographyField(
-                  "Region",
-                  "permanent_region",
-                  regions.map((r) => ({ code: r.reg_code, desc: r.reg_desc })),
-                  editedProfile?.permanent_region || profile.permanent_region,
-                  "Select region",
-                  false,
-                  loadingGeography
-                )}
-              </Grid>
-              <Grid size={12}>
-                {renderGeographyField(
-                  "Province",
-                  "permanent_province",
-                  permanentProvinces.map((p) => ({
-                    code: p.prov_code,
-                    desc: p.prov_desc,
-                  })),
-                  editedProfile?.permanent_province ||
-                    profile.permanent_province,
-                  "Select province",
-                  false,
-                  false
-                )}
-              </Grid>
-
-              <Grid size={12}>
-                {renderGeographyField(
-                  "City/Municipality",
-                  "permanent_city",
-                  permanentCities.map((c) => ({
-                    code: c.citymun_code,
-                    desc: c.citymun_desc,
-                  })),
-                  editedProfile?.permanent_city || profile.permanent_city,
-                  "Select city/municipality",
-                  false,
-                  false
-                )}
-              </Grid>
-
-              <Grid size={12}>
-                {renderGeographyField(
-                  "Subdivision/Barangay",
-                  "permanent_barangay",
-                  permanentBarangays.map((b) => ({
-                    code: b.brgy_code,
-                    desc: b.brgy_desc,
-                  })),
-                  editedProfile?.permanent_barangay ||
-                    profile.permanent_barangay,
-                  "Select barangay",
-                  false,
-                  false
-                )}
-              </Grid>
-
-              <Grid size={12}>
-                <div>
-                  <TextField
-                    label="Building Name, Floor, Unit Number, Street Name"
-                    value={editedProfile?.permanent_street || ""}
-                    onChange={(e) =>
-                      onInputChange("permanent_street", e.target.value)
-                    }
-                    variant="outlined"
-                    fullWidth
-                    multiline
-                    rows={3}
-                    placeholder="Enter complete address"
-                    error={hasValidationError("permanent_street")}
-                  />
-                  <ValidationError
-                    errors={getValidationError("permanent_street")}
-                  />
-                </div>
-              </Grid>
-
-              <Grid size={12}>
-                {renderField(
-                  "Postal Code",
-                  profile.permanent_address?.zip_code || "Not provided",
-                  "permanent_postal_code"
-                )}
-              </Grid>
-            </>
-          ) : (
-            <Grid size={12}>
-              <Box sx={{ mb: 2 }}>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 1, fontWeight: 600 }}
-                >
-                  Full Address
-                </Typography>
-                <Box
-                  sx={{
-                    p: 2,
-                    bgcolor: "grey.50",
-                    borderRadius: 2,
-                    border: "1px solid",
-                    borderColor: "grey.200",
-                    minHeight: "80px",
-                    display: "flex",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <Typography
-                    variant="body1"
-                    color={
-                      profile?.permanent_address?.full_address
-                        ? "text.primary"
-                        : "text.secondary"
-                    }
-                  >
-                    {profile?.permanent_address?.full_address || "Not provided"}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-          )}
-        </Grid>
-      </div>
-
-      {/* Current Address Section */}
-      <div className="bg-green-50 rounded-xl p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Current Address
-        </h3>
-
-        {isEditing && (
-          <div className="mb-4">
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={sameAsPermanent}
-                  onChange={(e) =>
-                    handleSameAsPermanentChange(e.target.checked)
-                  }
-                  color="primary"
-                />
-              }
-              label="Same as permanent address"
-            />
+            <button
+              onClick={handleSaveClick}
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
+            >
+              {saving ? (
+                <SaveButtonContent loading={true} />
+              ) : (
+                <SaveButtonContent loading={false} />
+              )}
+            </button>
           </div>
         )}
+      </div>
 
-        <Grid container spacing={3}>
-          {isEditing ? (
-            <>
-              <Grid size={12}>
-                {renderGeographyField(
-                  "Region",
-                  "current_region",
-                  regions.map((r) => ({ code: r.reg_code, desc: r.reg_desc })),
-                  editedProfile?.current_region || profile.current_region,
-                  "Select region",
-                  false,
-                  loadingGeography,
-                  sameAsPermanent
-                )}
+      {/* ══════════════════════════════════════════ VIEW MODE */}
+      {!isEditing && (
+        <div className="space-y-4">
+          {/* My Contact Details */}
+          <Card icon="bi-telephone-fill" iconBg="bg-blue-100" iconColor="text-blue-600" title="My Contact Details">
+            <ViewRow icon="bi-envelope-fill" iconColor="text-blue-500" label="Email Address" value={profile.email} />
+            <ViewRow icon="bi-phone-fill" iconColor="text-emerald-500" label="Mobile Number" value={profile.contacts?.mobile_number || (profile as any).mobile_number} />
+            <ViewRow icon="bi-telephone" iconColor="text-teal-500" label="Alternate Number" value={profile.contacts?.alternate_phone || (profile as any).alternate_phone} />
+          </Card>
+
+          {/* Permanent Address */}
+          <Card icon="bi-house-fill" iconBg="bg-indigo-100" iconColor="text-indigo-600" title="Permanent / Mailing Address">
+            <div className="py-4">
+              {profile.permanent_address?.full_address ? (
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i className="bi bi-geo-alt-fill text-indigo-600 text-sm"></i>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-800 leading-relaxed">
+                    {profile.permanent_address.full_address}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-300 font-semibold">Not specified</p>
+              )}
+            </div>
+          </Card>
+
+          {/* Current Address */}
+          <Card icon="bi-pin-map-fill" iconBg="bg-emerald-100" iconColor="text-emerald-600" title="Current Address">
+            <div className="py-4">
+              {profile.current_address?.full_address ? (
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i className="bi bi-geo-alt-fill text-emerald-600 text-sm"></i>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-800 leading-relaxed">
+                    {profile.current_address.full_address}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-300 font-semibold">Not specified</p>
+              )}
+            </div>
+          </Card>
+
+          {/* Emergency Contact */}
+          <Card icon="bi-exclamation-triangle-fill" iconBg="bg-red-100" iconColor="text-red-600" title="Emergency Contact">
+            <ViewRow icon="bi-person-fill" iconColor="text-red-500" label="Contact Name" value={profile.contacts?.emergency_contact_name} />
+            <ViewRow icon="bi-telephone-fill" iconColor="text-orange-500" label="Contact Number" value={profile.contacts?.emergency_contact_phone || (profile as any).emergency_contact_phone} />
+            <ViewRow icon="bi-people-fill" iconColor="text-amber-500" label="Relationship" value={profile.contacts?.emergency_contact_relationship} />
+          </Card>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════ EDIT MODE */}
+      {isEditing && (
+        <div className="space-y-5">
+          {/* My Contact Details */}
+          <EditCard icon="bi-telephone-fill" iconBg="bg-blue-100" iconColor="text-blue-600" title="My Contact Details">
+            <Grid container spacing={2}>
+              <Grid size={6}>
+                {renderField("Mobile Number", profile.contacts?.mobile_number || (profile as any).mobile_number || "Not provided", "mobile_number", false, "tel")}
+              </Grid>
+              <Grid size={6}>
+                {renderField("Alternate Number", profile.contacts?.alternate_phone || (profile as any).alternate_phone || "Not provided", "alternate_phone", false, "tel")}
               </Grid>
               <Grid size={12}>
-                {renderGeographyField(
-                  "Province",
-                  "current_province",
-                  currentProvinces.map((p) => ({
-                    code: p.prov_code,
-                    desc: p.prov_desc,
-                  })),
-                  editedProfile?.current_province || profile.current_province,
-                  "Select province",
-                  false,
-                  false,
-                  sameAsPermanent
-                )}
+                {renderField("Email Address", profile.email || "Not provided", "email", false, "email")}
               </Grid>
+            </Grid>
+          </EditCard>
 
+          {/* Permanent Address */}
+          <EditCard icon="bi-house-fill" iconBg="bg-indigo-100" iconColor="text-indigo-600" title="Permanent / Mailing Address">
+            <Grid container spacing={2}>
               <Grid size={12}>
-                {renderGeographyField(
-                  "City/Municipality",
-                  "current_city",
-                  currentCities.map((c) => ({
-                    code: c.citymun_code,
-                    desc: c.citymun_desc,
-                  })),
-                  editedProfile?.current_city || profile.current_city,
-                  "Select city/municipality",
-                  false,
-                  false,
-                  sameAsPermanent
-                )}
+                {renderGeographyField("Region", "permanent_region", regions.map((r) => ({ code: r.reg_code, desc: r.reg_desc })), editedProfile?.permanent_region || profile.permanent_region, "Select region", false, loadingGeography)}
               </Grid>
-
               <Grid size={12}>
-                {renderGeographyField(
-                  "Subdivision/Barangay",
-                  "current_barangay",
-                  currentBarangays.map((b) => ({
-                    code: b.brgy_code,
-                    desc: b.brgy_desc,
-                  })),
-                  editedProfile?.current_barangay || profile.current_barangay,
-                  "Select barangay",
-                  false,
-                  false,
-                  sameAsPermanent
-                )}
+                {renderGeographyField("Province", "permanent_province", permanentProvinces.map((p) => ({ code: p.prov_code, desc: p.prov_desc })), editedProfile?.permanent_province || profile.permanent_province, "Select province", false, false)}
               </Grid>
-
+              <Grid size={12}>
+                {renderGeographyField("City / Municipality", "permanent_city", permanentCities.map((c) => ({ code: c.citymun_code, desc: c.citymun_desc })), editedProfile?.permanent_city || profile.permanent_city, "Select city/municipality", false, false)}
+              </Grid>
+              <Grid size={12}>
+                {renderGeographyField("Barangay", "permanent_barangay", permanentBarangays.map((b) => ({ code: b.brgy_code, desc: b.brgy_desc })), editedProfile?.permanent_barangay || profile.permanent_barangay, "Select barangay", false, false)}
+              </Grid>
               <Grid size={12}>
                 <div>
                   <TextField
-                    label="Building Name, Floor, Unit Number, Street Name"
-                    value={editedProfile?.current_street || ""}
-                    onChange={(e) =>
-                      onInputChange("current_street", e.target.value)
-                    }
-                    variant="outlined"
-                    fullWidth
-                    multiline
-                    rows={3}
-                    placeholder="Enter complete address"
-                    disabled={sameAsPermanent}
-                    error={hasValidationError("current_street")}
+                    label="Street / Building / Unit"
+                    value={editedProfile?.permanent_street || ""}
+                    onChange={(e) => onInputChange("permanent_street", e.target.value)}
+                    variant="outlined" fullWidth multiline rows={2}
+                    placeholder="Building name, floor, unit number, street name"
+                    error={hasValidationError("permanent_street")}
                   />
-                  <ValidationError
-                    errors={getValidationError("current_street")}
-                  />
+                  <ValidationError errors={getValidationError("permanent_street")} />
                 </div>
               </Grid>
-
               <Grid size={12}>
-                {renderField(
-                  "Postal Code",
-                  profile.current_address?.zip_code || "Not provided",
-                  "current_postal_code",
-                  false,
-                  "text",
-                  sameAsPermanent
-                )}
+                {renderField("Postal Code", profile.permanent_address?.zip_code || "Not provided", "permanent_postal_code")}
               </Grid>
-            </>
-          ) : (
-            <Grid size={12}>
-              <Box sx={{ mb: 2 }}>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 1, fontWeight: 600 }}
-                >
-                  Full Address
-                </Typography>
-                <Box
-                  sx={{
-                    p: 2,
-                    bgcolor: "grey.50",
-                    borderRadius: 2,
-                    border: "1px solid",
-                    borderColor: "grey.200",
-                    minHeight: "80px",
-                    display: "flex",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <Typography
-                    variant="body1"
-                    color={
-                      profile?.current_address?.full_address
-                        ? "text.primary"
-                        : "text.secondary"
-                    }
-                  >
-                    {profile?.current_address?.full_address || "Not provided"}
-                  </Typography>
-                </Box>
-              </Box>
             </Grid>
-          )}
-        </Grid>
-      </div>
+          </EditCard>
 
-      {/* My Contact Section */}
-      <div className="bg-orange-50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          My Contact Information
-        </h3>
-        <Grid container spacing={3}>
-          <Grid size={6}>
-            {renderField(
-              "Emergency Contact Number No.",
-              profile.contacts?.mobile_number ||
-                (profile as any).mobile_number ||
-                "Not provided",
-              "mobile_number",
-              false,
-              "tel"
+          {/* Current Address */}
+          <EditCard icon="bi-pin-map-fill" iconBg="bg-emerald-100" iconColor="text-emerald-600" title="Current Address">
+            <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <FormControlLabel
+                control={<Checkbox checked={sameAsPermanent} onChange={(e) => handleSameAsPermanentChange(e.target.checked)} color="primary" size="small" />}
+                label={<span className="text-sm font-semibold text-emerald-800">Same as permanent address</span>}
+              />
+            </div>
+            {!sameAsPermanent && (
+              <Grid container spacing={2}>
+                <Grid size={12}>
+                  {renderGeographyField("Region", "current_region", regions.map((r) => ({ code: r.reg_code, desc: r.reg_desc })), editedProfile?.current_region || profile.current_region, "Select region", false, loadingGeography, false)}
+                </Grid>
+                <Grid size={12}>
+                  {renderGeographyField("Province", "current_province", currentProvinces.map((p) => ({ code: p.prov_code, desc: p.prov_desc })), editedProfile?.current_province || profile.current_province, "Select province", false, false, false)}
+                </Grid>
+                <Grid size={12}>
+                  {renderGeographyField("City / Municipality", "current_city", currentCities.map((c) => ({ code: c.citymun_code, desc: c.citymun_desc })), editedProfile?.current_city || profile.current_city, "Select city/municipality", false, false, false)}
+                </Grid>
+                <Grid size={12}>
+                  {renderGeographyField("Barangay", "current_barangay", currentBarangays.map((b) => ({ code: b.brgy_code, desc: b.brgy_desc })), editedProfile?.current_barangay || profile.current_barangay, "Select barangay", false, false, false)}
+                </Grid>
+                <Grid size={12}>
+                  <div>
+                    <TextField
+                      label="Street / Building / Unit"
+                      value={editedProfile?.current_street || ""}
+                      onChange={(e) => onInputChange("current_street", e.target.value)}
+                      variant="outlined" fullWidth multiline rows={2}
+                      placeholder="Building name, floor, unit number, street name"
+                      error={hasValidationError("current_street")}
+                    />
+                    <ValidationError errors={getValidationError("current_street")} />
+                  </div>
+                </Grid>
+                <Grid size={12}>
+                  {renderField("Postal Code", profile.current_address?.zip_code || "Not provided", "current_postal_code")}
+                </Grid>
+              </Grid>
             )}
-          </Grid>
-          <Grid size={6}>
-            {renderField(
-              "Alternate Mobile No.",
-              profile.contacts?.alternate_phone ||
-                (profile as any).alternate_phone ||
-                "Not provided",
-              "alternate_phone",
-              false,
-              "tel"
-            )}
-          </Grid>
-          <Grid size={12}>
-            {renderField(
-              "Email Address",
-              profile.email || "Not provided",
-              "email",
-              false,
-              "email"
-            )}
-          </Grid>
-        </Grid>
-      </div>
+          </EditCard>
 
-      {/* Contact Information Section */}
-      <div className="bg-red-50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Contact Emergency
-        </h3>
-        <Grid container spacing={3}>
-          <Grid size={12}>
-            <Box>
-              {isEditing ? (
+          {/* Emergency Contact */}
+          <EditCard icon="bi-exclamation-triangle-fill" iconBg="bg-red-100" iconColor="text-red-600" title="Emergency Contact">
+            <Grid container spacing={2}>
+              <Grid size={12}>
                 <div>
                   <TextField
                     label="Emergency Contact Name"
                     type="text"
-                    value={
-                      editedProfile?.contacts?.emergency_contact_name || ""
-                    }
-                    onChange={(e) =>
-                      onInputChange("emergency_contact_name", e.target.value)
-                    }
-                    variant="outlined"
-                    fullWidth
-                    placeholder="Enter emergency contact name"
-                    error={hasValidationError(
-                      "contacts.emergency_contact_name"
-                    )}
+                    value={editedProfile?.contacts?.emergency_contact_name || ""}
+                    onChange={(e) => onInputChange("emergency_contact_name", e.target.value)}
+                    variant="outlined" fullWidth
+                    placeholder="Full name of emergency contact"
+                    error={hasValidationError("contacts.emergency_contact_name")}
                   />
-                  <ValidationError
-                    errors={getValidationError(
-                      "contacts.emergency_contact_name"
-                    )}
-                  />
+                  <ValidationError errors={getValidationError("contacts.emergency_contact_name")} />
                 </div>
-              ) : (
-                <DisplayField
-                  label="Emergency Contact Name"
-                  value={profile.contacts?.emergency_contact_name}
-                />
-              )}
-            </Box>
-          </Grid>
-
-          <Grid size={12}>
-            {renderField(
-              "Emergency Contact Number No.",
-              profile.contacts?.emergency_contact_phone ||
-                (profile as any).emergency_contact_phone ||
-                "Not provided",
-              "emergency_contact_phone",
-              false,
-              "tel"
-            )}
-          </Grid>
-
-          <Grid size={12}>
-            {renderField(
-              "Emergency Contact Relation",
-              profile.contacts?.emergency_contact_relationship ||
-                "Not provided",
-              "emergency_contact_relationship"
-            )}
-          </Grid>
-        </Grid>
-      </div>
+              </Grid>
+              <Grid size={6}>
+                {renderField("Contact Number", profile.contacts?.emergency_contact_phone || (profile as any).emergency_contact_phone || "Not provided", "emergency_contact_phone", false, "tel")}
+              </Grid>
+              <Grid size={6}>
+                {renderField("Relationship", profile.contacts?.emergency_contact_relationship || "Not provided", "emergency_contact_relationship")}
+              </Grid>
+            </Grid>
+          </EditCard>
+        </div>
+      )}
     </div>
   );
 }

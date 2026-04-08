@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export type CalendarDayStatus = "available" | "limited" | "full" | "no_slots";
 
@@ -23,83 +22,48 @@ interface Props {
   onNextMonth: () => void;
 }
 
-function Legend() {
-  const items = [
-    {
-      key: "available",
-      text: "Available",
-      dot: "bg-green-500",
-      chip: "bg-green-50 text-green-700 border-green-200",
-    },
-    {
-      key: "limited",
-      text: "Limited",
-      dot: "bg-orange-500",
-      chip: "bg-orange-50 text-orange-700 border-orange-200",
-    },
-    {
-      key: "full",
-      text: "Fully booked",
-      dot: "bg-red-500",
-      chip: "bg-red-50 text-red-700 border-red-200",
-    },
-    {
-      key: "no_slots",
-      text: "No slots",
-      dot: "bg-gray-400",
-      chip: "bg-gray-50 text-gray-600 border-gray-200",
-    },
-  ] as const;
+const STATUS_CONFIG: Record<
+  CalendarDayStatus,
+  { dot: string; selectedBg: string; hoverBg: string; textClass: string; borderClass: string }
+> = {
+  available: {
+    dot: "bg-emerald-500",
+    selectedBg: "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200",
+    hoverBg: "hover:bg-emerald-50 hover:border-emerald-300",
+    textClass: "text-gray-800",
+    borderClass: "border-gray-200",
+  },
+  limited: {
+    dot: "bg-amber-500",
+    selectedBg: "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200",
+    hoverBg: "hover:bg-amber-50 hover:border-amber-300",
+    textClass: "text-gray-800",
+    borderClass: "border-gray-200",
+  },
+  full: {
+    dot: "bg-red-500",
+    selectedBg: "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200",
+    hoverBg: "",
+    textClass: "text-gray-400",
+    borderClass: "border-gray-100",
+  },
+  no_slots: {
+    dot: "bg-gray-300",
+    selectedBg: "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200",
+    hoverBg: "",
+    textClass: "text-gray-300",
+    borderClass: "border-gray-100",
+  },
+};
 
-  return (
-    <div className="mt-4">
-      <div className="flex flex-wrap gap-2">
-        {items.map((i) => (
-          <div
-            key={i.key}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${i.chip}`}
-          >
-            <span className={`h-2 w-2 rounded-full ${i.dot}`} />
-            <span>{i.text}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+const LEGEND = [
+  { key: "available", label: "Available", dot: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  { key: "limited",   label: "Limited",   dot: "bg-amber-500",   chip: "bg-amber-50 text-amber-700 border-amber-200" },
+  { key: "full",      label: "Full",      dot: "bg-red-500",     chip: "bg-red-50 text-red-700 border-red-200" },
+  { key: "no_slots",  label: "No slots",  dot: "bg-gray-300",    chip: "bg-gray-50 text-gray-500 border-gray-200" },
+] as const;
 
-function getDayDotClass(status: CalendarDayStatus) {
-  switch (status) {
-    case "available":
-      return "bg-green-500";
-    case "limited":
-      return "bg-orange-500";
-    case "full":
-      return "bg-red-500";
-    case "no_slots":
-      return "bg-gray-400";
-    default:
-      return "bg-gray-400";
-  }
-}
-
-function getDayBgClass(
-  status: CalendarDayStatus,
-  isSelected: boolean,
-  isDisabled: boolean
-) {
-  if (isSelected) return "bg-blue-600 text-white border-blue-600";
-  if (isDisabled) return "bg-gray-100 text-gray-400 border-gray-200";
-
-  switch (status) {
-    case "available":
-      return "bg-white hover:bg-green-50 border-gray-200";
-    case "limited":
-      return "bg-white hover:bg-orange-50 border-gray-200";
-    default:
-      return "bg-white hover:bg-blue-50 border-gray-200";
-  }
-}
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function AppointmentCalendar({
   days,
@@ -109,119 +73,141 @@ export default function AppointmentCalendar({
   onPrevMonth,
   onNextMonth,
 }: Props) {
-  const [activeTooltipDate, setActiveTooltipDate] = useState<string | null>(null);
+  const [tooltipDate, setTooltipDate] = useState<string | null>(null);
 
-  const weekdayLabels = useMemo(
-    () => [
-      { full: "Sun", short: "S" },
-      { full: "Mon", short: "M" },
-      { full: "Tue", short: "T" },
-      { full: "Wed", short: "W" },
-      { full: "Thu", short: "T" },
-      { full: "Fri", short: "F" },
-      { full: "Sat", short: "S" },
-    ],
-    []
-  );
-
-  const toggleTooltip = (date: string) => {
-    setActiveTooltipDate((prev) => (prev === date ? null : date));
-  };
+  const weekdayLabels = useMemo(() => WEEKDAYS, []);
 
   return (
-    <div className="bg-white rounded-xl p-4 sm:p-6 shadow w-full">
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={onPrevMonth}
-          className="p-2 rounded-full hover:bg-gray-100 flex items-center justify-center"
-          aria-label="Previous month"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-
-        <h3 className="text-base sm:text-lg font-semibold text-center flex-1">
-          {currentMonthLabel}
-        </h3>
-
-        <button
-          onClick={onNextMonth}
-          className="p-2 rounded-full hover:bg-gray-100 flex items-center justify-center"
-          aria-label="Next month"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-gray-50">
+        <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+          <i className="bi bi-calendar3 text-blue-600 text-sm"></i>
+        </div>
+        <div className="flex-1">
+          <p className="text-xs font-bold text-gray-700 uppercase tracking-wide leading-none">Select Date</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">Tap an available date to continue</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-7 text-center text-xs sm:text-sm font-medium text-gray-500 mb-2">
-        {weekdayLabels.map((d) => (
-          <div key={d.full} className="flex items-center justify-center">
-            <span className="hidden sm:inline">{d.full}</span>
-            <span className="sm:hidden">{d.short}</span>
-          </div>
-        ))}
-      </div>
+      <div className="p-4">
+        {/* Month Navigator */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={onPrevMonth}
+            className="w-9 h-9 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 active:scale-95 flex items-center justify-center transition-all"
+            aria-label="Previous month"
+          >
+            <i className="bi bi-chevron-left text-gray-600 text-sm"></i>
+          </button>
 
-      <div className="grid grid-cols-7 gap-2 text-center text-sm">
-        {days.map((day, index) => {
-          if (!day) return <div key={`empty-${index}`} />;
+          <h3 className="text-base font-black text-gray-900">{currentMonthLabel}</h3>
 
-          const isSelected = selectedDate === day.date;
-          const isTooltipActive = activeTooltipDate === day.date;
+          <button
+            onClick={onNextMonth}
+            className="w-9 h-9 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 active:scale-95 flex items-center justify-center transition-all"
+            aria-label="Next month"
+          >
+            <i className="bi bi-chevron-right text-gray-600 text-sm"></i>
+          </button>
+        </div>
 
-          const isDisabled =
-            !day.isAvailable || day.status === "no_slots" || day.status === "full";
-
-          const tooltipText =
-            day.status === "no_slots"
-              ? "No slots set"
-              : day.status === "full"
-              ? "Fully booked"
-              : `${day.availableSlots} slot${day.availableSlots > 1 ? "s" : ""} available`;
-
-          return (
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 mb-2">
+          {weekdayLabels.map((d) => (
             <div
-              key={day.date}
-              className="relative flex items-center justify-center"
-              onMouseEnter={() => setActiveTooltipDate(day.date)}
-              onMouseLeave={() => setActiveTooltipDate(null)}
+              key={d}
+              className="flex items-center justify-center text-[11px] font-bold text-gray-400 uppercase tracking-wider py-1"
             >
-              <button
-                disabled={isDisabled}
-                onClick={() => {
-                  toggleTooltip(day.date);
-                  if (!isDisabled) onSelectDate(day.date);
-                }}
-                className={[
-                  "relative w-full rounded-lg border transition flex items-center justify-center",
-                  "h-11 sm:h-12",
-                  "text-sm select-none",
-                  getDayBgClass(day.status, isSelected, isDisabled),
-                ].join(" ")}
-                aria-label={`${day.date} — ${tooltipText}`}
-              >
-                {day.date.slice(8, 10)}
-                <span
-                  className={`absolute top-1 right-1 h-2 w-2 rounded-full ${getDayDotClass(
-                    day.status
-                  )}`}
-                />
-              </button>
-
-              <div
-                className={`absolute z-10 bottom-full left-1/2 -translate-x-1/2 mb-1 transition-opacity ${
-                  isTooltipActive ? "opacity-100" : "opacity-0 pointer-events-none"
-                }`}
-              >
-                <div className="bg-gray-900 text-white text-xs px-2 py-1 rounded shadow whitespace-nowrap">
-                  {tooltipText}
-                </div>
-              </div>
+              <span className="hidden sm:inline">{d}</span>
+              <span className="sm:hidden">{d[0]}</span>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
 
-      <Legend />
+        {/* Day grid */}
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((day, index) => {
+            if (!day) return <div key={`empty-${index}`} />;
+
+            const cfg = STATUS_CONFIG[day.status];
+            const isSelected = selectedDate === day.date;
+            const isDisabled = day.status === "no_slots" || day.status === "full";
+            const isTooltipVisible = tooltipDate === day.date;
+
+            const tooltipText =
+              day.status === "no_slots"
+                ? "No slots"
+                : day.status === "full"
+                ? "Fully booked"
+                : `${day.availableSlots} slot${day.availableSlots !== 1 ? "s" : ""} left`;
+
+            return (
+              <div
+                key={day.date}
+                className="relative flex items-center justify-center"
+                onMouseEnter={() => setTooltipDate(day.date)}
+                onMouseLeave={() => setTooltipDate(null)}
+              >
+                <button
+                  disabled={isDisabled}
+                  onClick={() => {
+                    if (!isDisabled) onSelectDate(day.date);
+                  }}
+                  aria-label={`${day.date} — ${tooltipText}`}
+                  className={[
+                    "relative w-full h-10 sm:h-11 rounded-xl border text-sm font-semibold transition-all select-none",
+                    isSelected
+                      ? cfg.selectedBg
+                      : isDisabled
+                      ? `bg-gray-50 ${cfg.textClass} ${cfg.borderClass} cursor-not-allowed`
+                      : `bg-white ${cfg.textClass} ${cfg.borderClass} ${cfg.hoverBg} active:scale-95`,
+                  ].join(" ")}
+                >
+                  {day.date.slice(8, 10)}
+
+                  {/* Status dot */}
+                  {!isSelected && (
+                    <span
+                      className={`absolute top-1 right-1 h-1.5 w-1.5 rounded-full ${cfg.dot}`}
+                    />
+                  )}
+
+                  {/* Selected checkmark */}
+                  {isSelected && (
+                    <span className="absolute top-0.5 right-0.5 h-3 w-3 rounded-full bg-white/30 flex items-center justify-center">
+                      <i className="bi bi-check text-white text-[8px] font-black leading-none"></i>
+                    </span>
+                  )}
+                </button>
+
+                {/* Tooltip */}
+                {isTooltipVisible && (
+                  <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 pointer-events-none">
+                    <div className="bg-gray-900 text-white text-[11px] font-medium px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
+                      {tooltipText}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Legend */}
+        <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
+          {LEGEND.map((l) => (
+            <div
+              key={l.key}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${l.chip}`}
+            >
+              <span className={`h-2 w-2 rounded-full flex-shrink-0 ${l.dot}`} />
+              {l.label}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
