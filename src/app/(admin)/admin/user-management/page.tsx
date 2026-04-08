@@ -24,7 +24,7 @@ export default function UserManagement() {
       const response = await AdminManagementService.getAllAdmins();
 
       if (response.success && response.data) {
-        setAdmins(response.data);
+        setAdmins(response.data.filter((admin: Admin) => admin.department_id !== null));
         toast.success("Admin data loaded successfully");
       } else {
         toast.error(response.message || "Failed to load admin data");
@@ -44,7 +44,7 @@ export default function UserManagement() {
 
   // Get unique departments for statistics
   const departments = useMemo(() => {
-    const deptSet = new Set(admins.map((admin) => admin.department.name));
+    const deptSet = new Set(admins.map((admin) => admin.department?.name).filter(Boolean));
     return Array.from(deptSet);
   }, [admins]);
 
@@ -95,7 +95,7 @@ export default function UserManagement() {
   const handleResetDevice = async (admin: Admin) => {
     if (
       !confirm(
-        `Reset device for ${admin.profile.full_name}?\n\nThis will log them out of their current device and allow them to log in from a new device.`
+        `Reset device for ${admin.profile.full_name}?\n\nThis will log them out of their current device and allow them to log in from a new device.`,
       )
     ) {
       return;
@@ -105,7 +105,7 @@ export default function UserManagement() {
       const response = await AdminManagementService.resetDevice(admin.id);
       if (response.success) {
         toast.success(
-          "Device reset successfully. User can now log in from a new device."
+          "Device reset successfully. User can now log in from a new device.",
         );
         loadAdminData();
       } else {
